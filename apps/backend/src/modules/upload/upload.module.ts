@@ -1,13 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { MulterModule } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { extname } from 'path';
+import { AuditLog, AuditLogSchema } from '../../common/schemas/audit-log.schema';
+import { AuditService } from '../../common/services/audit.service';
+import { FileSecurityService } from '../../common/services/file-security.service';
+import { UploadController } from './upload.controller';
 
 @Module({
   imports: [
     ConfigModule,
+    MongooseModule.forFeature([
+      { name: AuditLog.name, schema: AuditLogSchema }
+    ]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -82,7 +90,9 @@ import { extname } from 'path';
       inject: [ConfigService],
     }),
   ],
-  exports: [MulterModule],
+  controllers: [UploadController],
+  providers: [FileSecurityService, AuditService],
+  exports: [MulterModule, FileSecurityService],
 })
 export class UploadModule {}
 

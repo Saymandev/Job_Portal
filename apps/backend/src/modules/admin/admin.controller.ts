@@ -117,6 +117,18 @@ export class AdminController {
     };
   }
 
+  @Put('jobs/:id')
+  @ApiOperation({ summary: 'Update job status' })
+  async updateJobStatus(@Param('id') id: string, @Body() updateData: any) {
+    const job = await this.adminService.updateJobStatus(id, updateData);
+
+    return {
+      success: true,
+      message: 'Job updated successfully',
+      data: job,
+    };
+  }
+
   @Get('applications')
   @ApiOperation({ summary: 'Get all applications' })
   async getAllApplications() {

@@ -60,6 +60,19 @@ export class SubscriptionsController {
     };
   }
 
+  @Get('limits')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get subscription limits and usage' })
+  async getSubscriptionLimits(@CurrentUser('id') userId: string) {
+    const limits = await this.subscriptionsService.getSubscriptionLimits(userId);
+
+    return {
+      success: true,
+      data: limits,
+    };
+  }
+
   @Post('cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.EMPLOYER)

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ExperienceLevel, JobStatus, JobType } from '../schemas/job.schema';
 
 export class CreateJobDto {
@@ -69,5 +69,28 @@ export class CreateJobDto {
   @Type(() => Date)
   @IsDate()
   applicationDeadline?: Date;
+
+  @ApiPropertyOptional({
+    type: [Object],
+    description: 'Screening questions for applicants',
+    example: [
+      {
+        question: 'How many years of experience do you have with React?',
+        type: 'text',
+        required: true,
+        options: []
+      }
+    ]
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Object)
+  screeningQuestions?: Array<{
+    question: string;
+    type: 'text' | 'yes_no' | 'multiple_choice';
+    required: boolean;
+    options?: string[];
+  }>;
 }
 

@@ -1,38 +1,154 @@
 import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
+import { AuditAction, AuditResource } from '@/common/schemas/audit-log.schema';
+import { AuditService } from '@/common/services/audit.service';
+import { SanitizationService } from '@/common/services/sanitization.service';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Request } from 'express';
 import { Model } from 'mongoose';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
+import { Subscription, SubscriptionDocument, SubscriptionPlan } from '../subscriptions/schemas/subscription.schema';
 import { CreateJobDto } from './dto/create-job.dto';
 import { SearchJobsDto } from './dto/search-jobs.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
-import { Job, JobDocument } from './schemas/job.schema';
+import { Job, JobDocument, JobStatus } from './schemas/job.schema';
 
 @Injectable()
 export class JobsService {
   constructor(
     @InjectModel(Job.name) private jobModel: Model<JobDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
+    private auditService: AuditService,
+    private sanitizationService: SanitizationService,
   ) {}
 
-  async create(userId: string, createJobDto: CreateJobDto): Promise<JobDocument> {
-    // Find user's company
-    const company = await this.companyModel.findOne({ owner: userId });
-    if (!company) {
-      throw new NotFoundException('Company not found. Please create a company first.');
+  async create(userId: string, createJobDto: CreateJobDto, req?: Request): Promise<{ job: JobDocument; autoPosted: boolean; subscriptionInfo: any }> {
+    try {
+      // Sanitize input data
+      const sanitizedDto = {
+        ...createJobDto,
+        title: this.sanitizationService.sanitizeText(createJobDto.title),
+        description: this.sanitizationService.sanitizeJobContent(createJobDto.description),
+        requirements: this.sanitizationService.sanitizeJobContent(createJobDto.requirements),
+        location: this.sanitizationService.sanitizeText(createJobDto.location),
+        skills: createJobDto.skills.map(skill => this.sanitizationService.sanitizeText(skill)),
+        benefits: createJobDto.benefits?.map(benefit => this.sanitizationService.sanitizeText(benefit)) || [],
+      };
+
+      // Find user's company
+      const company = await this.companyModel.findOne({ owner: userId });
+      if (!company) {
+        await this.auditService.log(
+          userId,
+          AuditAction.CREATE_JOB,
+          AuditResource.JOB,
+          'unknown',
+          { error: 'Company not found' },
+          req,
+          false,
+          'Company not found. Please create a company first.'
+        );
+        throw new NotFoundException('Company not found. Please create a company first.');
+      }
+
+    // Check subscription limits
+    const subscription = await this.subscriptionModel.findOne({ user: userId });
+    if (!subscription) {
+      throw new NotFoundException('Subscription not found. Please contact support.');
+    }
+
+    // Check if user has reached their job posting limit
+    const currentJobCount = await this.jobModel.countDocuments({ 
+      postedBy: userId, 
+      status: { $in: ['open', 'paused'] } 
+    });
+
+    let autoPosted = false;
+    let finalStatus = createJobDto.status;
+
+    // Determine if job should be auto-posted based on subscription plan
+    if (subscription.plan === SubscriptionPlan.FREE) {
+      // Free plan: Check if user has reached limit
+      if (currentJobCount >= subscription.jobPostsLimit) {
+        throw new ForbiddenException(
+          `You have reached your job posting limit of ${subscription.jobPostsLimit} for the FREE plan. Upgrade your subscription to post more jobs.`
+        );
+      }
+      // Free plan jobs are auto-posted (no approval needed)
+      autoPosted = true;
+      finalStatus = JobStatus.OPEN;
+    } else {
+      // Paid plans: Check if user has reached limit
+      if (currentJobCount >= subscription.jobPostsLimit) {
+        throw new ForbiddenException(
+          `You have reached your job posting limit of ${subscription.jobPostsLimit} for the ${subscription.plan.toUpperCase()} plan. Upgrade your subscription to post more jobs.`
+        );
+      }
+      // Paid plan jobs are auto-posted (premium feature)
+      autoPosted = true;
+      finalStatus = JobStatus.OPEN;
     }
 
     // Set expiration date (30 days from now by default)
     const expiresAt = createJobDto.applicationDeadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    const job = await this.jobModel.create({
-      ...createJobDto,
-      company: company._id,
-      postedBy: userId,
-      expiresAt,
-    });
+      const job = await this.jobModel.create({
+        ...sanitizedDto,
+        status: finalStatus,
+        company: company._id,
+        postedBy: userId,
+        expiresAt,
+      });
 
-    return job.populate(['company', 'postedBy']);
+      // Increment job posts used counter
+      await this.subscriptionModel.findOneAndUpdate(
+        { user: userId },
+        { $inc: { jobPostsUsed: 1 } }
+      );
+
+      const populatedJob = await job.populate(['company', 'postedBy']);
+
+      // Log successful job creation
+      await this.auditService.log(
+        userId,
+        AuditAction.CREATE_JOB,
+        AuditResource.JOB,
+        job._id.toString(),
+        {
+          title: sanitizedDto.title,
+          company: company._id,
+          autoPosted,
+          subscriptionPlan: subscription.plan,
+        },
+        req,
+        true
+      );
+
+      return {
+        job: populatedJob,
+        autoPosted,
+        subscriptionInfo: {
+          plan: subscription.plan,
+          jobPostsLimit: subscription.jobPostsLimit,
+          jobPostsUsed: subscription.jobPostsUsed + 1,
+          remainingJobs: subscription.jobPostsLimit - (subscription.jobPostsUsed + 1),
+        },
+      };
+    } catch (error) {
+      // Log failed job creation
+      await this.auditService.log(
+        userId,
+        AuditAction.CREATE_JOB,
+        AuditResource.JOB,
+        'unknown',
+        { error: error.message },
+        req,
+        false,
+        error.message
+      );
+      throw error;
+    }
   }
 
   async findAll(searchJobsDto: SearchJobsDto): Promise<PaginatedResult<JobDocument>> {

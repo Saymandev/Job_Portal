@@ -137,12 +137,51 @@ export class AdminService {
   async getAllJobs(filters: any = {}) {
     const query: any = {};
     if (filters.status) query.status = filters.status;
+    if (filters.jobType) query.jobType = filters.jobType;
+    if (filters.search) {
+      query.$or = [
+        { title: { $regex: filters.search, $options: 'i' } },
+        { description: { $regex: filters.search, $options: 'i' } },
+        { location: { $regex: filters.search, $options: 'i' } },
+      ];
+    }
 
-    return this.jobModel
-      .find(query)
-      .populate('company', 'name')
-      .populate('postedBy', 'fullName email')
-      .sort({ createdAt: -1 });
+    const page = parseInt(filters.page) || 1;
+    const limit = parseInt(filters.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [jobs, total] = await Promise.all([
+      this.jobModel
+        .find(query)
+        .populate('company', 'name')
+        .populate('postedBy', 'fullName email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.jobModel.countDocuments(query),
+    ]);
+
+    return {
+      jobs,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async updateJobStatus(jobId: string, updateData: any) {
+    const job = await this.jobModel.findByIdAndUpdate(
+      jobId,
+      updateData,
+      { new: true }
+    ).populate('company', 'name').populate('postedBy', 'fullName email');
+
+    if (!job) {
+      throw new Error('Job not found');
+    }
+
+    return job;
   }
 
   async getAllApplications() {

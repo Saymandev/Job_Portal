@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import Stripe from 'stripe';
+import { Job, JobDocument } from '../jobs/schemas/job.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { Subscription, SubscriptionDocument, SubscriptionPlan, SubscriptionStatus } from './schemas/subscription.schema';
 
@@ -13,6 +14,7 @@ export class SubscriptionsService {
   constructor(
     @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Job.name) private jobModel: Model<JobDocument>,
     private configService: ConfigService,
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), {
@@ -221,6 +223,27 @@ export class SubscriptionsService {
       { user: userId },
       { $inc: { jobPostsUsed: 1 } },
     );
+  }
+
+  async getSubscriptionLimits(userId: string) {
+    const subscription = await this.getUserSubscription(userId);
+    
+    // Get current active job count
+    const currentJobCount = await this.jobModel.countDocuments({ 
+      postedBy: userId, 
+      status: { $in: ['open', 'paused'] } 
+    });
+
+    return {
+      plan: subscription.plan,
+      jobPostsLimit: subscription.jobPostsLimit,
+      jobPostsUsed: currentJobCount,
+      remainingJobs: Math.max(0, subscription.jobPostsLimit - currentJobCount),
+      canPostJob: currentJobCount < subscription.jobPostsLimit,
+      status: subscription.status,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+      autoRenew: subscription.autoRenew,
+    };
   }
 }
 

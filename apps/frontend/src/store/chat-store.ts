@@ -299,13 +299,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         console.log('📥 User messages fetched successfully:', {
           messageCount: fetchedMessages.length,
           conversationId: conversationId,
-          page: page,
-          firstMessageTime: fetchedMessages[0]?.createdAt,
-          lastMessageTime: fetchedMessages[fetchedMessages.length - 1]?.createdAt
+          page: page
         });
         
-        // Backend returns newest first, so reverse to get oldest first for display
-        const sortedMessages = fetchedMessages.reverse();
+        // Sort messages by creation date to ensure proper order (oldest first)
+        const sortedMessages = fetchedMessages.sort((a: any, b: any) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
         
         if (reset) {
           // Replace all messages (first load)

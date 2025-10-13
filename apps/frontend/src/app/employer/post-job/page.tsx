@@ -10,17 +10,20 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
+  AlertCircle,
   Briefcase,
   Check,
   ChevronLeft,
   ChevronRight,
+  Crown,
   DollarSign,
   FileText,
   MapPin,
   Plus,
   Save,
   Sparkles,
-  X
+  X,
+  Zap,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -51,6 +54,17 @@ interface JobFormData {
   screeningQuestions: ScreeningQuestion[];
 }
 
+interface SubscriptionInfo {
+  plan: string;
+  jobPostsLimit: number;
+  jobPostsUsed: number;
+  remainingJobs: number;
+  canPostJob: boolean;
+  status: string;
+  currentPeriodEnd?: string;
+  autoRenew: boolean;
+}
+
 export default function PostJobPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
@@ -58,6 +72,8 @@ export default function PostJobPage() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(true);
   const [companies, setCompanies] = useState<any[]>([]);
   const [selectedCompany, setSelectedCompany] = useState('');
 
@@ -107,7 +123,22 @@ export default function PostJobPage() {
       return;
     }
     fetchCompanies();
+    fetchSubscriptionInfo();
   }, [isAuthenticated, user, router]);
+
+  const fetchSubscriptionInfo = async () => {
+    try {
+      setLoadingSubscription(true);
+      const response = await api.get('/subscriptions/limits');
+      if (response.data.success) {
+        setSubscriptionInfo(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription info:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -284,7 +315,8 @@ export default function PostJobPage() {
 
       const jobData = {
         ...formData,
-        company: selectedCompany,
+        // Remove company field as it's set automatically by backend
+        // Company is determined by the logged-in user's company
         status: isDraft ? 'draft' : formData.status,
         salaryMin: formData.salaryMin ? parseInt(formData.salaryMin) : undefined,
         salaryMax: formData.salaryMax ? parseInt(formData.salaryMax) : undefined,
@@ -294,9 +326,20 @@ export default function PostJobPage() {
       const response = await api.post('/jobs', jobData);
 
       if (response.data.success) {
+        const { autoPosted, subscriptionInfo: newSubscriptionInfo } = response.data;
+        
+        // Update subscription info
+        if (newSubscriptionInfo) {
+          setSubscriptionInfo(newSubscriptionInfo);
+        }
+        
         toast({
           title: 'Success!',
-          description: isDraft ? 'Job saved as draft' : 'Job posted successfully',
+          description: isDraft 
+            ? 'Job saved as draft' 
+            : autoPosted 
+              ? 'Job posted successfully and is now live!' 
+              : 'Job created successfully and is pending approval',
         });
         router.push('/employer/dashboard');
       }
@@ -325,6 +368,71 @@ export default function PostJobPage() {
             Fill in the details to create your job posting
           </p>
         </div>
+
+        {/* Subscription Status */}
+        {!loadingSubscription && subscriptionInfo && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                    <span className="font-semibold">
+                      {subscriptionInfo.plan.toUpperCase()} Plan
+                    </span>
+                  </div>
+                  <Badge variant={subscriptionInfo.canPostJob ? "default" : "destructive"}>
+                    {subscriptionInfo.remainingJobs} jobs remaining
+                  </Badge>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {subscriptionInfo.canPostJob ? (
+                    <div className="flex items-center space-x-1 text-green-600">
+                      <Check className="h-4 w-4" />
+                      <span className="text-sm">Can post job</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-1 text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="text-sm">Limit reached</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Jobs posted: {subscriptionInfo.jobPostsUsed}</span>
+                  <span>Limit: {subscriptionInfo.jobPostsLimit}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(subscriptionInfo.jobPostsUsed / subscriptionInfo.jobPostsLimit) * 100}%` }}
+                  />
+                </div>
+              </div>
+              {!subscriptionInfo.canPostJob && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <span className="text-sm text-red-700">
+                      You&apos;ve reached your job posting limit. Upgrade your subscription to post more jobs.
+                    </span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => router.push('/pricing')}
+                  >
+                    <Zap className="h-4 w-4 mr-1" />
+                    Upgrade Plan
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Progress Steps */}
         <div className="mb-8">
@@ -784,7 +892,10 @@ export default function PostJobPage() {
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
-                  <Button onClick={() => handleSubmit(false)} disabled={isSubmitting}>
+                  <Button 
+                    onClick={() => handleSubmit(false)} 
+                    disabled={isSubmitting || (subscriptionInfo ? !subscriptionInfo.canPostJob : false)}
+                  >
                     {isSubmitting ? 'Posting...' : 'Post Job'}
                   </Button>
                 )}

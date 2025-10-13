@@ -1,6 +1,10 @@
+import { AuditLog, AuditLogSchema } from '@/common/schemas/audit-log.schema';
+import { AuditService } from '@/common/services/audit.service';
+import { SanitizationService } from '@/common/services/sanitization.service';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
+import { Subscription, SubscriptionSchema } from '../subscriptions/schemas/subscription.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
@@ -16,10 +20,12 @@ import { SavedJob, SavedJobSchema } from './schemas/saved-job.schema';
       { name: Company.name, schema: CompanySchema },
       { name: User.name, schema: UserSchema },
       { name: SavedJob.name, schema: SavedJobSchema },
+      { name: Subscription.name, schema: SubscriptionSchema },
+      { name: AuditLog.name, schema: AuditLogSchema },
     ]),
   ],
   controllers: [JobsController, SavedJobsController],
-  providers: [JobsService, SavedJobsService],
+  providers: [JobsService, SavedJobsService, AuditService, SanitizationService],
   exports: [JobsService, SavedJobsService],
 })
 export class JobsModule {}

@@ -1,6 +1,9 @@
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { RateLimit } from '@/common/decorators/rate-limit.decorator';
 import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { PaginationDto } from '@/common/dto/pagination.dto';
+import { CsrfGuard } from '@/common/guards/csrf.guard';
+import { CustomRateLimitGuard } from '@/common/guards/rate-limit.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import {
     Body,
@@ -11,9 +14,11 @@ import {
     Post,
     Put,
     Query,
+    Req,
     UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateJobDto } from './dto/create-job.dto';
 import { SearchJobsDto } from './dto/search-jobs.dto';
@@ -26,17 +31,26 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, CsrfGuard, CustomRateLimitGuard)
   @Roles(Role.EMPLOYER)
+  @RateLimit({ ttl: 60000, limit: 5 }) // 5 job posts per minute
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create new job posting' })
-  async create(@CurrentUser('id') userId: string, @Body() createJobDto: CreateJobDto) {
-    const job = await this.jobsService.create(userId, createJobDto);
+  async create(
+    @CurrentUser('id') userId: string, 
+    @Body() createJobDto: CreateJobDto,
+    @Req() req: Request
+  ) {
+    const result = await this.jobsService.create(userId, createJobDto, req);
 
     return {
       success: true,
-      message: 'Job created successfully',
-      data: job,
+      message: result.autoPosted 
+        ? 'Job posted successfully and is now live!' 
+        : 'Job created successfully and is pending approval',
+      data: result.job,
+      autoPosted: result.autoPosted,
+      subscriptionInfo: result.subscriptionInfo,
     };
   }
 

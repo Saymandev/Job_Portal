@@ -4,13 +4,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Briefcase, CheckCircle, Edit, Eye, Filter, MoreVertical, Search, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/store/auth-store';
+import { Briefcase, CheckCircle, ChevronLeft, ChevronRight, Edit, Eye, Filter, MoreVertical, Search, XCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Job {
-  id: string;
+  _id: string;
   title: string;
-  company: string;
+  company: {
+    name: string;
+  };
   location: string;
   jobType: string;
   experienceLevel: string;
@@ -18,168 +24,135 @@ interface Job {
   salaryMin: number;
   salaryMax: number;
   currency: string;
-  postedBy: string;
-  postedAt: string;
+  postedBy: {
+    fullName: string;
+  };
+  createdAt: string;
   expiresAt: string;
-  applicationCount: number;
+  applicationsCount: number;
   isRemote: boolean;
 }
 
 export default function AdminJobsPage() {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { toast } = useToast();
+  
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [limit] = useState(10);
 
-  useEffect(() => {
-    // Mock jobs - in real app, fetch from API
-    const mockJobs: Job[] = [
-      {
-        id: '1',
-        title: 'Senior Full Stack Developer',
-        company: 'TechCorp Solutions',
-        location: 'San Francisco, CA',
-        jobType: 'full-time',
-        experienceLevel: 'senior',
-        status: 'open',
-        salaryMin: 120000,
-        salaryMax: 180000,
-        currency: 'USD',
-        postedBy: 'Sarah Williams',
-        postedAt: '2024-01-10T00:00:00Z',
-        expiresAt: '2024-02-10T00:00:00Z',
-        applicationCount: 25,
-        isRemote: true
-      },
-      {
-        id: '2',
-        title: 'Frontend Developer (React)',
-        company: 'StartupXYZ Inc',
-        location: 'New York, NY',
-        jobType: 'full-time',
-        experienceLevel: 'mid',
-        status: 'open',
-        salaryMin: 90000,
-        salaryMax: 130000,
-        currency: 'USD',
-        postedBy: 'David Brown',
-        postedAt: '2024-01-12T00:00:00Z',
-        expiresAt: '2024-02-12T00:00:00Z',
-        applicationCount: 18,
-        isRemote: false
-      },
-      {
-        id: '3',
-        title: 'UI/UX Designer',
-        company: 'Creative Design Studio',
-        location: 'Los Angeles, CA',
-        jobType: 'full-time',
-        experienceLevel: 'mid',
-        status: 'paused',
-        salaryMin: 80000,
-        salaryMax: 110000,
-        currency: 'USD',
-        postedBy: 'Emily Davis',
-        postedAt: '2024-01-08T00:00:00Z',
-        expiresAt: '2024-02-08T00:00:00Z',
-        applicationCount: 12,
-        isRemote: true
-      },
-      {
-        id: '4',
-        title: 'Backend Engineer (Node.js)',
-        company: 'TechCorp Solutions',
-        location: 'San Francisco, CA',
-        jobType: 'contract',
-        experienceLevel: 'senior',
-        status: 'closed',
-        salaryMin: 130000,
-        salaryMax: 170000,
-        currency: 'USD',
-        postedBy: 'Sarah Williams',
-        postedAt: '2024-01-05T00:00:00Z',
-        expiresAt: '2024-02-05T00:00:00Z',
-        applicationCount: 32,
-        isRemote: true
-      },
-      {
-        id: '5',
-        title: 'Product Manager',
-        company: 'StartupXYZ Inc',
-        location: 'New York, NY',
-        jobType: 'full-time',
-        experienceLevel: 'senior',
-        status: 'open',
-        salaryMin: 110000,
-        salaryMax: 150000,
-        currency: 'USD',
-        postedBy: 'David Brown',
-        postedAt: '2024-01-14T00:00:00Z',
-        expiresAt: '2024-02-14T00:00:00Z',
-        applicationCount: 8,
-        isRemote: false
+  const fetchJobs = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(typeFilter !== 'all' && { jobType: typeFilter }),
+        ...(searchTerm && { search: searchTerm }),
+      });
+
+      const response = await api.get(`/admin/jobs?${params}`);
+      
+      if (response.data.success) {
+        setJobs(response.data.data.jobs);
+        setTotalJobs(response.data.data.total);
+        setTotalPages(Math.ceil(response.data.data.total / limit));
       }
-    ];
-
-    setTimeout(() => {
-      setJobs(mockJobs);
-      setFilteredJobs(mockJobs);
+    } catch (error: any) {
+      console.error('Error fetching jobs:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch jobs',
+        variant: 'destructive',
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  }, [currentPage, statusFilter, typeFilter, searchTerm, limit, toast]);
+
+  // Wait for Zustand store to hydrate from localStorage
+  useEffect(() => {
+    setIsHydrated(true);
   }, []);
 
   useEffect(() => {
-    let filtered = jobs;
+    // Only check authentication after the store has hydrated
+    if (!isHydrated) return;
 
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(job =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    if (!isAuthenticated || user?.role !== 'admin') {
+      router.push('/login');
+      return;
     }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(job => job.status === statusFilter);
+    
+    // Only fetch data if user is properly authenticated
+    if (isAuthenticated && user?.role === 'admin') {
+      fetchJobs();
     }
+  }, [isAuthenticated, user, router, isHydrated, fetchJobs]);
 
-    // Type filter
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(job => job.jobType === typeFilter);
+  const toggleJobStatus = async (jobId: string) => {
+    try {
+      const job = jobs.find(j => j._id === jobId);
+      if (!job) return;
+
+      const newStatus = job.status === 'open' ? 'paused' : 'open';
+      
+      const response = await api.put(`/admin/jobs/${jobId}`, { status: newStatus });
+      
+      if (response.data.success) {
+        setJobs(prev => 
+          prev.map(j => j._id === jobId ? { ...j, status: newStatus } : j)
+        );
+        toast({
+          title: 'Success',
+          description: `Job ${newStatus === 'open' ? 'activated' : 'paused'} successfully`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error updating job status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update job status',
+        variant: 'destructive',
+      });
     }
+  };
 
-    setFilteredJobs(filtered);
-  }, [jobs, searchTerm, statusFilter, typeFilter]);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
-  const toggleJobStatus = (jobId: string) => {
-    setJobs(prev => 
-      prev.map(job => {
-        if (job.id === jobId) {
-          let newStatus: Job['status'];
-          if (job.status === 'open') {
-            newStatus = 'paused';
-          } else if (job.status === 'paused') {
-            newStatus = 'open';
-          } else {
-            newStatus = 'open';
-          }
-          return { ...job, status: newStatus };
-        }
-        return job;
-      })
-    );
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'status') {
+      setStatusFilter(value);
+    } else if (filterType === 'type') {
+      setTypeFilter(value);
+    }
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'open':
-        return <Badge variant="success">Open</Badge>;
+        return <Badge variant="default" className="bg-green-100 text-green-800">Open</Badge>;
       case 'paused':
-        return <Badge variant="warning">Paused</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Paused</Badge>;
       case 'closed':
         return <Badge variant="destructive">Closed</Badge>;
       default:
@@ -228,7 +201,7 @@ export default function AdminJobsPage() {
           <h1 className="text-3xl font-bold">Jobs Management</h1>
         </div>
         <Badge variant="outline" className="text-sm">
-          Total: {jobs.length}
+          Total: {totalJobs}
         </Badge>
       </div>
 
@@ -241,14 +214,14 @@ export default function AdminJobsPage() {
               <Input
                 placeholder="Search jobs..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
             
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Status</option>
@@ -259,7 +232,7 @@ export default function AdminJobsPage() {
             
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              onChange={(e) => handleFilterChange('type', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Types</option>
@@ -279,7 +252,7 @@ export default function AdminJobsPage() {
 
       {/* Jobs List */}
       <div className="space-y-4">
-        {filteredJobs.length === 0 ? (
+        {jobs.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -288,8 +261,8 @@ export default function AdminJobsPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredJobs.map((job) => (
-            <Card key={job.id}>
+          jobs.map((job) => (
+            <Card key={job._id}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -302,7 +275,7 @@ export default function AdminJobsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                       <div className="space-y-1">
                         <p className="text-sm text-gray-600">
-                          <strong>Company:</strong> {job.company}
+                          <strong>Company:</strong> {job.company.name}
                         </p>
                         <p className="text-sm text-gray-600">
                           <strong>Location:</strong> {job.location} {job.isRemote && '(Remote)'}
@@ -317,16 +290,16 @@ export default function AdminJobsPage() {
                           <strong>Salary:</strong> {job.currency} {job.salaryMin.toLocaleString()} - {job.salaryMax.toLocaleString()}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <strong>Applications:</strong> {job.applicationCount}
+                          <strong>Applications:</strong> {job.applicationsCount}
                         </p>
                         <p className="text-sm text-gray-600">
-                          <strong>Posted by:</strong> {job.postedBy}
+                          <strong>Posted by:</strong> {job.postedBy.fullName}
                         </p>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>Posted: {new Date(job.postedAt).toLocaleDateString()}</span>
+                      <span>Posted: {new Date(job.createdAt).toLocaleDateString()}</span>
                       <span>Expires: {new Date(job.expiresAt).toLocaleDateString()}</span>
                     </div>
                   </div>
@@ -345,7 +318,7 @@ export default function AdminJobsPage() {
                     <Button
                       variant={job.status === 'open' ? "destructive" : "default"}
                       size="sm"
-                      onClick={() => toggleJobStatus(job.id)}
+                      onClick={() => toggleJobStatus(job._id)}
                     >
                       {job.status === 'open' ? (
                         <>
@@ -370,6 +343,54 @@ export default function AdminJobsPage() {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Card className="mt-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalJobs)} of {totalJobs} jobs
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const page = i + 1;
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

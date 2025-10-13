@@ -24,6 +24,11 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { UploadModule } from './modules/upload/upload.module';
 import { UsersModule } from './modules/users/users.module';
 
+// Security Services
+import { AuditLog, AuditLogSchema } from './common/schemas/audit-log.schema';
+import { AuditService } from './common/services/audit.service';
+import { SanitizationService } from './common/services/sanitization.service';
+
 @Module({
   imports: [
     // Configuration
@@ -72,8 +77,15 @@ import { UsersModule } from './modules/users/users.module';
     MailModule,
     UploadModule,
     CronModule,
+    
+    // Security Module
+    MongooseModule.forFeature([
+      { name: AuditLog.name, schema: AuditLogSchema },
+    ]),
   ],
   controllers: [HealthController],
+  providers: [AuditService, SanitizationService],
+  exports: [AuditService, SanitizationService],
 })
 export class AppModule {}
 

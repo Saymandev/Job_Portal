@@ -27,6 +27,9 @@
     "npm": ">=9.0.0"
   },
   "dependencies": {
-    "@radix-ui/react-scroll-area": "^1.2.10"
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@types/csurf": "^1.11.5",
+    "csurf": "^1.11.0",
+    "isomorphic-dompurify": "^2.28.0"
   }
 }
