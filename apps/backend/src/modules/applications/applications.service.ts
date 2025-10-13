@@ -10,6 +10,7 @@ import { Model } from 'mongoose';
 import { JobsService } from '../jobs/jobs.service';
 import { Job, JobDocument } from '../jobs/schemas/job.schema';
 import { MailService } from '../mail/mail.service';
+import { EnhancedNotificationsService } from '../notifications/enhanced-notifications.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { CreateApplicationDto } from './dto/create-application.dto';
@@ -25,6 +26,7 @@ export class ApplicationsService {
     private jobsService: JobsService,
     private mailService: MailService,
     private notificationsService: NotificationsService,
+    private enhancedNotificationsService: EnhancedNotificationsService,
   ) {}
 
   async create(
@@ -62,12 +64,13 @@ export class ApplicationsService {
       portfolio,
     });
 
-    
-
     // Increment job application count
     await this.jobsService.incrementApplicationCount(jobId);
 
-    // Send confirmation email
+    // Send enhanced notification to job poster (employer)
+    await this.enhancedNotificationsService.notifyNewJobApplication(application._id.toString());
+
+    // Send confirmation email to applicant
     await this.mailService.sendApplicationConfirmation(user.email, job.title);
 
     return application.populate(['job', 'applicant', 'company']);
@@ -244,22 +247,15 @@ export class ApplicationsService {
 
     await application.save();
 
-    // Send notifications to applicant
-    const user = application.applicant as any;
-    const jobData = application.job as any;
-    
-    // Create in-app notification
-    await this.notificationsService.createNotification({
-      user: user._id,
-      title: 'Application Status Updated',
-      message: `Your application for ${jobData.title} has been updated to ${updateStatusDto.status.replace('_', ' ')}`,
-      type: 'application',
-      application: application._id.toString(),
-      job: jobData._id.toString(),
-      actionUrl: `/applications`,
-    });
+    // Send enhanced notification to applicant
+    await this.enhancedNotificationsService.notifyApplicationStatusChange(
+      application._id.toString(),
+      updateStatusDto.status
+    );
 
     // Send email notification
+    const user = application.applicant as any;
+    const jobData = application.job as any;
     await this.mailService.sendApplicationStatusUpdate(
       user.email,
       jobData.title,

@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Request } from 'express';
 import { Model } from 'mongoose';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
+import { EnhancedNotificationsService } from '../notifications/enhanced-notifications.service';
 import { Subscription, SubscriptionDocument, SubscriptionPlan } from '../subscriptions/schemas/subscription.schema';
 import { CreateJobDto } from './dto/create-job.dto';
 import { SearchJobsDto } from './dto/search-jobs.dto';
@@ -21,6 +22,7 @@ export class JobsService {
     @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
     private auditService: AuditService,
     private sanitizationService: SanitizationService,
+    private enhancedNotificationsService: EnhancedNotificationsService,
   ) {}
 
   async create(userId: string, createJobDto: CreateJobDto, req?: Request): Promise<{ job: JobDocument; autoPosted: boolean; subscriptionInfo: any }> {
@@ -124,6 +126,11 @@ export class JobsService {
         req,
         true
       );
+
+      // Send notification about new job posting (if auto-posted)
+      if (autoPosted) {
+        await this.enhancedNotificationsService.notifyNewJobPosted(job._id.toString());
+      }
 
       return {
         job: populatedJob,
