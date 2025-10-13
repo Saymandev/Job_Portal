@@ -208,11 +208,11 @@ export class SubscriptionsService {
       case SubscriptionPlan.FREE:
         return 5;
       case SubscriptionPlan.BASIC:
-        return 25;
+        return 25; // Matches frontend
       case SubscriptionPlan.PRO:
-        return 100;
+        return 100; // Matches frontend (was unlimited in frontend)
       case SubscriptionPlan.ENTERPRISE:
-        return 999999;
+        return 1000; // Matches frontend (was unlimited in frontend)
       default:
         return 5;
     }
@@ -244,6 +244,92 @@ export class SubscriptionsService {
       currentPeriodEnd: subscription.currentPeriodEnd,
       autoRenew: subscription.autoRenew,
     };
+  }
+
+  async verifyCheckoutSession(userId: string, sessionId: string) {
+    try {
+      console.log(`Verifying session ${sessionId} for user ${userId}`);
+      
+      // Retrieve the session from Stripe
+      const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+      console.log('Session retrieved:', { id: session.id, payment_status: session.payment_status });
+      
+      if (!session || session.payment_status !== 'paid') {
+        throw new Error(`Invalid or unpaid session. Status: ${session?.payment_status}`);
+      }
+
+      if (!session.subscription) {
+        throw new Error('No subscription found in session');
+      }
+
+      // Get the subscription from Stripe
+      const stripeSubscription = await this.stripe.subscriptions.retrieve(session.subscription as string);
+      console.log('Stripe subscription retrieved:', { id: stripeSubscription.id, status: stripeSubscription.status });
+      
+      if (!stripeSubscription.items.data.length) {
+        throw new Error('No items found in subscription');
+      }
+
+      const priceId = stripeSubscription.items.data[0].price.id;
+      console.log('Price ID:', priceId);
+      
+      const plan = this.mapStripePriceToPlan(priceId);
+      
+      // Update or create subscription in database
+      const subscription = await this.subscriptionModel.findOneAndUpdate(
+        { user: userId },
+        {
+          user: userId,
+          stripeSubscriptionId: stripeSubscription.id,
+          stripeCustomerId: session.customer as string,
+          plan: plan,
+          status: this.mapStripeStatusToSubscriptionStatus(stripeSubscription.status),
+          currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+          autoRenew: !stripeSubscription.cancel_at_period_end,
+          jobPostsLimit: this.getJobPostsLimit(plan),
+        },
+        { upsert: true, new: true }
+      );
+
+      console.log('Subscription updated in database:', subscription._id);
+
+      return {
+        plan: subscription.plan,
+        status: subscription.status,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+      };
+    } catch (error) {
+      console.error('Session verification error:', error);
+      throw new Error(`Failed to verify checkout session: ${error.message}`);
+    }
+  }
+
+  private mapStripePriceToPlan(priceId: string): SubscriptionPlan {
+    const basicPriceId = this.configService.get('STRIPE_PRICE_ID_BASIC');
+    const proPriceId = this.configService.get('STRIPE_PRICE_ID_PRO');
+    const enterprisePriceId = this.configService.get('STRIPE_PRICE_ID_ENTERPRISE');
+
+    if (priceId === basicPriceId) return SubscriptionPlan.BASIC;
+    if (priceId === proPriceId) return SubscriptionPlan.PRO;
+    if (priceId === enterprisePriceId) return SubscriptionPlan.ENTERPRISE;
+    
+    throw new Error('Unknown price ID');
+  }
+
+  private mapStripeStatusToSubscriptionStatus(stripeStatus: string): SubscriptionStatus {
+    switch (stripeStatus) {
+      case 'active':
+        return SubscriptionStatus.ACTIVE;
+      case 'past_due':
+        return SubscriptionStatus.PAST_DUE;
+      case 'canceled':
+        return SubscriptionStatus.CANCELLED;
+      case 'unpaid':
+        return SubscriptionStatus.INACTIVE;
+      default:
+        return SubscriptionStatus.ACTIVE;
+    }
   }
 }
 

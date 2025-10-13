@@ -225,6 +225,28 @@ export class AdminController {
     return { success: true, message: 'Subscription status updated', data: subscription };
   }
 
+  @Post('subscriptions/:id/cancel')
+  @ApiOperation({ summary: 'Cancel user subscription (Admin only)' })
+  async cancelUserSubscription(@Param('id') subscriptionId: string) {
+    const result = await this.adminService.cancelUserSubscription(subscriptionId);
+    return { 
+      success: true, 
+      message: 'User subscription has been cancelled',
+      data: result 
+    };
+  }
+
+  @Post('subscriptions/:id/reactivate')
+  @ApiOperation({ summary: 'Reactivate user subscription (Admin only)' })
+  async reactivateUserSubscription(@Param('id') subscriptionId: string) {
+    const result = await this.adminService.reactivateUserSubscription(subscriptionId);
+    return { 
+      success: true, 
+      message: 'User subscription has been reactivated',
+      data: result 
+    };
+  }
+
   @Put('subscriptions/:id/plan')
   @ApiOperation({ summary: 'Update subscription plan' })
   async updateSubscriptionPlan(

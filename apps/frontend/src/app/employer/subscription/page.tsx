@@ -101,28 +101,7 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleCancelSubscription = async () => {
-    if (!confirm('Are you sure you want to cancel your subscription? You will still have access until the end of your billing period.')) {
-      return;
-    }
-
-    try {
-      const response = await api.post('/subscriptions/cancel');
-      if (response.data.success) {
-        toast({
-          title: 'Subscription Cancelled',
-          description: 'Your subscription will be cancelled at the end of the billing period',
-        });
-        fetchSubscriptionData();
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to cancel subscription',
-        variant: 'destructive',
-      });
-    }
-  };
+  // Subscription cancellation removed - users must contact admin
 
   if (!isAuthenticated || user?.role !== 'employer') {
     return null;
@@ -207,7 +186,7 @@ export default function SubscriptionPage() {
                       <p className="text-sm text-muted-foreground mb-1">Start Date</p>
                       <p className="font-semibold flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        {new Date(subscription.startDate).toLocaleDateString()}
+                        {subscription.startDate ? new Date(subscription.startDate).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
                     {subscription.endDate && (
@@ -217,7 +196,7 @@ export default function SubscriptionPage() {
                         </p>
                         <p className="font-semibold flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          {new Date(subscription.endDate).toLocaleDateString()}
+                          {subscription.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
                     )}
@@ -239,11 +218,22 @@ export default function SubscriptionPage() {
                         Change Plan
                       </Link>
                     </Button>
-                    {!subscription.cancelAtPeriodEnd && (
-                      <Button variant="destructive" onClick={handleCancelSubscription}>
-                        Cancel Subscription
-                      </Button>
-                    )}
+                  </div>
+
+                  {/* Contact Admin for Cancellation */}
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-blue-900">Need to Cancel Your Subscription?</h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                          To cancel your subscription, please contact our support team. We&apos;ll help you through the process and ensure a smooth transition.
+                        </p>
+                        <Button variant="outline" size="sm" className="mt-2">
+                          Contact Support
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (

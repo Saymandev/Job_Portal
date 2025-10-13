@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JobsModule } from '../jobs/jobs.module';
 import { Job, JobSchema } from '../jobs/schemas/job.schema';
@@ -15,10 +15,10 @@ import { NotificationCronService } from './notification-cron.service';
       { name: Job.name, schema: JobSchema },
       { name: Subscription.name, schema: SubscriptionSchema },
     ]),
-    JobsModule, 
+    forwardRef(() => JobsModule), 
     MailModule, 
     MessagingPermissionsModule, 
-    NotificationsModule
+    forwardRef(() => NotificationsModule)
   ],
   providers: [CronService, NotificationCronService],
 })

@@ -34,6 +34,22 @@ export class SubscriptionsController {
     };
   }
 
+  @Post('verify-session')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify Stripe checkout session' })
+  async verifySession(
+    @CurrentUser('id') userId: string,
+    @Body() body: { sessionId: string },
+  ) {
+    const result = await this.subscriptionsService.verifyCheckoutSession(userId, body.sessionId);
+
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
   @Get('current')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -41,9 +57,24 @@ export class SubscriptionsController {
   async getCurrentSubscription(@CurrentUser('id') userId: string) {
     const subscription = await this.subscriptionsService.getUserSubscription(userId);
 
+    // Transform the data to match frontend expectations
+    const transformedData = {
+      _id: subscription._id,
+      plan: subscription.plan,
+      status: subscription.status,
+      startDate: subscription.currentPeriodStart?.toISOString() || (subscription as any).createdAt?.toISOString() || new Date().toISOString(),
+      endDate: subscription.currentPeriodEnd?.toISOString(),
+      cancelAtPeriodEnd: !subscription.autoRenew,
+      boostsAvailable: subscription.boostsAvailable || 0,
+      boostsUsed: subscription.boostsUsed || 0,
+      featuredJobsEnabled: subscription.featuredJobsEnabled || false,
+      advancedAnalyticsEnabled: subscription.advancedAnalyticsEnabled || false,
+      prioritySupportEnabled: subscription.prioritySupportEnabled || false,
+    };
+
     return {
       success: true,
-      data: subscription,
+      data: transformedData,
     };
   }
 
@@ -73,20 +104,8 @@ export class SubscriptionsController {
     };
   }
 
-  @Post('cancel')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.EMPLOYER)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cancel subscription' })
-  async cancelSubscription(@CurrentUser('id') userId: string) {
-    const subscription = await this.subscriptionsService.cancelSubscription(userId);
-
-    return {
-      success: true,
-      message: 'Subscription will be cancelled at the end of the current period',
-      data: subscription,
-    };
-  }
+  // User subscription cancellation removed - only admin can cancel subscriptions
+  // Users need to contact admin for cancellation
 
   @Post('webhook')
   @HttpCode(200)

@@ -119,6 +119,7 @@ export class AdminService {
     };
   }
 
+
   async getAllUsers(filters: any = {}) {
     const query: any = {};
     if (filters.role) query.role = filters.role;
@@ -349,6 +350,63 @@ export class AdminService {
 
     subscription.status = status as any;
     await subscription.save();
+
+    return subscription;
+  }
+
+  async cancelUserSubscription(subscriptionId: string) {
+    const subscription = await this.subscriptionModel.findById(subscriptionId);
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+
+    if (subscription.stripeSubscriptionId) {
+      // Cancel in Stripe immediately (admin override)
+      const Stripe = require('stripe');
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+    }
+
+    subscription.status = 'cancelled' as any;
+    subscription.autoRenew = false;
+    await subscription.save();
+
+    // Log admin action
+    await this.activityService.logActivity(
+      'SUBSCRIPTION_CANCELLED' as any,
+      `Admin cancelled subscription for user ${subscription.user}`,
+      'admin', // admin userId
+      { 
+        targetUserId: subscription.user.toString(),
+        subscriptionId: subscriptionId,
+        reason: 'Cancelled by admin' 
+      }
+    );
+
+    return subscription;
+  }
+
+  async reactivateUserSubscription(subscriptionId: string) {
+    const subscription = await this.subscriptionModel.findById(subscriptionId);
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+
+    subscription.status = 'active' as any;
+    subscription.autoRenew = true;
+    await subscription.save();
+
+    // Log admin action
+    await this.activityService.logActivity(
+      'SUBSCRIPTION_CREATED' as any, // Using closest available type
+      `Admin reactivated subscription for user ${subscription.user}`,
+      'admin', // admin userId
+      { 
+        targetUserId: subscription.user.toString(),
+        subscriptionId: subscriptionId,
+        reason: 'Reactivated by admin' 
+      }
+    );
 
     return subscription;
   }

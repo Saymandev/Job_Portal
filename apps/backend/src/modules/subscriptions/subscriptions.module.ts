@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Job, JobSchema } from '../jobs/schemas/job.schema';
@@ -17,7 +17,7 @@ import { SubscriptionsService } from './subscriptions.service';
       { name: Job.name, schema: JobSchema },
     ]),
     ConfigModule,
-    NotificationsModule,
+    forwardRef(() => NotificationsModule),
   ],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService, JobBoostService],

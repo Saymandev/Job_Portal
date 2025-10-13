@@ -6,12 +6,22 @@ import { NotificationsService } from './notifications.service';
 
 @ApiTags('Notifications')
 @Controller('notifications')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
+  @Get('test')
+  @ApiOperation({ summary: 'Test notifications endpoint (public)' })
+  async testEndpoint() {
+    return {
+      success: true,
+      message: 'Notifications endpoint is working',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user notifications' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -42,17 +52,32 @@ export class NotificationsController {
   }
 
   @Get('unread-count')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get unread notifications count' })
   async getUnreadCount(@CurrentUser('id') userId: string) {
-    const count = await this.notificationsService.getUnreadCount(userId);
+    try {
+      console.log(`📊 Fetching unread count for user: ${userId}`);
+      const count = await this.notificationsService.getUnreadCount(userId);
+      console.log(`✅ Unread count for user ${userId}: ${count}`);
 
-    return {
-      success: true,
-      data: { count },
-    };
+      return {
+        success: true,
+        data: { count },
+      };
+    } catch (error) {
+      console.error(`❌ Error fetching unread count for user ${userId}:`, error);
+      return {
+        success: false,
+        message: 'Failed to fetch unread count',
+        data: { count: 0 },
+      };
+    }
   }
 
   @Patch(':id/read')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark notification as read' })
   async markAsRead(@Param('id') id: string, @CurrentUser('id') userId: string) {
     const notification = await this.notificationsService.markAsRead(id, userId);
@@ -65,6 +90,8 @@ export class NotificationsController {
   }
 
   @Patch('mark-all-read')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark all notifications as read' })
   async markAllAsRead(@CurrentUser('id') userId: string) {
     const result = await this.notificationsService.markAllAsRead(userId);
@@ -77,6 +104,8 @@ export class NotificationsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete notification' })
   async deleteNotification(@Param('id') id: string, @CurrentUser('id') userId: string) {
     const deleted = await this.notificationsService.deleteNotification(id, userId);

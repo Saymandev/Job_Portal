@@ -1,47 +1,66 @@
-import { ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ThrottlerGuard } from '@nestjs/throttler';
-import { RATE_LIMIT_KEY } from '../decorators/rate-limit.decorator';
+import { RATE_LIMIT_KEY, RateLimitOptions } from '../decorators/rate-limit.decorator';
 
 @Injectable()
-export class CustomRateLimitGuard extends ThrottlerGuard {
-  constructor(reflector: Reflector) {
-    super({}, reflector);
-  }
+export class CustomRateLimitGuard implements CanActivate {
+  private readonly requestCounts = new Map<string, { count: number; resetTime: number }>();
 
-  async handleRequest(context: ExecutionContext, limit: number, ttl: number): Promise<boolean> {
-    const { req } = context.switchToHttp().getRequest();
-    const userId = req.user?.id || req.ip; // Use user ID if authenticated, otherwise IP
-    const key = `${req.route?.path || 'unknown'}:${userId}`;
+  constructor(private reflector: Reflector) {}
 
-    // Check custom rate limits first
-    const customRateLimit = this.reflector.getAllAndOverride(RATE_LIMIT_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const userId = (request.user as any)?.id || request.ip;
+    const routePath = request.route?.path || 'unknown';
+    const key = `${routePath}:${userId}`;
 
-    if (customRateLimit) {
-      const customLimit = await this.checkCustomRateLimit(key, customRateLimit);
-      if (!customLimit) {
-        throw new HttpException(
-          `Rate limit exceeded. Maximum ${customRateLimit.limit} requests per ${customRateLimit.ttl / 1000} seconds.`,
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      }
+    // Check for custom rate limit configuration
+    const rateLimitOptions = this.reflector.getAllAndOverride<RateLimitOptions>(
+      RATE_LIMIT_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!rateLimitOptions) {
+      return true; // No rate limiting configured
     }
 
-    // Fall back to default throttling
-    return super.handleRequest(context, limit, ttl);
+    const { limit, ttl } = rateLimitOptions;
+    const now = Date.now();
+
+    // Get current request count for this key
+    const current = this.requestCounts.get(key);
+    
+    if (!current || now > current.resetTime) {
+      // First request or window expired
+      this.requestCounts.set(key, {
+        count: 1,
+        resetTime: now + ttl,
+      });
+      return true;
+    }
+
+    if (current.count >= limit) {
+      // Rate limit exceeded
+      const remainingTime = Math.ceil((current.resetTime - now) / 1000);
+      throw new HttpException(
+        `Rate limit exceeded. Maximum ${limit} requests per ${ttl / 1000} seconds. Try again in ${remainingTime} seconds.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    // Increment counter
+    current.count++;
+    this.requestCounts.set(key, current);
+    return true;
   }
 
-  private async checkCustomRateLimit(key: string, options: any): Promise<boolean> {
-    // This would integrate with Redis or in-memory store
-    // For now, we'll use a simple implementation
+  // Cleanup old entries periodically (could be called by a cron job)
+  cleanup(): void {
     const now = Date.now();
-    const windowStart = now - options.ttl;
-    
-    // In a real implementation, you'd store this in Redis
-    // For demo purposes, we'll assume it's working
-    return true;
+    for (const [key, value] of this.requestCounts.entries()) {
+      if (now > value.resetTime) {
+        this.requestCounts.delete(key);
+      }
+    }
   }
 }

@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { Check, Crown, Rocket, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const plans = [
   {
@@ -21,8 +21,8 @@ const plans = [
     bgColor: 'bg-gray-100',
     features: [
       '5 job postings per month',
-      'Basic analytics',
-      'Standard support',
+      'Basic analytics dashboard',
+      'Email support',
       'Job board listing',
       '30-day job duration',
     ],
@@ -43,15 +43,15 @@ const plans = [
     bgColor: 'bg-blue-100',
     popular: false,
     features: [
-      '20 job postings per month',
+      '25 job postings per month',
       '3 job boosts per month',
-      'Advanced analytics',
-      'Priority support',
+      'Enhanced analytics',
+      'Email support',
       '60-day job duration',
-      'Company branding',
+      'Featured job priority',
     ],
     limits: {
-      jobPosts: 20,
+      jobPosts: 25,
       boosts: 3,
       featuredJobs: false,
       advancedAnalytics: true,
@@ -67,18 +67,16 @@ const plans = [
     bgColor: 'bg-purple-100',
     popular: true,
     features: [
-      'Unlimited job postings',
+      '100 job postings per month',
       '10 job boosts per month',
       'Featured job listings',
-      'Advanced analytics & insights',
-      'Priority support',
+      'Enhanced analytics & insights',
+      'Email support',
       '90-day job duration',
-      'Company branding',
-      'API access',
-      'Bulk posting',
+      'Priority job visibility',
     ],
     limits: {
-      jobPosts: 999,
+      jobPosts: 100,
       boosts: 10,
       featuredJobs: true,
       advancedAnalytics: true,
@@ -94,19 +92,18 @@ const plans = [
     bgColor: 'bg-yellow-100',
     popular: false,
     features: [
-      'Unlimited everything',
-      'Unlimited job boosts',
-      'Featured listings always',
-      'Custom analytics',
-      'Dedicated account manager',
-      'Custom integrations',
-      'White-label options',
-      'API access',
-      'Custom contracts',
+      '1000 job postings per month',
+      '50 job boosts per month',
+      'Always featured listings',
+      'Enhanced analytics & insights',
+      'Email support',
+      '90-day job duration',
+      'Priority job visibility',
+      'Custom job duration',
     ],
     limits: {
-      jobPosts: 9999,
-      boosts: 999,
+      jobPosts: 1000,
+      boosts: 50,
       featuredJobs: true,
       advancedAnalytics: true,
     },
@@ -118,6 +115,36 @@ export default function PricingPage() {
   const { user, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+
+  // Fetch current subscription when component loads
+  useEffect(() => {
+    const fetchCurrentSubscription = async () => {
+      if (!isAuthenticated || user?.role !== 'employer') {
+        return;
+      }
+
+      try {
+        setIsLoadingSubscription(true);
+        const response = await api.get('/subscriptions/current');
+        
+        if (response.data.success) {
+          setCurrentSubscription(response.data.data);
+        }
+      } catch (error: any) {
+        // If no subscription found (404), user is on free plan
+        if (error.response?.status === 404) {
+          setCurrentSubscription({ plan: 'free' });
+        }
+        console.error('Error fetching subscription:', error);
+      } finally {
+        setIsLoadingSubscription(false);
+      }
+    };
+
+    fetchCurrentSubscription();
+  }, [isAuthenticated, user]);
 
   const handleSelectPlan = async (planId: string) => {
     if (!isAuthenticated) {
@@ -134,10 +161,12 @@ export default function PricingPage() {
       return;
     }
 
-    if (planId === 'free') {
+    // Check if user is already on this plan
+    if (currentSubscription && currentSubscription.plan === planId) {
+      const planName = plans.find(p => p.id === planId)?.name || 'this plan';
       toast({
-        title: 'Already on Free Plan',
-        description: 'You are currently on the free plan',
+        title: `Already on ${planName}`,
+        description: `You are currently on the ${planName.toLowerCase()} plan`,
       });
       return;
     }
@@ -178,11 +207,19 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative ${plan.popular ? 'border-2 border-primary shadow-xl' : ''}`}
+                className={`relative ${
+                  plan.popular ? 'border-2 border-primary shadow-xl' : 
+                  currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 shadow-lg bg-green-50' : ''
+                }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <Badge className="px-4 py-1 text-sm">Most Popular</Badge>
+                  </div>
+                )}
+                {currentSubscription && currentSubscription.plan === plan.id && (
+                  <div className="absolute -top-4 right-4">
+                    <Badge className="px-4 py-1 text-sm bg-green-500 text-white">Current Plan</Badge>
                   </div>
                 )}
                 <CardHeader>
@@ -210,9 +247,14 @@ export default function PricingPage() {
                     className="w-full"
                     variant={plan.popular ? 'default' : 'outline'}
                     onClick={() => handleSelectPlan(plan.id)}
-                    disabled={loadingPlan === plan.id}
+                    disabled={loadingPlan === plan.id || isLoadingSubscription}
                   >
-                    {loadingPlan === plan.id ? 'Loading...' : plan.id === 'free' ? 'Current Plan' : 'Get Started'}
+                    {loadingPlan === plan.id 
+                      ? 'Loading...' 
+                      : currentSubscription && currentSubscription.plan === plan.id 
+                        ? 'Current Plan' 
+                        : 'Get Started'
+                    }
                   </Button>
                 </CardContent>
               </Card>
@@ -220,8 +262,80 @@ export default function PricingPage() {
           })}
         </div>
 
-        {/* FAQ or Additional Info */}
+        {/* Coming Soon Features */}
         <div className="mt-16 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">🚀 Coming Soon</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">API Access</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  REST API for integrating with your existing HR systems and workflows.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Company Branding</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Custom logos, colors, and branding on your job listings and company page.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Bulk Job Import</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Upload multiple job postings via CSV file for faster hiring processes.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Priority Support</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Dedicated support channels with faster response times for premium users.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Advanced Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered insights, market trends, and candidate demographic analytics.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">White-label Options</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Fully customizable job board with your domain and branding for Enterprise clients.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* FAQ or Additional Info */}
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <Card>

@@ -1,14 +1,14 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import * as csrf from 'csurf';
+import * as csurf from 'csurf';
 
 export const SKIP_CSRF_KEY = 'skipCsrf';
 
-export const SkipCsrf = () => Reflector.createDecorator(SKIP_CSRF_KEY);
+export const SkipCsrf = () => SetMetadata(SKIP_CSRF_KEY, true);
 
 @Injectable()
 export class CsrfGuard implements CanActivate {
-  private csrfProtection = csrf({ cookie: true });
+  private csrfProtection = csurf({ cookie: true });
 
   constructor(private reflector: Reflector) {}
 

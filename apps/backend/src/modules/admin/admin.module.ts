@@ -26,7 +26,7 @@ import { PlatformSettings, PlatformSettingsSchema } from './schemas/platform-set
   ],
   controllers: [AdminController],
   providers: [AdminService, ActivityService, PlatformSettingsService],
-  exports: [ActivityService, PlatformSettingsService],
+  exports: [AdminService, ActivityService, PlatformSettingsService],
 })
 export class AdminModule {}
 

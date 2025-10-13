@@ -78,22 +78,45 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      
+      // Check if user is authenticated before making the API call
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('⚠️ No access token found, skipping unread count fetch');
+        set({ unreadCount: 0 });
+        return;
+      }
+
+      console.log('📡 Fetching unread notification count...');
       const response = await api.get('/notifications/unread-count');
-      
       
       if (response.data.success) {
         set({ unreadCount: response.data.data.count });
-        
+        console.log(`✅ Unread count fetched: ${response.data.data.count}`);
+      } else {
+        console.warn('⚠️ API returned success: false');
+        set({ unreadCount: 0 });
       }
     } catch (error: any) {
-      console.error('❌ Failed to fetch unread count:', {
+      // More detailed error logging
+      const errorDetails = {
         message: error.message,
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        url: error.config?.url
-      });
+        url: error.config?.url,
+        hasToken: !!localStorage.getItem('accessToken')
+      };
+      
+      console.error('❌ Failed to fetch unread count:', errorDetails);
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        console.log('🔐 Authentication error - user may not be logged in');
+      } else if (error.response?.status === 404) {
+        console.log('🔍 Endpoint not found - backend may not be running');
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        console.log('🌐 Network error - backend server may be down');
+      }
       
       // Set unread count to 0 if there's an error
       set({ unreadCount: 0 });

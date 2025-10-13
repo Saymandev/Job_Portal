@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JobsModule } from '../jobs/jobs.module';
 import { Job, JobSchema } from '../jobs/schemas/job.schema';
@@ -20,9 +20,9 @@ import { CoverLetterTemplate, CoverLetterTemplateSchema } from './schemas/cover-
       { name: User.name, schema: UserSchema },
       { name: CoverLetterTemplate.name, schema: CoverLetterTemplateSchema },
     ]),
-    JobsModule,
+    forwardRef(() => JobsModule),
     MailModule,
-    NotificationsModule,
+    forwardRef(() => NotificationsModule),
   ],
   controllers: [ApplicationsController, CoverLetterTemplatesController],
   providers: [ApplicationsService, CoverLetterTemplatesService],

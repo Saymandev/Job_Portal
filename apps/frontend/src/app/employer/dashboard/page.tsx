@@ -84,6 +84,30 @@ interface Analytics {
   topPerformingJobs: JobPosting[];
 }
 
+interface Subscription {
+  _id: string;
+  plan: string;
+  status: string;
+  startDate: string;
+  endDate?: string;
+  cancelAtPeriodEnd: boolean;
+  boostsAvailable: number;
+  boostsUsed: number;
+  featuredJobsEnabled: boolean;
+  advancedAnalyticsEnabled: boolean;
+  prioritySupportEnabled: boolean;
+}
+
+interface SubscriptionLimits {
+  plan: string;
+  jobPostsLimit: number;
+  jobPostsUsed: number;
+  jobPostsRemaining: number;
+  boostsAvailable: number;
+  boostsUsed: number;
+  boostsRemaining: number;
+}
+
 export default function EmployerDashboard() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
@@ -107,6 +131,8 @@ export default function EmployerDashboard() {
   });
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [recentJobs, setRecentJobs] = useState<JobPosting[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subscriptionLimits, setSubscriptionLimits] = useState<SubscriptionLimits | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -114,21 +140,6 @@ export default function EmployerDashboard() {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
-
-  useEffect(() => {
-    // Only check authentication after the store has hydrated
-    if (!isHydrated) return;
-
-    if (!isAuthenticated || user?.role !== 'employer') {
-      router.push('/login');
-      return;
-    }
-    
-    // Only fetch data if user is properly authenticated
-    if (isAuthenticated && user?.role === 'employer') {
-      fetchDashboardData();
-    }
-  }, [isAuthenticated, user, router, isHydrated]);
 
   const fetchDashboardData = useCallback(async () => {
     // Double check authentication before making any API calls
@@ -174,12 +185,60 @@ export default function EmployerDashboard() {
       if (jobsResponse.data.success) {
         setRecentJobs(jobsResponse.data.data);
       }
+
+      // Fetch subscription data
+      try {
+        const subscriptionResponse = await api.get('/subscriptions/current');
+        if (subscriptionResponse.data.success) {
+          setSubscription(subscriptionResponse.data.data);
+        }
+      } catch (error: any) {
+        // If no subscription found (404), user is on free plan
+        if (error.response?.status === 404) {
+          setSubscription({ 
+            plan: 'free', 
+            status: 'active',
+            startDate: new Date().toISOString(),
+            boostsAvailable: 0,
+            boostsUsed: 0,
+            featuredJobsEnabled: false,
+            advancedAnalyticsEnabled: false,
+            prioritySupportEnabled: false
+          } as Subscription);
+        }
+        console.error('Error fetching subscription:', error);
+      }
+
+      // Fetch subscription limits
+      try {
+        const limitsResponse = await api.get('/subscriptions/limits');
+        if (limitsResponse.data.success) {
+          setSubscriptionLimits(limitsResponse.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription limits:', error);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setIsLoading(false);
     }
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    // Only check authentication after the store has hydrated
+    if (!isHydrated) return;
+
+    if (!isAuthenticated || user?.role !== 'employer') {
+      router.push('/login');
+      return;
+    }
+    
+    // Only fetch data if user is properly authenticated
+    if (isAuthenticated && user?.role === 'employer') {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, user, router, isHydrated, fetchDashboardData]);
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -342,22 +401,139 @@ export default function EmployerDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="grid md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Current Plan</p>
-              <p className="text-2xl font-bold">Free Plan</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Upgrade to unlock premium features and job boosts
+              <p className="text-2xl font-bold capitalize">
+                {subscription?.plan || 'Free'} Plan
               </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {subscription?.plan === 'free' 
+                  ? 'Upgrade to unlock premium features and job boosts'
+                  : 'Enjoy your premium features and job boosts'
+                }
+              </p>
+              
+              {/* Job Posts Usage */}
+              {subscriptionLimits && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Job Posts</span>
+                    <span className="font-medium">
+                      {subscriptionLimits.jobPostsUsed}/{subscriptionLimits.jobPostsLimit}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={(subscriptionLimits.jobPostsUsed / subscriptionLimits.jobPostsLimit) * 100} 
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {subscriptionLimits.jobPostsRemaining} remaining this month
+                  </p>
+                </div>
+              )}
+
+              {/* Boosts Usage */}
+              {subscriptionLimits && subscriptionLimits.boostsAvailable > 0 && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Job Boosts</span>
+                    <span className="font-medium">
+                      {subscriptionLimits.boostsUsed}/{subscriptionLimits.boostsAvailable}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={(subscriptionLimits.boostsUsed / subscriptionLimits.boostsAvailable) * 100} 
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {subscriptionLimits.boostsRemaining} boosts remaining
+                  </p>
+                </div>
+              )}
             </div>
-            <Button asChild>
-              <Link href="/pricing">
-                Upgrade Now
-              </Link>
-            </Button>
+            
+            <div className="flex flex-col justify-between">
+              {/* Plan Features */}
+              <div>
+                <h4 className="font-semibold mb-2">Plan Features</h4>
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`h-4 w-4 ${(subscriptionLimits?.jobPostsLimit || 5) > 5 ? 'text-green-500' : 'text-gray-400'}`} />
+                    <span>{subscriptionLimits?.jobPostsLimit || 5} job posts/month</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`h-4 w-4 ${(subscriptionLimits?.boostsAvailable || 0) > 0 ? 'text-green-500' : 'text-gray-400'}`} />
+                    <span>{subscriptionLimits?.boostsAvailable || 0} job boosts/month</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`h-4 w-4 ${subscription?.featuredJobsEnabled ? 'text-green-500' : 'text-gray-400'}`} />
+                    <span>Featured job listings</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className={`h-4 w-4 ${subscription?.advancedAnalyticsEnabled ? 'text-green-500' : 'text-gray-400'}`} />
+                    <span>Enhanced analytics</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="mt-4">
+                {subscription?.plan === 'free' ? (
+                  <Button asChild className="w-full">
+                    <Link href="/pricing">
+                      Upgrade Now
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/pricing">
+                      Change Plan
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Job Boosts Section */}
+      {subscriptionLimits && subscriptionLimits.boostsAvailable > 0 && (
+        <Card className="mb-8 border-yellow-200 bg-gradient-to-r from-yellow-50 to-transparent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-yellow-600" />
+              Job Boosts Available
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Boost Your Job Visibility</p>
+                <p className="text-lg font-semibold">
+                  {subscriptionLimits.boostsRemaining} boost{subscriptionLimits.boostsRemaining !== 1 ? 's' : ''} remaining
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Make your jobs stand out with featured listings and priority placement
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" asChild>
+                  <Link href="/employer/jobs">
+                    Boost Jobs
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/pricing">
+                    Get More Boosts
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Analytics Overview */}
       <Card className="mb-8">

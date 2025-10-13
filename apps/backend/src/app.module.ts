@@ -20,6 +20,7 @@ import { JobsModule } from './modules/jobs/jobs.module';
 import { MailModule } from './modules/mail/mail.module';
 import { MessagingPermissionsModule } from './modules/messaging-permissions/messaging-permissions.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PublicModule } from './modules/public/public.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { UsersModule } from './modules/users/users.module';
@@ -76,6 +77,7 @@ import { SanitizationService } from './common/services/sanitization.service';
     AdminModule,
     MailModule,
     UploadModule,
+    PublicModule,
     CronModule,
     
     // Security Module

@@ -92,8 +92,9 @@ export class JobsService {
       finalStatus = JobStatus.OPEN;
     }
 
-    // Set expiration date (30 days from now by default)
-    const expiresAt = createJobDto.applicationDeadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    // Set expiration date based on subscription plan
+    const jobDurationDays = this.getJobDurationDays(subscription.plan);
+    const expiresAt = createJobDto.applicationDeadline || new Date(Date.now() + jobDurationDays * 24 * 60 * 60 * 1000);
 
       const job = await this.jobModel.create({
         ...sanitizedDto,
@@ -481,6 +482,21 @@ export class JobsService {
       closed,
       byType,
     };
+  }
+
+  private getJobDurationDays(plan: SubscriptionPlan): number {
+    switch (plan) {
+      case SubscriptionPlan.FREE:
+        return 30; // 30 days
+      case SubscriptionPlan.BASIC:
+        return 60; // 60 days
+      case SubscriptionPlan.PRO:
+        return 90; // 90 days
+      case SubscriptionPlan.ENTERPRISE:
+        return 90; // 90 days (can be customized later)
+      default:
+        return 30;
+    }
   }
 }
 

@@ -1,8 +1,9 @@
 import { AuditLog, AuditLogSchema } from '@/common/schemas/audit-log.schema';
 import { AuditService } from '@/common/services/audit.service';
 import { SanitizationService } from '@/common/services/sanitization.service';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ApplicationsModule } from '../applications/applications.module';
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Subscription, SubscriptionSchema } from '../subscriptions/schemas/subscription.schema';
@@ -24,7 +25,8 @@ import { SavedJob, SavedJobSchema } from './schemas/saved-job.schema';
       { name: Subscription.name, schema: SubscriptionSchema },
       { name: AuditLog.name, schema: AuditLogSchema },
     ]),
-    NotificationsModule,
+    forwardRef(() => ApplicationsModule),
+    forwardRef(() => NotificationsModule),
   ],
   controllers: [JobsController, SavedJobsController],
   providers: [JobsService, SavedJobsService, AuditService, SanitizationService],

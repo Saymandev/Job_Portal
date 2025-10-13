@@ -50,11 +50,16 @@ export default function NavigationHeader() {
 
   // Fetch notification and conversation counts when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchUnreadCount();
-      fetchConversations();
+    if (isAuthenticated && user && isHydrated) {
+      // Add a small delay to ensure auth state is fully loaded
+      const timer = setTimeout(() => {
+        fetchUnreadCount();
+        fetchConversations();
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, user, fetchUnreadCount, fetchConversations]);
+  }, [isAuthenticated, user, isHydrated, fetchUnreadCount, fetchConversations]);
 
   // Initialize theme from localStorage (client-side only)
   useEffect(() => {
