@@ -1,0 +1,226 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import Stripe from 'stripe';
+import { User, UserDocument } from '../users/schemas/user.schema';
+import { Subscription, SubscriptionDocument, SubscriptionPlan, SubscriptionStatus } from './schemas/subscription.schema';
+
+@Injectable()
+export class SubscriptionsService {
+  private stripe: Stripe;
+
+  constructor(
+    @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private configService: ConfigService,
+  ) {
+    this.stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), {
+      apiVersion: '2023-10-16',
+    });
+  }
+
+  async createCheckoutSession(userId: string, plan: SubscriptionPlan) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    let priceId: string;
+    switch (plan) {
+      case SubscriptionPlan.BASIC:
+        priceId = this.configService.get('STRIPE_PRICE_ID_BASIC');
+        break;
+      case SubscriptionPlan.PRO:
+        priceId = this.configService.get('STRIPE_PRICE_ID_PRO');
+        break;
+      case SubscriptionPlan.ENTERPRISE:
+        priceId = this.configService.get('STRIPE_PRICE_ID_ENTERPRISE');
+        break;
+      default:
+        throw new Error('Invalid plan');
+    }
+
+    const session = await this.stripe.checkout.sessions.create({
+      customer_email: user.email,
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${this.configService.get('FRONTEND_URL')}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${this.configService.get('FRONTEND_URL')}/subscription/cancel`,
+      metadata: {
+        userId: userId.toString(),
+        plan,
+      },
+    });
+
+    return { url: session.url };
+  }
+
+  async handleWebhook(signature: string, payload: Buffer) {
+    const webhookSecret = this.configService.get('STRIPE_WEBHOOK_SECRET');
+    let event: Stripe.Event;
+
+    try {
+      event = this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    } catch (err) {
+      throw new Error(`Webhook signature verification failed: ${err.message}`);
+    }
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      case 'customer.subscription.updated':
+        await this.handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+      case 'customer.subscription.deleted':
+        await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+      case 'invoice.payment_failed':
+        await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
+    }
+
+    return { received: true };
+  }
+
+  private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+    const { userId, plan } = session.metadata;
+
+    // Get subscription details
+    const stripeSubscription = await this.stripe.subscriptions.retrieve(
+      session.subscription as string,
+    );
+
+    // Get or create subscription record
+    let subscription = await this.subscriptionModel.findOne({ user: userId });
+
+    const jobPostsLimit = this.getJobPostsLimit(plan as SubscriptionPlan);
+
+    if (subscription) {
+      subscription.plan = plan as SubscriptionPlan;
+      subscription.status = SubscriptionStatus.ACTIVE;
+      subscription.stripeCustomerId = session.customer as string;
+      subscription.stripeSubscriptionId = session.subscription as string;
+      subscription.stripePriceId = stripeSubscription.items.data[0].price.id;
+      subscription.currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
+      subscription.currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+      subscription.jobPostsLimit = jobPostsLimit;
+      subscription.autoRenew = true;
+      await subscription.save();
+    } else {
+      await this.subscriptionModel.create({
+        user: userId,
+        plan: plan as SubscriptionPlan,
+        status: SubscriptionStatus.ACTIVE,
+        stripeCustomerId: session.customer as string,
+        stripeSubscriptionId: session.subscription as string,
+        stripePriceId: stripeSubscription.items.data[0].price.id,
+        currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+        jobPostsLimit,
+        jobPostsUsed: 0,
+        autoRenew: true,
+      });
+    }
+  }
+
+  private async handleSubscriptionUpdated(stripeSubscription: Stripe.Subscription) {
+    const subscription = await this.subscriptionModel.findOne({
+      stripeSubscriptionId: stripeSubscription.id,
+    });
+
+    if (subscription) {
+      subscription.status = stripeSubscription.status as any;
+      subscription.currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
+      subscription.currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+      await subscription.save();
+    }
+  }
+
+  private async handleSubscriptionDeleted(stripeSubscription: Stripe.Subscription) {
+    const subscription = await this.subscriptionModel.findOne({
+      stripeSubscriptionId: stripeSubscription.id,
+    });
+
+    if (subscription) {
+      subscription.status = SubscriptionStatus.CANCELLED;
+      subscription.autoRenew = false;
+      await subscription.save();
+    }
+  }
+
+  private async handlePaymentFailed(invoice: Stripe.Invoice) {
+    const subscription = await this.subscriptionModel.findOne({
+      stripeCustomerId: invoice.customer as string,
+    });
+
+    if (subscription) {
+      subscription.status = SubscriptionStatus.PAST_DUE;
+      await subscription.save();
+    }
+  }
+
+  async getUserSubscription(userId: string): Promise<SubscriptionDocument> {
+    let subscription = await this.subscriptionModel.findOne({ user: userId });
+
+    if (!subscription) {
+      // Create free subscription
+      subscription = await this.subscriptionModel.create({
+        user: userId,
+        plan: SubscriptionPlan.FREE,
+        status: 'active',
+        jobPostsLimit: 5,
+        jobPostsUsed: 0,
+      });
+    }
+
+    return subscription;
+  }
+
+  async cancelSubscription(userId: string) {
+    const subscription = await this.subscriptionModel.findOne({ user: userId });
+
+    if (!subscription || !subscription.stripeSubscriptionId) {
+      throw new NotFoundException('Active subscription not found');
+    }
+
+    await this.stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
+
+    subscription.autoRenew = false;
+    await subscription.save();
+
+    return subscription;
+  }
+
+  private getJobPostsLimit(plan: SubscriptionPlan): number {
+    switch (plan) {
+      case SubscriptionPlan.FREE:
+        return 5;
+      case SubscriptionPlan.BASIC:
+        return 25;
+      case SubscriptionPlan.PRO:
+        return 100;
+      case SubscriptionPlan.ENTERPRISE:
+        return 999999;
+      default:
+        return 5;
+    }
+  }
+
+  async incrementJobPostsUsed(userId: string): Promise<void> {
+    await this.subscriptionModel.findOneAndUpdate(
+      { user: userId },
+      { $inc: { jobPostsUsed: 1 } },
+    );
+  }
+}
+

@@ -1,0 +1,363 @@
+import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Company, CompanyDocument } from '../companies/schemas/company.schema';
+import { CreateJobDto } from './dto/create-job.dto';
+import { SearchJobsDto } from './dto/search-jobs.dto';
+import { UpdateJobDto } from './dto/update-job.dto';
+import { Job, JobDocument } from './schemas/job.schema';
+
+@Injectable()
+export class JobsService {
+  constructor(
+    @InjectModel(Job.name) private jobModel: Model<JobDocument>,
+    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+  ) {}
+
+  async create(userId: string, createJobDto: CreateJobDto): Promise<JobDocument> {
+    // Find user's company
+    const company = await this.companyModel.findOne({ owner: userId });
+    if (!company) {
+      throw new NotFoundException('Company not found. Please create a company first.');
+    }
+
+    // Set expiration date (30 days from now by default)
+    const expiresAt = createJobDto.applicationDeadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    const job = await this.jobModel.create({
+      ...createJobDto,
+      company: company._id,
+      postedBy: userId,
+      expiresAt,
+    });
+
+    return job.populate(['company', 'postedBy']);
+  }
+
+  async findAll(searchJobsDto: SearchJobsDto): Promise<PaginatedResult<JobDocument>> {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search, 
+      location, 
+      jobType, 
+      experienceLevel, 
+      isRemote, 
+      minSalary, 
+      maxSalary, 
+      skills, 
+      companySize, 
+      tags, 
+      sortBy,
+      featured
+    } = searchJobsDto;
+
+    const query: any = { status: 'open' };
+
+    // Text search
+    if (search) {
+      query.$text = { $search: search };
+    }
+
+    // Filters
+    if (location) {
+      query.location = { $regex: location, $options: 'i' };
+    }
+
+    if (jobType) {
+      query.jobType = jobType;
+    }
+
+    if (experienceLevel) {
+      query.experienceLevel = experienceLevel;
+    }
+
+    if (isRemote !== undefined) {
+      query.isRemote = isRemote;
+    }
+
+    if (minSalary) {
+      query.salaryMin = { $gte: minSalary };
+    }
+
+    if (maxSalary) {
+      query.salaryMax = { $lte: maxSalary };
+    }
+
+    if (skills && skills.length > 0) {
+      query.skills = { $in: skills };
+    }
+
+    if (companySize) {
+      // For now, we'll store company size as a string in the job document
+      // In a real app, this would be populated from the company document
+      query.companySize = companySize;
+    }
+
+    if (tags && tags.length > 0) {
+      // For tags, we'll search in the job title, description, and skills
+      query.$or = [
+        { title: { $regex: tags.join('|'), $options: 'i' } },
+        { description: { $regex: tags.join('|'), $options: 'i' } },
+        { skills: { $in: tags } }
+      ];
+    }
+
+    if (featured !== undefined) {
+      query.isFeatured = featured;
+    }
+
+    // Build sort criteria
+    let sortCriteria: any = { isFeatured: -1, createdAt: -1 }; // Default sort
+    
+    if (sortBy) {
+      switch (sortBy) {
+        case 'date':
+          sortCriteria = { createdAt: -1 };
+          break;
+        case 'salary':
+          sortCriteria = { salaryMax: -1, salaryMin: -1 };
+          break;
+        case 'company':
+          sortCriteria = { 'company.name': 1 };
+          break;
+        case 'title':
+          sortCriteria = { title: 1 };
+          break;
+        case 'relevance':
+        default:
+          sortCriteria = { isFeatured: -1, createdAt: -1 };
+          break;
+      }
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.jobModel
+        .find(query)
+        .populate('company', 'name logo location')
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.jobModel.countDocuments(query),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
+  async findById(id: string): Promise<JobDocument> {
+    const job = await this.jobModel
+      .findById(id)
+      .populate('company')
+      .populate('postedBy', 'fullName email');
+
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    // Increment views count
+    job.viewsCount += 1;
+    await job.save();
+
+    return job;
+  }
+
+  async findByCompany(companyId: string): Promise<JobDocument[]> {
+    return this.jobModel.find({ company: companyId }).sort({ createdAt: -1 });
+  }
+
+  async findByEmployer(userId: string): Promise<any[]> {
+    const jobs = await this.jobModel.find({ postedBy: userId }).populate('company').sort({ createdAt: -1 });
+    
+    // Get accurate application counts for each job
+    const jobsWithCounts = await Promise.all(
+      jobs.map(async (job) => {
+        const { Application } = await import('../applications/schemas/application.schema');
+        const ApplicationModel = this.jobModel.db.model('Application');
+        
+        const applicationsCount = await ApplicationModel.countDocuments({ job: job._id });
+        
+        return {
+          ...job.toObject(),
+          applicationsCount
+        };
+      })
+    );
+    
+    return jobsWithCounts;
+  }
+
+  async findRecentByEmployer(userId: string, limit: number = 5): Promise<any[]> {
+    const jobs = await this.jobModel
+      .find({ postedBy: userId })
+      .populate('company', 'name')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+    
+    // Get accurate application counts for each job
+    const jobsWithCounts = await Promise.all(
+      jobs.map(async (job) => {
+        const { Application } = await import('../applications/schemas/application.schema');
+        const ApplicationModel = this.jobModel.db.model('Application');
+        
+        const applicationsCount = await ApplicationModel.countDocuments({ job: job._id });
+        
+        return {
+          ...job,
+          applicationsCount,
+          views: job.viewsCount || 0,
+          postedAt: job.createdAt,
+          expiresAt: job.applicationDeadline,
+        };
+      })
+    );
+    
+    return jobsWithCounts;
+  }
+
+  async findRecentByEmployerPaginated(userId: string, page: number = 1, limit: number = 10): Promise<PaginatedResult<any>> {
+    const skip = (page - 1) * limit;
+
+    const [jobs, total] = await Promise.all([
+      this.jobModel
+        .find({ postedBy: userId })
+        .populate('company', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.jobModel.countDocuments({ postedBy: userId }),
+    ]);
+    
+    // Get accurate application counts for each job
+    const { Application } = await import('../applications/schemas/application.schema');
+    const ApplicationModel = this.jobModel.db.model('Application');
+    
+    const data = await Promise.all(
+      jobs.map(async (job) => {
+        const applicationsCount = await ApplicationModel.countDocuments({ job: job._id });
+        
+        return {
+          ...job,
+          applicationsCount,
+          views: job.viewsCount || 0,
+          postedAt: job.createdAt,
+          expiresAt: job.applicationDeadline,
+        };
+      })
+    );
+    
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
+  async update(id: string, userId: string, updateJobDto: UpdateJobDto): Promise<JobDocument> {
+    const job = await this.jobModel.findById(id);
+
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    if (job.postedBy.toString() !== userId) {
+      throw new ForbiddenException('You do not have permission to update this job');
+    }
+
+    Object.assign(job, updateJobDto);
+    await job.save();
+
+    return job.populate(['company', 'postedBy']);
+  }
+
+  async delete(id: string, userId: string): Promise<void> {
+    const job = await this.jobModel.findById(id);
+
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    if (job.postedBy.toString() !== userId) {
+      throw new ForbiddenException('You do not have permission to delete this job');
+    }
+
+    await job.deleteOne();
+  }
+
+  async incrementApplicationCount(jobId: string): Promise<void> {
+    await this.jobModel.findByIdAndUpdate(jobId, { $inc: { applicationsCount: 1 } });
+  }
+
+  async recalculateApplicationCount(jobId: string): Promise<void> {
+    // Import Application model dynamically to avoid circular dependency
+    const { Application } = await import('../applications/schemas/application.schema');
+    const ApplicationModel = this.jobModel.db.model('Application');
+    
+    const count = await ApplicationModel.countDocuments({ job: jobId });
+    await this.jobModel.findByIdAndUpdate(jobId, { applicationsCount: count });
+  }
+
+  async recalculateAllApplicationCounts(): Promise<void> {
+    const { Application } = await import('../applications/schemas/application.schema');
+    const ApplicationModel = this.jobModel.db.model('Application');
+    
+    const jobs = await this.jobModel.find({});
+    
+    for (const job of jobs) {
+      const count = await ApplicationModel.countDocuments({ job: job._id });
+      await this.jobModel.findByIdAndUpdate(job._id, { applicationsCount: count });
+    }
+  }
+
+  async expireJobs(): Promise<void> {
+    await this.jobModel.updateMany(
+      {
+        expiresAt: { $lt: new Date() },
+        status: 'open',
+      },
+      {
+        status: 'expired',
+      },
+    );
+  }
+
+  async getStats(): Promise<any> {
+    const [total, open, closed, byType] = await Promise.all([
+      this.jobModel.countDocuments(),
+      this.jobModel.countDocuments({ status: 'open' }),
+      this.jobModel.countDocuments({ status: 'closed' }),
+      this.jobModel.aggregate([
+        { $group: { _id: '$jobType', count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    return {
+      total,
+      open,
+      closed,
+      byType,
+    };
+  }
+}
+
