@@ -50,6 +50,52 @@ interface BlockStatistics {
   recentBlocks: number;
 }
 
+interface UserActivity {
+  _id: string;
+  type: string;
+  description: string;
+  userId: {
+    _id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  };
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
+}
+
+interface IpGroup {
+  ipAddress: string;
+  users: Array<{
+    _id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  }>;
+  activities: Array<{
+    id: string;
+    type: string;
+    description: string;
+    user: any;
+    userAgent: string;
+    createdAt: string;
+  }>;
+  activityCount: number;
+  lastActivity: string;
+}
+
+interface UserIpData {
+  ipAddress: string;
+  firstSeen: string;
+  lastSeen: string;
+  userAgents: string[];
+  activityCount: number;
+  isBlocked: boolean;
+  blockReason?: string;
+  blockedAt?: string;
+}
+
 const blockTypeLabels = {
   manual: 'Manual',
   automatic: 'Automatic',
@@ -91,6 +137,14 @@ export default function IpManagementPage() {
   const [limit] = useState(20);
   const [total, setTotal] = useState(0);
 
+  // New state for user IP tracking
+  const [activeTab, setActiveTab] = useState<'blocked' | 'activity' | 'users'>('blocked');
+  const [recentActivity, setRecentActivity] = useState<UserActivity[]>([]);
+  const [ipGroups, setIpGroups] = useState<IpGroup[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [userIps, setUserIps] = useState<UserIpData[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+
   // Block IP form
   const [blockForm, setBlockForm] = useState({
     ipAddress: '',
@@ -115,10 +169,14 @@ export default function IpManagementPage() {
 
   useEffect(() => {
     if (user?.role === 'admin') {
-      fetchBlockedIps();
-      fetchStatistics();
+      if (activeTab === 'blocked') {
+        fetchBlockedIps();
+        fetchStatistics();
+      } else if (activeTab === 'activity') {
+        fetchRecentActivity();
+      }
     }
-  }, [user, page, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, page, filters, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchBlockedIps = async () => {
     try {
@@ -163,6 +221,92 @@ export default function IpManagementPage() {
       }
     } catch (error) {
       console.error('Error fetching statistics:', error);
+    }
+  };
+
+  const fetchRecentActivity = async () => {
+    try {
+      setActivityLoading(true);
+      console.log('Fetching recent activity...');
+      const response = await api.get(`/admin/ip-management/recent-activity?page=1&limit=50`);
+      console.log('Recent activity response:', response.data);
+      
+      if (response.data.success) {
+        setRecentActivity(response.data.data.activities || []);
+        setIpGroups(response.data.data.ipGroups || []);
+        console.log('Recent activity loaded:', {
+          activities: response.data.data.activities?.length || 0,
+          ipGroups: response.data.data.ipGroups?.length || 0
+        });
+      } else {
+        console.error('API returned unsuccessful response:', response.data);
+        toast({
+          title: 'Error',
+          description: response.data.message || 'Failed to fetch recent activity',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching recent activity:', error);
+      console.error('Error response:', error.response?.data);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to fetch recent activity',
+        variant: 'destructive',
+      });
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
+  const fetchUserIps = async (searchTerm: string) => {
+    try {
+      console.log('Searching for user IPs with term:', searchTerm);
+      
+      // First, search for users by name or email
+      const usersResponse = await api.get(`/admin/ip-management/search-users?q=${encodeURIComponent(searchTerm)}`);
+      console.log('Users search response:', usersResponse.data);
+      
+      if (!usersResponse.data.success || !usersResponse.data.data?.users?.length) {
+        toast({
+          title: 'No users found',
+          description: 'No users found matching your search term',
+          variant: 'destructive',
+        });
+        setUserIps([]);
+        return;
+      }
+      
+      // Use the first matching user
+      const user = usersResponse.data.data.users[0];
+      console.log('Found user:', user);
+      
+      // Now get IPs for this user
+      const response = await api.get(`/admin/ip-management/user-ips/${user._id}`);
+      console.log('User IPs response:', response.data);
+      
+      if (response.data.success) {
+        setUserIps(response.data.data || []);
+        console.log('User IPs loaded:', response.data.data?.length || 0);
+        
+        // Update the search input to show the selected user
+        setSelectedUserId(`${user.fullName} (${user.email})`);
+      } else {
+        console.error('API returned unsuccessful response:', response.data);
+        toast({
+          title: 'Error',
+          description: response.data.message || 'Failed to fetch user IP addresses',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching user IPs:', error);
+      console.error('Error response:', error.response?.data);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to fetch user IP addresses',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -386,8 +530,44 @@ export default function IpManagementPage() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      {statistics && (
+      {/* Tab Navigation */}
+      <div className="border-b mb-6">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('blocked')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'blocked'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Blocked IPs
+          </button>
+          <button
+            onClick={() => setActiveTab('activity')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'activity'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Recent Activity
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'users'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            User IPs
+          </button>
+        </nav>
+      </div>
+
+      {/* Statistics Cards - Only show for blocked tab */}
+      {activeTab === 'blocked' && statistics && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
@@ -503,7 +683,8 @@ export default function IpManagementPage() {
       </Card>
 
       {/* Blocked IPs Table */}
-      <Card>
+      {activeTab === 'blocked' && (
+        <Card>
         <CardHeader>
           <CardTitle>Blocked IP Addresses</CardTitle>
           <CardDescription>
@@ -652,6 +833,191 @@ export default function IpManagementPage() {
           )}
         </CardContent>
       </Card>
+      )}
+
+      {/* Recent Activity Tab */}
+      {activeTab === 'activity' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity with IP Addresses</CardTitle>
+              <CardDescription>
+                Monitor user activities and their IP addresses for security analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activityLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-muted-foreground">Loading recent activity...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {ipGroups.map((ipGroup) => (
+                    <Card key={ipGroup.ipAddress} className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="font-mono">
+                            {ipGroup.ipAddress}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {ipGroup.activityCount} activities
+                          </span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setBlockForm({
+                              ...blockForm,
+                              ipAddress: ipGroup.ipAddress,
+                            });
+                            setBlockDialogOpen(true);
+                          }}
+                        >
+                          Block IP
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-sm">
+                          <strong>Users:</strong>{' '}
+                          {ipGroup.users.map((user, index) => (
+                            <span key={user._id}>
+                              {user.fullName} ({user.role})
+                              {index < ipGroup.users.length - 1 && ', '}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          <strong>Last Activity:</strong> {formatDate(ipGroup.lastActivity)}
+                        </div>
+                        <div className="text-sm">
+                          <strong>Recent Activities:</strong>
+                          <ul className="list-disc list-inside mt-1 space-y-1">
+                            {ipGroup.activities.slice(0, 3).map((activity) => (
+                              <li key={activity.id} className="text-xs">
+                                {activity.description} - {formatDate(activity.createdAt)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  {ipGroups.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No recent activity found
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* User IPs Tab */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>User IP Address Tracking</CardTitle>
+              <CardDescription>
+                Search for a user to view their IP address history and activities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <Input
+                    placeholder="Enter user email or name to search..."
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={() => selectedUserId && fetchUserIps(selectedUserId)}
+                    disabled={!selectedUserId}
+                  >
+                    Search User IPs
+                  </Button>
+                </div>
+                
+                {userIps.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold">IP Addresses for User</h3>
+                    {userIps.map((userIp) => (
+                      <Card key={userIp.ipAddress} className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <Badge 
+                              variant={userIp.isBlocked ? "destructive" : "outline"} 
+                              className="font-mono"
+                            >
+                              {userIp.ipAddress}
+                            </Badge>
+                            {userIp.isBlocked && (
+                              <Badge variant="destructive">
+                                BLOCKED ({userIp.blockReason})
+                              </Badge>
+                            )}
+                          </div>
+                          {!userIp.isBlocked && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setBlockForm({
+                                  ...blockForm,
+                                  ipAddress: userIp.ipAddress,
+                                });
+                                setBlockDialogOpen(true);
+                              }}
+                            >
+                              Block IP
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <strong>First Seen:</strong> {formatDate(userIp.firstSeen)}
+                          </div>
+                          <div>
+                            <strong>Last Seen:</strong> {formatDate(userIp.lastSeen)}
+                          </div>
+                          <div>
+                            <strong>Activity Count:</strong> {userIp.activityCount}
+                          </div>
+                          <div>
+                            <strong>User Agents:</strong> {userIp.userAgents.length}
+                          </div>
+                        </div>
+                        {userIp.userAgents.length > 0 && (
+                          <div className="mt-3">
+                            <strong className="text-sm">User Agents:</strong>
+                            <div className="mt-1 space-y-1">
+                              {userIp.userAgents.slice(0, 2).map((agent, index) => (
+                                <div key={index} className="text-xs text-muted-foreground font-mono bg-gray-50 p-2 rounded">
+                                  {agent}
+                                </div>
+                              ))}
+                              {userIp.userAgents.length > 2 && (
+                                <div className="text-xs text-muted-foreground">
+                                  +{userIp.userAgents.length - 2} more...
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

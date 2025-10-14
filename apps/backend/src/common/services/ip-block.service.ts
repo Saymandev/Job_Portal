@@ -1,6 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Activity, ActivityDocument } from '../../modules/admin/schemas/activity.schema';
+import { User, UserDocument } from '../../modules/users/schemas/user.schema';
 import { BlockedIp, BlockedIpDocument, BlockReason, BlockType } from '../schemas/blocked-ip.schema';
 
 export interface BlockIpDto {
@@ -23,7 +25,14 @@ export interface UnblockIpDto {
 export class IpBlockService {
   constructor(
     @InjectModel(BlockedIp.name) private blockedIpModel: Model<BlockedIpDocument>,
+    @InjectModel(Activity.name) private activityModel: Model<ActivityDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
+
+  // Expose userModel for controller access
+  get userModelAccess() {
+    return this.userModel;
+  }
 
   async blockIp(blockData: BlockIpDto): Promise<BlockedIp> {
     try {
@@ -280,6 +289,204 @@ export class IpBlockService {
     } catch (error) {
       throw new HttpException(
         'Failed to retrieve block statistics',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get recent activity with IP addresses
+   */
+  async getRecentActivityWithIps(page: number = 1, limit: number = 50, userId?: string) {
+    try {
+      console.log(`🔍 Getting recent activity with IPs: page=${page}, limit=${limit}, userId=${userId}`);
+      
+      const skip = (page - 1) * limit;
+      const query: any = {};
+
+      if (userId) {
+        query.userId = userId;
+      }
+
+      console.log('📋 Query:', query);
+
+      const activities = await this.activityModel
+        .find(query)
+        .populate('userId', 'fullName email role')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select('type description userId ipAddress userAgent createdAt metadata');
+
+      console.log(`📊 Found ${activities.length} activities`);
+
+      const total = await this.activityModel.countDocuments(query);
+
+      // Group by IP address for easy viewing
+      const ipGroups = activities.reduce((acc: any, activity) => {
+        const ip = activity.ipAddress;
+        if (!acc[ip]) {
+          acc[ip] = {
+            ipAddress: ip,
+            users: new Set(),
+            activities: [],
+            lastActivity: activity.createdAt,
+          };
+        }
+        acc[ip].users.add(activity.userId);
+        acc[ip].activities.push({
+          id: activity._id,
+          type: activity.type,
+          description: activity.description,
+          user: activity.userId,
+          userAgent: activity.userAgent,
+          createdAt: activity.createdAt,
+        });
+        return acc;
+      }, {});
+
+      // Convert Set to Array for users
+      Object.keys(ipGroups).forEach(ip => {
+        ipGroups[ip].users = Array.from(ipGroups[ip].users);
+        ipGroups[ip].activityCount = ipGroups[ip].activities.length;
+      });
+
+      return {
+        activities,
+        ipGroups: Object.values(ipGroups),
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      throw new HttpException(
+        'Failed to retrieve recent activity',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get all IP addresses used by a specific user
+   */
+  async getUserIps(userId: string) {
+    try {
+      console.log(`🔍 Getting user IPs for userId: ${userId}`);
+      
+      // Validate userId format (should be a valid MongoDB ObjectId)
+      if (!userId || typeof userId !== 'string') {
+        throw new HttpException('Invalid user ID provided', HttpStatus.BAD_REQUEST);
+      }
+
+      // Check if user exists first
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      
+      console.log(`👤 User found: ${user.fullName} (${user.email})`);
+
+      const activities = await this.activityModel
+        .find({ userId })
+        .select('ipAddress userAgent createdAt')
+        .sort({ createdAt: -1 });
+
+      console.log(`📊 Found ${activities.length} activities for user ${userId}`);
+
+      // Group by IP address
+      const ipGroups = activities.reduce((acc: any, activity) => {
+        const ip = activity.ipAddress;
+        if (!acc[ip]) {
+          acc[ip] = {
+            ipAddress: ip,
+            firstSeen: activity.createdAt,
+            lastSeen: activity.createdAt,
+            userAgents: new Set(),
+            activityCount: 0,
+          };
+        }
+        acc[ip].lastSeen = new Date(Math.max(acc[ip].lastSeen.getTime(), activity.createdAt.getTime()));
+        acc[ip].userAgents.add(activity.userAgent);
+        acc[ip].activityCount++;
+        return acc;
+      }, {});
+
+      // Convert Set to Array and add additional info
+      Object.keys(ipGroups).forEach(ip => {
+        ipGroups[ip].userAgents = Array.from(ipGroups[ip].userAgents);
+        ipGroups[ip].isBlocked = false; // We'll check this separately
+      });
+
+      // Check which IPs are blocked
+      const blockedIps = await this.blockedIpModel.find({
+        ipAddress: { $in: Object.keys(ipGroups) },
+        isActive: true,
+      });
+
+      blockedIps.forEach(blocked => {
+        if (ipGroups[blocked.ipAddress]) {
+          ipGroups[blocked.ipAddress].isBlocked = true;
+          ipGroups[blocked.ipAddress].blockReason = blocked.reason;
+          ipGroups[blocked.ipAddress].blockedAt = (blocked as any).createdAt || new Date();
+        }
+      });
+
+      return Object.values(ipGroups);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to retrieve user IP addresses',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get all users associated with a specific IP address
+   */
+  async getUsersByIp(ipAddress: string) {
+    try {
+      const activities = await this.activityModel
+        .find({ ipAddress })
+        .populate('userId', 'fullName email role isActive createdAt lastLogin')
+        .select('userId userAgent createdAt type description')
+        .sort({ createdAt: -1 });
+
+      // Group by user
+      const userGroups = activities.reduce((acc: any, activity) => {
+        const userId = (activity.userId as any)._id.toString();
+        if (!acc[userId]) {
+          acc[userId] = {
+            user: activity.userId,
+            firstSeen: activity.createdAt,
+            lastSeen: activity.createdAt,
+            userAgents: new Set(),
+            activityCount: 0,
+            activities: [],
+          };
+        }
+        acc[userId].lastSeen = new Date(Math.max(acc[userId].lastSeen.getTime(), activity.createdAt.getTime()));
+        acc[userId].userAgents.add(activity.userAgent);
+        acc[userId].activityCount++;
+        acc[userId].activities.push({
+          type: activity.type,
+          description: activity.description,
+          createdAt: activity.createdAt,
+        });
+        return acc;
+      }, {});
+
+      // Convert Set to Array
+      Object.keys(userGroups).forEach(userId => {
+        userGroups[userId].userAgents = Array.from(userGroups[userId].userAgents);
+      });
+
+      return Object.values(userGroups);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to retrieve users for IP address',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

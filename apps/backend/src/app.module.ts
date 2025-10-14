@@ -33,6 +33,8 @@ import { AuditService } from './common/services/audit.service';
 import { FraudDetectionService } from './common/services/fraud-detection.service';
 import { IpBlockService } from './common/services/ip-block.service';
 import { SanitizationService } from './common/services/sanitization.service';
+import { Activity, ActivitySchema } from './modules/admin/schemas/activity.schema';
+import { User, UserSchema } from './modules/users/schemas/user.schema';
 
 @Module({
   imports: [
@@ -88,6 +90,8 @@ import { SanitizationService } from './common/services/sanitization.service';
     MongooseModule.forFeature([
       { name: AuditLog.name, schema: AuditLogSchema },
       { name: BlockedIp.name, schema: BlockedIpSchema },
+      { name: User.name, schema: UserSchema },
+      { name: Activity.name, schema: ActivitySchema },
     ]),
   ],
   controllers: [HealthController],
