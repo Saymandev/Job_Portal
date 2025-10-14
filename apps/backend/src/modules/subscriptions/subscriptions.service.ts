@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import Stripe from 'stripe';
 import { Job, JobDocument } from '../jobs/schemas/job.schema';
+import { MailService } from '../mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { Subscription, SubscriptionDocument, SubscriptionPlan, SubscriptionStatus } from './schemas/subscription.schema';
@@ -18,6 +19,7 @@ export class SubscriptionsService {
     @InjectModel(Job.name) private jobModel: Model<JobDocument>,
     private configService: ConfigService,
     private notificationsService: NotificationsService,
+    private mailService: MailService,
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), {
       apiVersion: '2023-10-16',
@@ -166,6 +168,12 @@ export class SubscriptionsService {
 
     // Notify all admins about the new subscription
     await this.notifyAdminsAboutNewSubscription(userId, plan as SubscriptionPlan);
+
+    // Send subscription receipt email to user
+    const userSubscription = await this.subscriptionModel.findOne({ user: userId });
+    if (userSubscription) {
+      await this.sendSubscriptionReceiptEmail(userId, userSubscription, plan as SubscriptionPlan, stripeSubscription);
+    }
   }
 
   private async handleSubscriptionUpdated(stripeSubscription: Stripe.Subscription) {
@@ -421,6 +429,9 @@ export class SubscriptionsService {
       // Notify admins about the new subscription
       await this.notifyAdminsAboutNewSubscription(userId, plan);
 
+      // Send subscription receipt email to user
+      await this.sendSubscriptionReceiptEmail(userId, subscription, plan, stripeSubscription);
+
       return {
         plan: subscription.plan,
         status: subscription.status,
@@ -532,6 +543,66 @@ export class SubscriptionsService {
     } catch (error) {
       console.error('❌ Error notifying admins about new subscription:', error);
       // Don't fail the subscription creation if notification fails
+    }
+  }
+
+  /**
+   * Send subscription receipt email to user
+   */
+  private async sendSubscriptionReceiptEmail(
+    userId: string, 
+    subscription: any, 
+    plan: SubscriptionPlan, 
+    stripeSubscription: Stripe.Subscription
+  ): Promise<void> {
+    try {
+      console.log(`📧 Sending subscription receipt email to user ${userId}`);
+      
+      // Get user details
+      const user = await this.userModel.findById(userId).select('fullName email');
+      if (!user) {
+        console.log(`❌ User not found for receipt email: ${userId}`);
+        return;
+      }
+
+      // Get price information from Stripe
+      let amount = 'Custom pricing';
+      let nextBillingDate: Date | undefined;
+      
+      try {
+        const priceId = stripeSubscription.items.data[0]?.price?.id;
+        if (priceId) {
+          const stripePrice = await this.stripe.prices.retrieve(priceId);
+          if (stripePrice.unit_amount) {
+            const priceAmount = (stripePrice.unit_amount / 100).toFixed(2);
+            const currency = stripePrice.currency.toUpperCase();
+            const interval = stripePrice.recurring?.interval || 'month';
+            amount = `$${priceAmount}/${interval}`;
+          }
+        }
+        
+        // Get next billing date
+        if (stripeSubscription.current_period_end) {
+          nextBillingDate = new Date(stripeSubscription.current_period_end * 1000);
+        }
+      } catch (error) {
+        console.log('Could not fetch price details from Stripe, using default');
+      }
+
+      // Send receipt email
+      await this.mailService.sendSubscriptionReceipt(
+        user.email,
+        user.fullName,
+        plan,
+        amount,
+        subscription._id.toString(),
+        nextBillingDate
+      );
+
+      console.log(`✅ Subscription receipt email sent to ${user.email} for ${plan} plan`);
+    } catch (error) {
+      console.error('❌ Error sending subscription receipt email:', error);
+      // Don't throw error to prevent subscription creation from failing
     }
   }
 

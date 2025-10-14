@@ -46,13 +46,19 @@ export class NotificationsService {
         // Check notification type preferences
         const shouldSendEmail = 
           (data.type === 'application' && prefs.applicationUpdates) ||
+          (data.type === 'interview' && prefs.applicationUpdates) ||
           (data.type === 'message' && prefs.messages) ||
           (data.type === 'info' && prefs.newJobMatches) ||
+          (data.type === 'job_match' && prefs.newJobMatches) ||
           (data.type === 'subscription' && prefs.emailNotifications) ||
-          data.type === 'system';
+          (data.type === 'reminder' && prefs.emailNotifications) ||
+          data.type === 'system' ||
+          data.type === 'admin' ||
+          data.type === 'digest' ||
+          data.type === 'recommendation';
 
         if (shouldSendEmail) {
-          await this.sendEmailNotification(user.email, data.title, data.message, data.actionUrl);
+          await this.mailService.sendNotificationEmail(user.email, data.title, data.message, data.actionUrl);
         }
       }
     } catch (error) {
@@ -77,22 +83,6 @@ export class NotificationsService {
     return notification;
   }
 
-  private async sendEmailNotification(email: string, title: string, message: string, actionUrl?: string) {
-    await this.mailService['transporter'].sendMail({
-      from: this.mailService['configService'].get('MAIL_FROM') || this.mailService['configService'].get('EMAIL_USER'),
-      to: email,
-      subject: title,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>${title}</h2>
-          <p>${message}</p>
-          ${actionUrl ? `<a href="${actionUrl}" style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
-            View Details
-          </a>` : ''}
-        </div>
-      `,
-    });
-  }
 
   async getUserNotifications(
     userId: string,

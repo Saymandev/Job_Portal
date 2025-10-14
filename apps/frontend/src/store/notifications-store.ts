@@ -6,7 +6,7 @@ interface Notification {
   _id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'application' | 'interview' | 'message' | 'system' | 'subscription';
+  type: 'info' | 'success' | 'warning' | 'error' | 'application' | 'interview' | 'message' | 'system' | 'subscription' | 'job_match' | 'reminder' | 'admin' | 'digest' | 'recommendation';
   isRead: boolean;
   job?: {
     _id: string;

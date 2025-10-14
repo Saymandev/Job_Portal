@@ -228,5 +228,155 @@ export class MailService {
       `,
     });
   }
+
+  async sendNotificationEmail(email: string, title: string, message: string, actionUrl?: string) {
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get('MAIL_FROM') || this.configService.get('EMAIL_USER'),
+        to: email,
+        subject: title,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>${title}</h2>
+            <p>${message}</p>
+            ${actionUrl ? `<a href="${actionUrl}" style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              View Details
+            </a>` : ''}
+          </div>
+        `,
+      });
+      console.log(`📧 Email notification sent to ${email}: ${title}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to send email notification to ${email}:`, error);
+      return false;
+    }
+  }
+
+  async sendSubscriptionReceipt(
+    email: string, 
+    userName: string, 
+    plan: string, 
+    amount: string, 
+    subscriptionId: string, 
+    nextBillingDate?: Date,
+    features?: string[]
+  ) {
+    const planFeatures = features || this.getPlanFeatures(plan);
+    
+    await this.transporter.sendMail({
+      from: this.configService.get('MAIL_FROM') || this.configService.get('EMAIL_USER'),
+      to: email,
+      subject: `🎉 Subscription Confirmation - ${plan.toUpperCase()} Plan`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb;">
+          <div style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 30px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 28px;">🎉 Welcome to ${plan.toUpperCase()}!</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Your subscription has been successfully activated</p>
+          </div>
+          
+          <div style="padding: 30px; background-color: white;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h2 style="color: #4F46E5; margin: 0;">Receipt & Confirmation</h2>
+              <p style="color: #6b7280; margin: 5px 0;">Thank you for subscribing, ${userName}!</p>
+            </div>
+
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+              <h3 style="margin: 0 0 15px 0; color: #374151;">Subscription Details</h3>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #6b7280;">Plan:</span>
+                <span style="font-weight: 600; color: #374151;">${plan.toUpperCase()}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #6b7280;">Amount:</span>
+                <span style="font-weight: 600; color: #374151;">${amount}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #6b7280;">Subscription ID:</span>
+                <span style="font-family: monospace; font-size: 12px; color: #6b7280;">${subscriptionId}</span>
+              </div>
+              ${nextBillingDate ? `
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #6b7280;">Next Billing:</span>
+                <span style="font-weight: 600; color: #374151;">${new Date(nextBillingDate).toLocaleDateString()}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <div style="margin-bottom: 25px;">
+              <h3 style="margin: 0 0 15px 0; color: #374151;">✅ Your ${plan.toUpperCase()} Plan Includes:</h3>
+              <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
+                ${planFeatures.map(feature => `<li style="margin-bottom: 8px;">${feature}</li>`).join('')}
+              </ul>
+            </div>
+
+            <div style="background-color: #ecfdf5; border: 1px solid #d1fae5; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+              <p style="margin: 0; color: #065f46; font-weight: 500;">
+                🚀 Your subscription is now active! You can start posting jobs and accessing premium features immediately.
+              </p>
+            </div>
+
+            <div style="text-align: center;">
+              <a href="${this.configService.get('FRONTEND_URL')}/employer/dashboard" 
+                 style="display: inline-block; background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-right: 10px; font-weight: 500;">
+                Go to Dashboard
+              </a>
+              <a href="${this.configService.get('FRONTEND_URL')}/subscription" 
+                 style="display: inline-block; background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                Manage Subscription
+              </a>
+            </div>
+          </div>
+
+          <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0; color: #6b7280; font-size: 14px;">
+              Need help? Contact our support team at 
+              <a href="mailto:support@jobportal.com" style="color: #4F46E5;">support@jobportal.com</a>
+            </p>
+            <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 12px;">
+              This receipt was sent to ${email}
+            </p>
+          </div>
+        </div>
+      `,
+    });
+  }
+
+  private getPlanFeatures(plan: string): string[] {
+    const features = {
+      'free': [
+        'Post up to 1 job listing',
+        'Basic job posting features',
+        'View job applications',
+        'Email support'
+      ],
+      'basic': [
+        'Post up to 10 job listings',
+        'Advanced job posting features',
+        'Application management tools',
+        'Priority email support',
+        'Job posting analytics'
+      ],
+      'pro': [
+        'Post up to 50 job listings',
+        'Premium job posting features',
+        'Advanced analytics dashboard',
+        'Candidate screening tools',
+        'Priority support',
+        'Featured job listings'
+      ],
+      'enterprise': [
+        'Unlimited job listings',
+        'All premium features',
+        'Custom branding',
+        'API access',
+        'Dedicated account manager',
+        'Custom integrations',
+        'Advanced reporting'
+      ]
+    };
+    
+    return features[plan.toLowerCase()] || features['free'];
+  }
 }
 

@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Job, JobSchema } from '../jobs/schemas/job.schema';
+import { MailModule } from '../mail/mail.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { JobBoostService } from './job-boost.service';
@@ -17,6 +18,7 @@ import { SubscriptionsService } from './subscriptions.service';
       { name: Job.name, schema: JobSchema },
     ]),
     ConfigModule,
+    MailModule,
     forwardRef(() => NotificationsModule),
   ],
   controllers: [SubscriptionsController],

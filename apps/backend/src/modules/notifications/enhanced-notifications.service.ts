@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Application, ApplicationDocument } from '../applications/schemas/application.schema';
 import { Job, JobDocument } from '../jobs/schemas/job.schema';
+import { MailService } from '../mail/mail.service';
 import { Subscription, SubscriptionDocument } from '../subscriptions/schemas/subscription.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from './notifications.service';
@@ -24,6 +25,7 @@ export class EnhancedNotificationsService {
     @InjectModel(Job.name) private jobModel: Model<JobDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -63,7 +65,7 @@ export class EnhancedNotificationsService {
     try {
       const employer = await this.userModel.findById(job.postedBy);
       if (employer) {
-        await this.notificationsService['sendEmailNotification'](
+        await this.mailService.sendNotificationEmail(
           employer.email,
           'New Job Application Received',
           `${applicant.fullName} has applied for your job "${job.title}". Review their application and take action.`,
