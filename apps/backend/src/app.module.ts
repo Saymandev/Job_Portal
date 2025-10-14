@@ -26,8 +26,12 @@ import { UploadModule } from './modules/upload/upload.module';
 import { UsersModule } from './modules/users/users.module';
 
 // Security Services
+import { IpBlockGuard } from './common/guards/ip-block.guard';
 import { AuditLog, AuditLogSchema } from './common/schemas/audit-log.schema';
+import { BlockedIp, BlockedIpSchema } from './common/schemas/blocked-ip.schema';
 import { AuditService } from './common/services/audit.service';
+import { FraudDetectionService } from './common/services/fraud-detection.service';
+import { IpBlockService } from './common/services/ip-block.service';
 import { SanitizationService } from './common/services/sanitization.service';
 
 @Module({
@@ -83,11 +87,12 @@ import { SanitizationService } from './common/services/sanitization.service';
     // Security Module
     MongooseModule.forFeature([
       { name: AuditLog.name, schema: AuditLogSchema },
+      { name: BlockedIp.name, schema: BlockedIpSchema },
     ]),
   ],
   controllers: [HealthController],
-  providers: [AuditService, SanitizationService],
-  exports: [AuditService, SanitizationService],
+  providers: [AuditService, SanitizationService, IpBlockService, FraudDetectionService, IpBlockGuard],
+  exports: [AuditService, SanitizationService, IpBlockService, FraudDetectionService, IpBlockGuard],
 })
 export class AppModule {}
 

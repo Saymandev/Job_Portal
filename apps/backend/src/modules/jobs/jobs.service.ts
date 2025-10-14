@@ -9,6 +9,8 @@ import { Model } from 'mongoose';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { EnhancedNotificationsService } from '../notifications/enhanced-notifications.service';
 import { Subscription, SubscriptionDocument, SubscriptionPlan } from '../subscriptions/schemas/subscription.schema';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { User, UserDocument } from '../users/schemas/user.schema';
 import { CreateJobDto } from './dto/create-job.dto';
 import { SearchJobsDto } from './dto/search-jobs.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
@@ -20,9 +22,11 @@ export class JobsService {
     @InjectModel(Job.name) private jobModel: Model<JobDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private auditService: AuditService,
     private sanitizationService: SanitizationService,
     private enhancedNotificationsService: EnhancedNotificationsService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async create(userId: string, createJobDto: CreateJobDto, req?: Request): Promise<{ job: JobDocument; autoPosted: boolean; subscriptionInfo: any }> {
@@ -54,9 +58,22 @@ export class JobsService {
         throw new NotFoundException('Company not found. Please create a company first.');
       }
 
-    // Check subscription limits
-    const subscription = await this.subscriptionModel.findOne({ user: userId });
-    if (!subscription) {
+    // Get user to check role
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Job seekers cannot post jobs
+    if (user.role === 'job_seeker') {
+      throw new ForbiddenException('Job seekers cannot post jobs. Only employers can post jobs.');
+    }
+
+    // Check subscription limits (only for employers)
+    const subscription = await this.subscriptionsService.getUserSubscription(userId);
+
+    // Employers must have a subscription
+    if (user.role === 'employer' && !subscription) {
       throw new NotFoundException('Subscription not found. Please contact support.');
     }
 

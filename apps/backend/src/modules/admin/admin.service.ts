@@ -316,10 +316,17 @@ export class AdminService {
   async getSubscriptionManagement() {
     const subscriptions = await this.subscriptionModel
       .find()
-      .populate('user', 'fullName email role')
+      .populate({
+        path: 'user',
+        select: 'fullName email role',
+        match: { role: { $in: ['employer', 'admin'] } } // Only show subscriptions for employers and admins
+      })
       .sort({ createdAt: -1 });
 
-    return subscriptions.map(sub => ({
+    // Filter out subscriptions where user is null (job seekers)
+    const validSubscriptions = subscriptions.filter(sub => sub.user !== null);
+
+    return validSubscriptions.map(sub => ({
       _id: sub._id,
       user: {
         _id: (sub.user as any)._id,
@@ -453,34 +460,35 @@ export class AdminService {
   }
 
   async getSubscriptionStats() {
-    const [
-      totalSubscriptions,
-      activeSubscriptions,
-      cancelledSubscriptions,
-      freeSubscriptions,
-      basicSubscriptions,
-      proSubscriptions,
-      enterpriseSubscriptions,
-    ] = await Promise.all([
-      this.subscriptionModel.countDocuments(),
-      this.subscriptionModel.countDocuments({ status: 'active' }),
-      this.subscriptionModel.countDocuments({ status: 'cancelled' }),
-      this.subscriptionModel.countDocuments({ plan: 'free' }),
-      this.subscriptionModel.countDocuments({ plan: 'basic' }),
-      this.subscriptionModel.countDocuments({ plan: 'pro' }),
-      this.subscriptionModel.countDocuments({ plan: 'enterprise' }),
-    ]);
+    // Get all subscriptions with populated users
+    const allSubscriptions = await this.subscriptionModel
+      .find()
+      .populate({
+        path: 'user',
+        select: 'role',
+        match: { role: { $in: ['employer', 'admin'] } }
+      });
+
+    // Filter out subscriptions where user is null (job seekers)
+    const validSubscriptions = allSubscriptions.filter(sub => sub.user !== null);
+
+    // Calculate stats from valid subscriptions
+    const totalSubscriptions = validSubscriptions.length;
+    const activeSubscriptions = validSubscriptions.filter(sub => sub.status === 'active').length;
+    const cancelledSubscriptions = validSubscriptions.filter(sub => sub.status === 'cancelled').length;
+    
+    const planBreakdown = {
+      free: validSubscriptions.filter(sub => sub.plan === 'free').length,
+      basic: validSubscriptions.filter(sub => sub.plan === 'basic').length,
+      pro: validSubscriptions.filter(sub => sub.plan === 'pro').length,
+      enterprise: validSubscriptions.filter(sub => sub.plan === 'enterprise').length,
+    };
 
     return {
       totalSubscriptions,
       activeSubscriptions,
       cancelledSubscriptions,
-      planBreakdown: {
-        free: freeSubscriptions,
-        basic: basicSubscriptions,
-        pro: proSubscriptions,
-        enterprise: enterpriseSubscriptions,
-      },
+      planBreakdown,
     };
   }
 }

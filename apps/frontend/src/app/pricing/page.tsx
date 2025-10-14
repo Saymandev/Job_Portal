@@ -212,17 +212,16 @@ export default function PricingPage() {
                   currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 shadow-lg bg-green-50' : ''
                 }`}
               >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge className="px-4 py-1 text-sm">Most Popular</Badge>
-                  </div>
-                )}
-                {currentSubscription && currentSubscription.plan === plan.id && (
-                  <div className="absolute -top-4 right-4">
+                {/* Badge Container */}
+                <div className="absolute -top-4 left-0 right-0 flex justify-center items-center gap-2">
+                  {plan.popular && (
+                    <Badge className="px-4 py-1 text-sm bg-purple-500 text-white">Most Popular</Badge>
+                  )}
+                  {currentSubscription && currentSubscription.plan === plan.id && (
                     <Badge className="px-4 py-1 text-sm bg-green-500 text-white">Current Plan</Badge>
-                  </div>
-                )}
-                <CardHeader>
+                  )}
+                </div>
+                <CardHeader className="pt-8">
                   <div className="flex items-center gap-2 mb-4">
                     <div className={`p-2 rounded-lg ${plan.bgColor}`}>
                       <Icon className={`h-6 w-6 ${plan.color}`} />

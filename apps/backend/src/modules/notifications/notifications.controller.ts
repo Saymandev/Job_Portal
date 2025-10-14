@@ -1,5 +1,5 @@
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
@@ -17,6 +17,38 @@ export class NotificationsController {
       message: 'Notifications endpoint is working',
       timestamp: new Date().toISOString(),
     };
+  }
+
+  @Post('test-realtime')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Test real-time notification (Admin only)' })
+  async testRealtimeNotification(@CurrentUser('id') userId: string) {
+    try {
+      const testNotification = await this.notificationsService.createNotification({
+        user: userId,
+        title: '🧪 Test Real-time Notification',
+        message: 'This is a test notification to verify real-time delivery is working.',
+        type: 'system',
+        actionUrl: '/notifications',
+        metadata: {
+          test: true,
+          timestamp: new Date(),
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Test notification created and sent',
+        data: testNotification,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to create test notification',
+        error: error.message,
+      };
+    }
   }
 
   @Get()

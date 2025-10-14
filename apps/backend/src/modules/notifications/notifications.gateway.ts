@@ -32,6 +32,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     for (const [userId, socketId] of this.connectedUsers.entries()) {
       if (socketId === client.id) {
         this.connectedUsers.delete(userId);
+        console.log(`🗑️ Removed user ${userId} from connected users`);
         break;
       }
     }
@@ -39,15 +40,23 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   @SubscribeMessage('joinUserRoom')
   handleJoinUserRoom(@ConnectedSocket() client: Socket, @MessageBody() userId: string) {
+    console.log(`🔌 Received joinUserRoom request from client ${client.id} for user ${userId}`);
     this.connectedUsers.set(userId, client.id);
     client.join(`user:${userId}`);
-    console.log(`User ${userId} joined notifications room`);
+    console.log(`✅ User ${userId} joined notifications room (total connected users: ${this.connectedUsers.size})`);
   }
 
   // Method to send notification to specific user
   sendNotificationToUser(userId: string, notification: any) {
+    const isUserConnected = this.connectedUsers.has(userId);
+    console.log(`📢 Attempting to send notification to user ${userId} (connected: ${isUserConnected})`);
+    
     this.server.to(`user:${userId}`).emit('newNotification', notification);
     console.log(`📢 Sent notification to user ${userId}:`, notification.title);
+    
+    if (!isUserConnected) {
+      console.log(`⚠️ User ${userId} is not connected to notifications socket`);
+    }
   }
 
   // Method to send notification to multiple users

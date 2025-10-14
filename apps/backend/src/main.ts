@@ -7,6 +7,7 @@ import * as express from 'express';
 import helmet from 'helmet';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { IpBlockGuard } from './common/guards/ip-block.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,6 +28,9 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
+  // Raw body parsing for Stripe webhooks
+  app.use('/api/subscriptions/webhook', express.raw({ type: 'application/json' }));
+
   // Serve static files
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
@@ -41,6 +45,10 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Global IP blocking guard
+  const ipBlockGuard = app.get(IpBlockGuard);
+  app.useGlobalGuards(ipBlockGuard);
 
   // Swagger documentation
   const config = new DocumentBuilder()

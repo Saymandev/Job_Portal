@@ -6,7 +6,7 @@ interface Notification {
   _id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'application' | 'interview' | 'message' | 'system';
+  type: 'info' | 'success' | 'warning' | 'error' | 'application' | 'interview' | 'message' | 'system' | 'subscription';
   isRead: boolean;
   job?: {
     _id: string;
@@ -192,15 +192,30 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   clearError: () => set({ error: null }),
 
   initSocketListeners: (userId: string) => {
+    console.log('🔔 Initializing notifications socket listeners for user:', userId);
     
     let socket = getNotificationsSocket();
     if (!socket) {
-      
+      console.log('🔌 Creating new notifications socket connection...');
       socket = initNotificationsSocket(userId);
     }
 
     if (socket) {
+      console.log('✅ Notifications socket available, setting up listeners...');
       
+      // Add connection status listeners
+      socket.on('connect', () => {
+        console.log('🔌 Notifications socket connected');
+        socket?.emit('joinUserRoom', userId);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('🔌 Notifications socket disconnected');
+      });
+
+      socket.on('connect_error', (error) => {
+        console.error('🔌 Notifications socket connection error:', error);
+      });
       
       // Remove existing listeners to prevent duplicates
       socket.off('newNotification');
@@ -208,7 +223,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       
       // Listen for new notifications
       socket.on('newNotification', (notification: Notification) => {
-       
+        console.log('🔔 Received new notification via socket:', notification.title);
         set(state => ({
           notifications: [notification, ...state.notifications],
           unreadCount: state.unreadCount + 1,
@@ -217,11 +232,11 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
       // Listen for unread count updates
       socket.on('unreadCountUpdate', ({ count }: { count: number }) => {
-        
+        console.log('📊 Received unread count update via socket:', count);
         set({ unreadCount: count });
       });
       
-      
+      console.log('✅ Notifications socket listeners initialized successfully');
     } else {
       console.error('🔔 Failed to initialize notifications socket');
     }

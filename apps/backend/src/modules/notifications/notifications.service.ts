@@ -48,6 +48,7 @@ export class NotificationsService {
           (data.type === 'application' && prefs.applicationUpdates) ||
           (data.type === 'message' && prefs.messages) ||
           (data.type === 'info' && prefs.newJobMatches) ||
+          (data.type === 'subscription' && prefs.emailNotifications) ||
           data.type === 'system';
 
         if (shouldSendEmail) {
@@ -61,7 +62,13 @@ export class NotificationsService {
 
     // Send real-time notification via WebSocket
     try {
+      console.log(`📡 Sending real-time notification to user ${data.user}:`, notification.title);
       this.notificationsGateway.sendNotificationToUser(data.user, notification);
+      
+      // Also update unread count
+      const unreadCount = await this.getUnreadCount(data.user);
+      this.notificationsGateway.updateUnreadCount(data.user, unreadCount);
+      console.log(`📊 Updated unread count for user ${data.user}: ${unreadCount}`);
     } catch (error) {
       console.error('Error sending real-time notification:', error);
       // Don't fail the notification creation if WebSocket fails

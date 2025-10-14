@@ -6,19 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-  AlertTriangle,
-  BarChart3,
-  Briefcase,
-  CheckCircle,
-  Clock,
-  CreditCard,
-  Eye,
-  FileText,
-  MessageSquare,
-  Shield,
-  UserCheck,
-  Users,
-  UserX
+    AlertTriangle,
+    BarChart3,
+    Briefcase,
+    CheckCircle,
+    Clock,
+    CreditCard,
+    Eye,
+    FileText,
+    MessageSquare,
+    Shield,
+    UserCheck,
+    Users,
+    UserX
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
     if (isAuthenticated && user?.role === 'admin') {
       fetchDashboardData();
     }
-  }, [isAuthenticated, user, router, isHydrated]);
+  }, [isAuthenticated, user, router, isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchDashboardData = async () => {
     // Double check authentication before making any API calls
@@ -260,6 +260,12 @@ export default function AdminDashboard() {
             <Link href="/admin/jobs">
               <Briefcase className="h-4 w-4 mr-2" />
               Manage Jobs
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/ip-management">
+              <Shield className="h-4 w-4 mr-2" />
+              IP Management
             </Link>
           </Button>
         </div>

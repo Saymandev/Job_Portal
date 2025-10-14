@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/auth-store';
 import { ArrowRight, CheckCircle, Home } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -12,6 +13,7 @@ export default function SubscriptionSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { isAuthenticated, fetchUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
 
@@ -31,6 +33,14 @@ export default function SubscriptionSuccessPage() {
 
       try {
         setLoading(true);
+        
+        // First, ensure user is authenticated
+        if (!isAuthenticated) {
+          await fetchUser();
+        }
+        
+        // Wait a bit for authentication to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Verify the session with the backend
         const response = await api.post('/subscriptions/verify-session', {
@@ -57,7 +67,7 @@ export default function SubscriptionSuccessPage() {
     };
 
     handleSuccess();
-  }, [sessionId, router, toast]);
+  }, [sessionId, router, toast, isAuthenticated, fetchUser]);
 
   if (loading) {
     return (

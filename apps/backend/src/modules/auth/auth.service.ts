@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Model } from 'mongoose';
 
+import { FraudDetectionService } from '../../common/services/fraud-detection.service';
 import { MailService } from '../mail/mail.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { LoginDto } from './dto/login.dto';
@@ -23,6 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailService: MailService,
+    private fraudDetectionService: FraudDetectionService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -65,18 +67,26 @@ export class AuthService {
     };
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string) {
     const { email, password } = loginDto;
 
     // Find user
     const user = await this.userModel.findOne({ email }).select('+password');
     if (!user) {
+      // Log failed login attempt for fraud detection
+      if (ipAddress) {
+        await this.fraudDetectionService.detectFailedLogin(ipAddress, userAgent);
+      }
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      // Log failed login attempt for fraud detection
+      if (ipAddress) {
+        await this.fraudDetectionService.detectFailedLogin(ipAddress, userAgent);
+      }
       throw new UnauthorizedException('Invalid credentials');
     }
 

@@ -7,11 +7,12 @@ import {
     HttpStatus,
     Post,
     Query,
+    Req,
     Res,
     UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -50,8 +51,11 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user' })
-  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] as string;
+    const userAgent = req.headers['user-agent'];
+    
+    const result = await this.authService.login(loginDto, ipAddress, userAgent);
 
     // Set refresh token in HTTP-only cookie
     res.cookie('refreshToken', result.refreshToken, {

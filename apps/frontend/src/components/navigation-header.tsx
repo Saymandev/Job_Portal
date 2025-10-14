@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Moon,
   Settings,
+  Shield,
   Sun,
   User,
   Users,
@@ -34,7 +35,7 @@ export default function NavigationHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout, isAuthenticated } = useAuthStore();
-  const { unreadCount: notifications, fetchUnreadCount } = useNotificationsStore();
+  const { unreadCount: notifications, fetchUnreadCount, initSocketListeners } = useNotificationsStore();
   const { conversations, fetchConversations } = useChatStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -55,11 +56,13 @@ export default function NavigationHeader() {
       const timer = setTimeout(() => {
         fetchUnreadCount();
         fetchConversations();
+        // Initialize notifications socket listeners
+        initSocketListeners(user.id);
       }, 100);
       
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, user, isHydrated, fetchUnreadCount, fetchConversations]);
+  }, [isAuthenticated, user, isHydrated, fetchUnreadCount, fetchConversations, initSocketListeners]);
 
   // Initialize theme from localStorage (client-side only)
   useEffect(() => {
@@ -400,6 +403,14 @@ export default function NavigationHeader() {
                             >
                               <BarChart3 className="mr-2 h-4 w-4" />
                               Platform Analytics
+                            </Link>
+                            <Link 
+                              href="/admin/ip-management" 
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Shield className="mr-2 h-4 w-4" />
+                              IP Management
                             </Link>
                             <Link 
                               href="/admin/settings" 

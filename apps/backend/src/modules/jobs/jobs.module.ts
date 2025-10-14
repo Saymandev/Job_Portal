@@ -7,6 +7,7 @@ import { ApplicationsModule } from '../applications/applications.module';
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Subscription, SubscriptionSchema } from '../subscriptions/schemas/subscription.schema';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
@@ -27,6 +28,7 @@ import { SavedJob, SavedJobSchema } from './schemas/saved-job.schema';
     ]),
     forwardRef(() => ApplicationsModule),
     forwardRef(() => NotificationsModule),
+    forwardRef(() => SubscriptionsModule),
   ],
   controllers: [JobsController, SavedJobsController],
   providers: [JobsService, SavedJobsService, AuditService, SanitizationService],

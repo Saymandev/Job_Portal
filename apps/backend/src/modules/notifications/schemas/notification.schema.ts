@@ -16,7 +16,7 @@ export class Notification {
 
   @Prop({ 
     type: String, 
-    enum: ['info', 'success', 'warning', 'error', 'application', 'interview', 'message', 'system'],
+    enum: ['info', 'success', 'warning', 'error', 'application', 'interview', 'message', 'system', 'subscription'],
     default: 'info',
     index: true
   })

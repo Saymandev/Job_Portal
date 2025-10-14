@@ -21,7 +21,7 @@ export class SubscriptionsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.EMPLOYER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create Stripe checkout session' })
+  @ApiOperation({ summary: 'Create Stripe checkout session (Employers only)' })
   async createCheckoutSession(
     @CurrentUser('id') userId: string,
     @Body() body: { plan: SubscriptionPlan },
@@ -56,6 +56,15 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Get current user subscription' })
   async getCurrentSubscription(@CurrentUser('id') userId: string) {
     const subscription = await this.subscriptionsService.getUserSubscription(userId);
+
+    // Job seekers don't have subscriptions
+    if (!subscription) {
+      return {
+        success: true,
+        message: 'Job seekers do not need subscriptions - they can apply to jobs for free',
+        data: null,
+      };
+    }
 
     // Transform the data to match frontend expectations
     const transformedData = {
@@ -112,14 +121,33 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Stripe webhook endpoint' })
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
     const signature = req.headers['stripe-signature'] as string;
-    const payload = req.body;
+    const payload = req.body as Buffer;
 
     try {
+      console.log('📡 Webhook received:', {
+        signature: signature ? 'present' : 'missing',
+        payloadSize: payload.length,
+        contentType: req.headers['content-type']
+      });
+
       await this.subscriptionsService.handleWebhook(signature, payload);
       res.json({ received: true });
     } catch (error) {
+      console.error('❌ Webhook error:', error.message);
       res.status(400).send(`Webhook Error: ${error.message}`);
     }
+  }
+
+  @Post('webhook/test')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Test webhook endpoint (for development)' })
+  async testWebhook(@Body() body: any) {
+    console.log('🧪 Test webhook called:', body);
+    return { 
+      success: true, 
+      message: 'Test webhook endpoint working',
+      received: body 
+    };
   }
 
   @Post('boost/:jobId')

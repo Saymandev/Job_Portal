@@ -139,6 +139,12 @@ export const useAuthStore = create<AuthState>()(
           const userId = normalizedUserData.id;
           console.log('Auth Store fetchUser: Initializing socket with userId:', userId);
           initSocket(userId);
+          initNotificationsSocket(userId);
+          
+          // Initialize notifications socket listeners
+          setTimeout(() => {
+            useNotificationsStore.getState().initSocketListeners(userId);
+          }, 1000);
         } catch (error) {
           set({ user: null, isAuthenticated: false });
         }
