@@ -3,13 +3,13 @@ services:
     name: job-portal-backend
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    buildCommand: cd apps/backend && npm install && npm run build
+    startCommand: cd apps/backend && npm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 5000
+        value: 10000
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -20,9 +20,23 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
       - key: MAIL_USER
         sync: false
       - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_SECURE
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
         sync: false
       - key: FRONTEND_URL
         value: https://your-frontend-url.vercel.app

@@ -17,12 +17,38 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
 
-  // CORS - Fixed to use specific origin instead of wildcard
+  // CORS - Configure for production and development
+  const frontendUrl = configService.get('FRONTEND_URL') || 'http://localhost:3000';
+  const allowedOrigins = [
+    frontendUrl,
+    'http://localhost:3000',
+    'https://localhost:3000',
+  ];
+
   app.enableCors({
-    origin: configService.get('FRONTEND_URL') || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // In production, only allow the configured frontend URL
+      if (configService.get('NODE_ENV') === 'production') {
+        return callback(new Error('Not allowed by CORS'), false);
+      }
+      
+      // In development, allow localhost
+      if (origin.includes('localhost')) {
+        return callback(null, true);
+      }
+      
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
   });
 
   // Global prefix

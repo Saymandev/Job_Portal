@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
-import { ArrowLeft, Building, Calendar, Clock, DollarSign, MapPin, Users } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, Clock, DollarSign, MapPin, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useCallback, useEffect, useState } from 'react';
@@ -28,6 +28,8 @@ interface Job {
   applicationsCount: number;
   views: number;
   viewsCount: number;
+  isFeatured?: boolean;
+  expiresAt?: string;
   company: {
     name: string;
     logo?: string;
@@ -43,6 +45,7 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [boostLoading, setBoostLoading] = useState(false);
 
   // Wait for Zustand store to hydrate from localStorage
   useEffect(() => {
@@ -64,6 +67,64 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
       setIsLoading(false);
     }
   }, [resolvedParams.id, toast, router]);
+
+  const handleBoostJob = async () => {
+    if (!job) return;
+    
+    if (!confirm(`Boost "${job.title}" for 7 days? This will use one of your available boosts.`)) return;
+
+    try {
+      setBoostLoading(true);
+      const response = await api.post(`/subscriptions/boost/${job._id}`, {
+        boostDays: 7
+      });
+      
+      if (response.data.success) {
+        toast({
+          title: 'Success',
+          description: `"${job.title}" has been boosted and will appear at the top of search results for 7 days!`,
+        });
+        fetchJob(); // Refresh the job data
+      }
+    } catch (error: any) {
+      console.error('Boost error:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to boost job. You may not have available boosts.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBoostLoading(false);
+    }
+  };
+
+  const handleRemoveBoost = async () => {
+    if (!job) return;
+    
+    if (!confirm(`Remove boost from "${job.title}"?`)) return;
+
+    try {
+      setBoostLoading(true);
+      const response = await api.post(`/subscriptions/boost/${job._id}/remove`);
+      
+      if (response.data.success) {
+        toast({
+          title: 'Success',
+          description: `Boost removed from "${job.title}"`,
+        });
+        fetchJob(); // Refresh the job data
+      }
+    } catch (error: any) {
+      console.error('Remove boost error:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to remove boost.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBoostLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Only check authentication after the store has hydrated
@@ -138,7 +199,15 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-3xl mb-2">{job.title}</CardTitle>
+                    <div className="flex items-center gap-3 mb-2">
+                      <CardTitle className="text-3xl">{job.title}</CardTitle>
+                      {job.isFeatured && (
+                        <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                          <Zap className="h-3 w-3" />
+                          BOOSTED
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex items-center gap-4 text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Building className="h-4 w-4" />
@@ -148,6 +217,12 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
                         <MapPin className="h-4 w-4" />
                         <span>{job.location}</span>
                       </div>
+                      {job.isFeatured && job.expiresAt && (
+                        <div className="flex items-center gap-1 text-yellow-600">
+                          <Zap className="h-4 w-4" />
+                          <span>Boost expires {new Date(job.expiresAt).toLocaleDateString()}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <Badge 
@@ -283,6 +358,27 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
                     View Public Job Page
                   </Button>
                 </Link>
+                {/* Boost Button */}
+                {job.isFeatured ? (
+                  <Button 
+                    className="w-full justify-start bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                    variant="outline"
+                    onClick={handleRemoveBoost}
+                    disabled={boostLoading}
+                  >
+                    <Zap className="mr-2 h-4 w-4" />
+                    {boostLoading ? 'Removing...' : 'Remove Boost'}
+                  </Button>
+                ) : (
+                  <Button 
+                    className="w-full justify-start bg-yellow-500 hover:bg-yellow-600"
+                    onClick={handleBoostJob}
+                    disabled={boostLoading}
+                  >
+                    <Zap className="mr-2 h-4 w-4" />
+                    {boostLoading ? 'Boosting...' : 'Boost Job'}
+                  </Button>
+                )}
               </CardContent>
             </Card>
 

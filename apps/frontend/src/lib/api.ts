@@ -4,6 +4,7 @@ import { clearAuthData, safeGetItem, safeSetItem } from './auth-utils';
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
   withCredentials: true,
+  timeout: 10000, // 10 second timeout
 });
 
 // Request interceptor to add auth token
