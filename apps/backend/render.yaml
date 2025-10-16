@@ -1,8 +1,9 @@
 services:
   - type: web
     name: job-portal-backend
-    env: node
+    runtime: node
     plan: starter
+    rootDir: apps/backend
     buildCommand: npm install && npm run build
     startCommand: npm run start:prod
     envVars:

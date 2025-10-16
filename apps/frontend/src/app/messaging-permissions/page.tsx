@@ -9,14 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useMessagingPermissionsStore } from '@/store/messaging-permissions-store';
 import {
-    Check,
-    Clock,
-    MessageSquare,
-    Plus,
-    Shield,
-    UserCheck,
-    Users,
-    X
+  Check,
+  Clock,
+  MessageSquare,
+  Plus,
+  Shield,
+  UserCheck,
+  Users,
+  X
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -419,7 +419,7 @@ export default function MessagingPermissionsPage() {
                 <CardContent className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No active permissions</h3>
-                  <p className="text-gray-500">You don't have any active messaging permissions yet.</p>
+                  <p className="text-gray-500">You don&apos;t have any active messaging permissions yet.</p>
                 </CardContent>
               </Card>
             ) : (

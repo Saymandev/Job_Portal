@@ -1,0 +1,10 @@
+# Ignore frontend files to prevent build issues
+../frontend
+../../apps/frontend
+node_modules
+.git
+*.log
+.env
+.env.local
+.env.production
+.env.development
