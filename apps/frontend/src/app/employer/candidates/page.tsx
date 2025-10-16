@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Application {
   _id: string;
@@ -73,6 +73,7 @@ export default function CandidatePipelinePage() {
   const { toast } = useToast();
 
   const [columns, setColumns] = useState<Column[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJob, setSelectedJob] = useState<string>('all');
@@ -92,6 +93,51 @@ export default function CandidatePipelinePage() {
   });
   const [isScheduling, setIsScheduling] = useState(false);
 
+  const fetchJobs = useCallback(async () => {
+    try {
+      const response = await api.get('/jobs/my-jobs');
+      if (response.data.success) {
+        setJobs(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    }
+  }, []);
+
+  const fetchApplications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get('/applications/employer');
+      if (response.data.success) {
+        setApplications(response.data.data);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load applications',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  const organizeApplicationsIntoColumns = useCallback((applications: Application[]) => {
+    const organized = PIPELINE_STAGES.map(stage => ({
+      ...stage,
+      applications: applications.filter(app => {
+        const statusMatch = app.status === stage.status;
+        const jobMatch = selectedJob === 'all' || app.job._id === selectedJob;
+        const searchMatch = searchQuery === '' || 
+          app.applicant.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          app.applicant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          app.job.title.toLowerCase().includes(searchQuery.toLowerCase());
+        return statusMatch && jobMatch && searchMatch;
+      }),
+    }));
+    setColumns(organized);
+  }, [selectedJob, searchQuery]);
+
   // Wait for Zustand store to hydrate from localStorage
   useEffect(() => {
     setIsHydrated(true);
@@ -107,59 +153,20 @@ export default function CandidatePipelinePage() {
     }
     fetchJobs();
     fetchApplications();
-  }, [isAuthenticated, user, router, isHydrated]);
+  }, [isAuthenticated, user, router, isHydrated, fetchJobs, fetchApplications]);
 
-  const fetchJobs = async () => {
-    try {
-      const response = await api.get('/jobs/my-jobs');
-      if (response.data.success) {
-        setJobs(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
+  useEffect(() => {
+    if (applications.length > 0) {
+      organizeApplicationsIntoColumns(applications);
     }
-  };
-
-  const fetchApplications = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.get('/applications/employer');
-      if (response.data.success) {
-        organizeApplicationsIntoColumns(response.data.data);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load applications',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const organizeApplicationsIntoColumns = (applications: Application[]) => {
-    const organized = PIPELINE_STAGES.map(stage => ({
-      ...stage,
-      applications: applications.filter(app => {
-        const statusMatch = app.status === stage.status;
-        const jobMatch = selectedJob === 'all' || app.job._id === selectedJob;
-        const searchMatch = searchQuery === '' || 
-          app.applicant.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.applicant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.job.title.toLowerCase().includes(searchQuery.toLowerCase());
-        return statusMatch && jobMatch && searchMatch;
-      }),
-    }));
-    setColumns(organized);
-  };
+  }, [applications, organizeApplicationsIntoColumns]);
 
   useEffect(() => {
     if (columns.length > 0) {
       const allApplications = columns.flatMap(col => col.applications);
       organizeApplicationsIntoColumns(allApplications);
     }
-  }, [searchQuery, selectedJob]);
+  }, [searchQuery, selectedJob, columns, organizeApplicationsIntoColumns]);
 
   const handleDragStart = (e: React.DragEvent, application: Application) => {
     setDraggedApplication(application);

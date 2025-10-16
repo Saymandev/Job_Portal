@@ -278,7 +278,7 @@ export default function MessagingPermissionsPage() {
                 <CardContent className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No permission requests</h3>
-                  <p className="text-gray-500">You haven't sent any messaging permission requests yet.</p>
+                  <p className="text-gray-500">You haven&apos;t sent any messaging permission requests yet.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -298,10 +298,10 @@ export default function MessagingPermissionsPage() {
                           <p className="text-sm text-gray-600">{request.targetUser.email}</p>
                           <p className="text-xs text-gray-500 capitalize">{request.targetUser.role.replace('_', ' ')}</p>
                           {request.message && (
-                            <p className="text-sm text-gray-700 mt-1">"{request.message}"</p>
+                            <p className="text-sm text-gray-700 mt-1">&ldquo;{request.message}&rdquo;</p>
                           )}
                           {request.responseMessage && (
-                            <p className="text-sm text-blue-700 mt-1 italic">Response: "{request.responseMessage}"</p>
+                            <p className="text-sm text-blue-700 mt-1 italic">Response: &ldquo;{request.responseMessage}&rdquo;</p>
                           )}
                         </div>
                       </div>
@@ -338,7 +338,7 @@ export default function MessagingPermissionsPage() {
                 <CardContent className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No received requests</h3>
-                  <p className="text-gray-500">You haven't received any messaging permission requests yet.</p>
+                  <p className="text-gray-500">You haven&apos;t received any messaging permission requests yet.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -358,7 +358,7 @@ export default function MessagingPermissionsPage() {
                           <p className="text-sm text-gray-600">{request.user.email}</p>
                           <p className="text-xs text-gray-500 capitalize">{request.user.role.replace('_', ' ')}</p>
                           {request.message && (
-                            <p className="text-sm text-gray-700 mt-1">"{request.message}"</p>
+                            <p className="text-sm text-gray-700 mt-1">&ldquo;{request.message}&rdquo;</p>
                           )}
                           {request.relatedJob && (
                             <p className="text-xs text-blue-600 mt-1">

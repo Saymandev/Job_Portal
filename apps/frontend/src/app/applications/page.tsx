@@ -34,7 +34,7 @@ export default function ApplicationsPage() {
     if (isAuthenticated) {
       fetchApplications();
     }
-  }, [isAuthenticated, router, isHydrated]);
+  }, [isAuthenticated, router, isHydrated, fetchApplications]);
 
   const fetchApplications = async () => {
     // Double check authentication before making any API calls

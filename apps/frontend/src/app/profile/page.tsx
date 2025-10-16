@@ -12,22 +12,22 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  Award,
-  Briefcase,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  Eye,
-  FileText,
-  GraduationCap,
-  Link,
-  Loader2,
-  Plus,
-  Save,
-  Trash2,
-  Upload,
-  User,
-  X
+    Award,
+    Briefcase,
+    ChevronDown,
+    ChevronUp,
+    Download,
+    Eye,
+    FileText,
+    GraduationCap,
+    Link,
+    Loader2,
+    Plus,
+    Save,
+    Trash2,
+    Upload,
+    User,
+    X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -267,7 +267,7 @@ export default function CVBuilderPage() {
     };
 
     initializeAuth();
-  }, [router, user, fetchUser]);
+  }, [router, user, fetchUser, isAuthenticated]);
 
   // Load CV data once authenticated
   useEffect(() => {

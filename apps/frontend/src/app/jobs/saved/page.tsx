@@ -143,7 +143,7 @@ export default function SavedJobsPage() {
               <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No saved jobs yet</h3>
               <p className="text-muted-foreground mb-6">
-                Start saving jobs you're interested in to keep track of them here.
+                Start saving jobs you&apos;re interested in to keep track of them here.
               </p>
               <Button asChild>
                 <Link href="/jobs">

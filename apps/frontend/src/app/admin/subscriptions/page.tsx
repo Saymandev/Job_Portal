@@ -84,7 +84,7 @@ export default function AdminSubscriptionManagementPage() {
     }
 
     fetchSubscriptionData();
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, fetchSubscriptionData]);
 
   const fetchSubscriptionData = useCallback(async () => {
     try {

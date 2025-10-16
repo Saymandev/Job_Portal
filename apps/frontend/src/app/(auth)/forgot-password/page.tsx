@@ -58,14 +58,14 @@ export default function ForgotPasswordPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password</CardTitle>
           <CardDescription>
-            Enter your email and we'll send you a reset link
+            Enter your email and we&apos;ll send you a reset link
           </CardDescription>
         </CardHeader>
         <CardContent>
           {emailSent ? (
             <div className="space-y-4">
               <p className="text-center text-muted-foreground">
-                If an account exists with that email, you'll receive a password reset link shortly.
+                If an account exists with that email, you&apos;ll receive a password reset link shortly.
               </p>
               <Link href="/login" className="block">
                 <Button className="w-full gap-2">

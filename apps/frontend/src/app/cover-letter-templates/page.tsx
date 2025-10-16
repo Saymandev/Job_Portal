@@ -10,7 +10,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { Check, Edit2, FileText, Plus, Star, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface CoverLetterTemplate {
   _id: string;
@@ -37,15 +37,7 @@ export default function CoverLetterTemplatesPage() {
     isDefault: false,
   });
 
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'job_seeker') {
-      router.push('/login');
-      return;
-    }
-    fetchTemplates();
-  }, [isAuthenticated, user, router]);
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await api.get('/cover-letter-templates');
@@ -61,7 +53,15 @@ export default function CoverLetterTemplatesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'job_seeker') {
+      router.push('/login');
+      return;
+    }
+    fetchTemplates();
+  }, [isAuthenticated, user, router, fetchTemplates]);
 
   const handleCreate = async () => {
     if (!formData.name || !formData.content) {

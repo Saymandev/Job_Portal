@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CheckCircle, Download, Mail, Phone, User, XCircle } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export default function ApplicantsPage() {
   const params = useParams();
@@ -21,22 +21,7 @@ export default function ApplicantsPage() {
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Wait for Zustand store to hydrate from localStorage
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    // Only check authentication after the store has hydrated
-    if (!isHydrated) return;
-
-    if (!isAuthenticated || user?.role !== 'employer') {
-      router.push('/login');
-      return;
-    }
-    fetchApplicants();
-  }, [isAuthenticated, user, router, params.jobId, isHydrated]);
-
-  const fetchApplicants = async () => {
+  const fetchApplicants = useCallback(async () => {
     try {
       const { data } = await api.get(`/applications/job/${params.jobId}`);
       setApplicants(data.data);
@@ -52,7 +37,7 @@ export default function ApplicantsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [params.jobId, toast]);
 
   const updateStatus = async (applicationId: string, status: string) => {
     try {
