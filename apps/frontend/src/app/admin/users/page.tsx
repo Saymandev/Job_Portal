@@ -164,9 +164,9 @@ export default function AdminUsersPage() {
       return <Badge variant="destructive">Inactive</Badge>;
     }
     if (!user.isEmailVerified) {
-      return <Badge variant="warning">Unverified</Badge>;
+      return <Badge variant="secondary">Unverified</Badge>;
     }
-    return <Badge variant="success">Active</Badge>;
+    return <Badge variant="default">Active</Badge>;
   };
 
   if (isLoading) {
