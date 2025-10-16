@@ -10,17 +10,17 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    Calendar,
-    CreditCard,
-    Crown,
-    DollarSign,
-    Edit,
-    Package,
-    Search,
-    TrendingDown,
-    TrendingUp,
-    Users,
-    X
+  Calendar,
+  CreditCard,
+  Crown,
+  DollarSign,
+  Edit,
+  Package,
+  Search,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -77,15 +77,6 @@ export default function AdminSubscriptionManagementPage() {
   const [planFilter, setPlanFilter] = useState('all');
   const [editingSubscription, setEditingSubscription] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') {
-      router.push('/login');
-      return;
-    }
-
-    fetchSubscriptionData();
-  }, [isAuthenticated, user, router, fetchSubscriptionData]);
-
   const fetchSubscriptionData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -111,6 +102,15 @@ export default function AdminSubscriptionManagementPage() {
       setIsLoading(false);
     }
   }, [toast]);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      router.push('/login');
+      return;
+    }
+
+    fetchSubscriptionData();
+  }, [isAuthenticated, user, router, fetchSubscriptionData]);
 
   const updateSubscriptionStatus = async (subscriptionId: string, status: string) => {
     try {
