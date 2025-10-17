@@ -7,7 +7,7 @@ import { formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { Briefcase, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function ApplicationsPage() {
   const router = useRouter();
@@ -15,6 +15,23 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
+
+  const fetchApplications = useCallback(async () => {
+    // Double check authentication before making any API calls
+    if (!isAuthenticated) {
+      console.log('User not authenticated, skipping API calls');
+      return;
+    }
+    
+    try {
+      const { data } = await api.get('/applications/my-applications');
+      setApplications(data.data);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
   // Wait for Zustand store to hydrate from localStorage
   useEffect(() => {
@@ -35,23 +52,6 @@ export default function ApplicationsPage() {
       fetchApplications();
     }
   }, [isAuthenticated, router, isHydrated, fetchApplications]);
-
-  const fetchApplications = async () => {
-    // Double check authentication before making any API calls
-    if (!isAuthenticated) {
-      console.log('User not authenticated, skipping API calls');
-      return;
-    }
-    
-    try {
-      const { data } = await api.get('/applications/my-applications');
-      setApplications(data.data);
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     const colors: any = {
