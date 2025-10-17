@@ -3,6 +3,12 @@
  * Handles cases where localStorage might be corrupted or unavailable
  */
 export const clearAuthData = () => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    console.log('localStorage not available (SSR)');
+    return;
+  }
+  
   try {
     localStorage.removeItem('auth-storage');
     localStorage.removeItem('accessToken');
@@ -19,6 +25,11 @@ export const clearAuthData = () => {
  * Safely get item from localStorage with error handling
  */
 export const safeGetItem = (key: string): string | null => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return null;
+  }
+  
   try {
     return localStorage.getItem(key);
   } catch (error) {
@@ -31,6 +42,11 @@ export const safeGetItem = (key: string): string | null => {
  * Safely set item in localStorage with error handling
  */
 export const safeSetItem = (key: string, value: string): boolean => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return false;
+  }
+  
   try {
     localStorage.setItem(key, value);
     return true;

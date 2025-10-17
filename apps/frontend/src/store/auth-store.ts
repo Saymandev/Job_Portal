@@ -53,16 +53,18 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
 
-          // Initialize socket connection
-          const userId = normalizedUserData.id;
-          console.log('Auth Store login: Initializing socket with userId:', userId);
-          initSocket(userId);
-          initNotificationsSocket(userId);
-          
-          // Initialize notifications socket listeners
-          setTimeout(() => {
-            useNotificationsStore.getState().initSocketListeners(userId);
-          }, 1000);
+          // Initialize socket connection only on client side
+          if (typeof window !== 'undefined') {
+            const userId = normalizedUserData.id;
+            console.log('Auth Store login: Initializing socket with userId:', userId);
+            initSocket(userId);
+            initNotificationsSocket(userId);
+            
+            // Initialize notifications socket listeners
+            setTimeout(() => {
+              useNotificationsStore.getState().initSocketListeners(userId);
+            }, 1000);
+          }
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -91,15 +93,18 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
 
-          const userId = normalizedUserData.id;
-          console.log('Auth Store register: Initializing socket with userId:', userId);
-          initSocket(userId);
-          initNotificationsSocket(userId);
-          
-          // Initialize notifications socket listeners
-          setTimeout(() => {
-            useNotificationsStore.getState().initSocketListeners(userId);
-          }, 1000);
+          // Initialize socket connection only on client side
+          if (typeof window !== 'undefined') {
+            const userId = normalizedUserData.id;
+            console.log('Auth Store register: Initializing socket with userId:', userId);
+            initSocket(userId);
+            initNotificationsSocket(userId);
+            
+            // Initialize notifications socket listeners
+            setTimeout(() => {
+              useNotificationsStore.getState().initSocketListeners(userId);
+            }, 1000);
+          }
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -113,7 +118,9 @@ export const useAuthStore = create<AuthState>()(
           console.error('Logout error:', error);
         } finally {
           clearAuthData();
-          disconnectSocket();
+          if (typeof window !== 'undefined') {
+            disconnectSocket();
+          }
           set({
             user: null,
             isAuthenticated: false,
@@ -136,15 +143,18 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
           });
           
-          const userId = normalizedUserData.id;
-          console.log('Auth Store fetchUser: Initializing socket with userId:', userId);
-          initSocket(userId);
-          initNotificationsSocket(userId);
-          
-          // Initialize notifications socket listeners
-          setTimeout(() => {
-            useNotificationsStore.getState().initSocketListeners(userId);
-          }, 1000);
+          // Initialize socket connection only on client side
+          if (typeof window !== 'undefined') {
+            const userId = normalizedUserData.id;
+            console.log('Auth Store fetchUser: Initializing socket with userId:', userId);
+            initSocket(userId);
+            initNotificationsSocket(userId);
+            
+            // Initialize notifications socket listeners
+            setTimeout(() => {
+              useNotificationsStore.getState().initSocketListeners(userId);
+            }, 1000);
+          }
         } catch (error) {
           set({ user: null, isAuthenticated: false });
         }
@@ -165,10 +175,14 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.error('Auth store rehydration error:', error);
-          // Clear corrupted data
-          clearAuthData();
+          // Clear corrupted data only on client side
+          if (typeof window !== 'undefined') {
+            clearAuthData();
+          }
         }
       },
+      // Skip hydration on server side
+      skipHydration: typeof window === 'undefined',
     }
   )
 );
