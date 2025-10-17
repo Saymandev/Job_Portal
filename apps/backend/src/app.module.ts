@@ -41,7 +41,19 @@ import { User, UserSchema } from './modules/users/schemas/user.schema';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env', 'apps/backend/.env'],
+      validate: (config: Record<string, any>) => {
+        const requiredKeys = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'MONGODB_URI'];
+        const missingKeys = requiredKeys.filter(
+          (key) => !config[key] || String(config[key]).trim() === '',
+        );
+        if (missingKeys.length > 0) {
+          throw new Error(
+            `Missing required environment variables: ${missingKeys.join(', ')}`,
+          );
+        }
+        return config;
+      },
     }),
 
     // Database
