@@ -1,7 +1,7 @@
 {
-  "buildCommand": "npm install && npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "buildCommand": "cd ../.. && npm install && npm run build --filter=frontend",
+  "devCommand": "cd ../.. && npm run dev --filter=frontend",
+  "installCommand": "cd ../.. && npm install",
   "framework": "nextjs",
   "outputDirectory": ".next"
 }

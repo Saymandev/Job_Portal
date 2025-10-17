@@ -9,7 +9,7 @@ const nextConfig = {
   },
   typescript: {
     // Skip TypeScript checking during builds
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   webpack: (config) => {
     // Ensure TS path alias @/* resolves during Vercel build
