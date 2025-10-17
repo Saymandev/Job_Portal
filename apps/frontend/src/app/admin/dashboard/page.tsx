@@ -209,7 +209,7 @@ export default function AdminDashboard() {
   const getActivityIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'user_registration':
-        return <UserCheck className="h-4 w-4 text-green-500 dark:text-green-400 dark:text-green-500" />;
+        return <UserCheck className="h-4 w-4 text-green-500 dark:text-green-400 " />;
       case 'job_posted':
         return <Briefcase className="h-4 w-4 text-primary" />;
       case 'application_submitted':
