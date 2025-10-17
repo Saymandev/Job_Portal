@@ -128,7 +128,7 @@ export class AdminController {
       data: job,
     };
   }
-
+// test
   @Get('applications')
   @ApiOperation({ summary: 'Get all applications' })
   async getAllApplications() {
