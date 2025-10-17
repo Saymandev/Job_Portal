@@ -8,7 +8,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Allow production builds to succeed even if TS is missing or has type errors
+    // Skip TypeScript checking during builds
     ignoreBuildErrors: true,
   },
   webpack: (config) => {
