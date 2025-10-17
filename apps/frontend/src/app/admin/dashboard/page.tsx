@@ -6,19 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    AlertTriangle,
-    BarChart3,
-    Briefcase,
-    CheckCircle,
-    Clock,
-    CreditCard,
-    Eye,
-    FileText,
-    MessageSquare,
-    Shield,
-    UserCheck,
-    Users,
-    UserX
+  AlertTriangle,
+  BarChart3,
+  Briefcase,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Eye,
+  FileText,
+  MessageSquare,
+  Shield,
+  UserCheck,
+  Users,
+  UserX
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -27,9 +27,9 @@ import { useEffect, useState } from 'react';
 const Progress = ({ value = 0, className = "" }: { value?: number; className?: string }) => {
   const percentage = Math.min(Math.max(value, 0), 100);
   return (
-    <div className={`relative h-4 w-full overflow-hidden rounded-full bg-gray-200 ${className}`}>
+    <div className={`relative h-4 w-full overflow-hidden rounded-full bg-muted ${className}`}>
       <div
-        className="h-full bg-blue-600 transition-all duration-300 ease-in-out"
+        className="h-full bg-primary transition-all duration-300 ease-in-out"
         style={{ width: `${percentage}%` }}
       />
     </div>
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case 'healthy':
-        return <Badge variant="default" className="gap-1 bg-green-600"><CheckCircle className="h-3 w-3" />Healthy</Badge>;
+        return <Badge variant="default" className="gap-1 bg-green-600 dark:bg-green-700"><CheckCircle className="h-3 w-3" />Healthy</Badge>;
       case 'warning':
         return <Badge variant="secondary" className="gap-1"><AlertTriangle className="h-3 w-3" />Warning</Badge>;
       case 'error':
@@ -196,11 +196,11 @@ export default function AdminDashboard() {
   const getRoleBadge = (role: string) => {
     switch (role.toLowerCase()) {
       case 'admin':
-        return <Badge variant="default" className="gap-1 bg-purple-600"><Shield className="h-3 w-3" />Admin</Badge>;
+        return <Badge variant="default" className="gap-1 bg-purple-600 dark:bg-purple-700"><Shield className="h-3 w-3" />Admin</Badge>;
       case 'employer':
-        return <Badge variant="default" className="gap-1 bg-blue-600"><Briefcase className="h-3 w-3" />Employer</Badge>;
+        return <Badge variant="default" className="gap-1 bg-primary"><Briefcase className="h-3 w-3" />Employer</Badge>;
       case 'job_seeker':
-        return <Badge variant="default" className="gap-1 bg-green-600"><Users className="h-3 w-3" />Job Seeker</Badge>;
+        return <Badge variant="default" className="gap-1 bg-green-600 dark:bg-green-700"><Users className="h-3 w-3" />Job Seeker</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
     }
@@ -209,15 +209,15 @@ export default function AdminDashboard() {
   const getActivityIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'user_registration':
-        return <UserCheck className="h-4 w-4 text-green-500" />;
+        return <UserCheck className="h-4 w-4 text-green-500 dark:text-green-400 dark:text-green-500" />;
       case 'job_posted':
-        return <Briefcase className="h-4 w-4 text-blue-500" />;
+        return <Briefcase className="h-4 w-4 text-primary" />;
       case 'application_submitted':
-        return <FileText className="h-4 w-4 text-purple-500" />;
+        return <FileText className="h-4 w-4 text-purple-500 dark:text-purple-400" />;
       case 'user_blocked':
-        return <UserX className="h-4 w-4 text-red-500" />;
+        return <UserX className="h-4 w-4 text-red-500 dark:text-red-400" />;
       default:
-        return <MessageSquare className="h-4 w-4 text-gray-500" />;
+        return <MessageSquare className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -226,15 +226,15 @@ export default function AdminDashboard() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-muted rounded w-1/3"></div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={i} className="h-32 bg-muted rounded"></div>
             ))}
           </div>
           <div className="grid lg:grid-cols-2 gap-6">
-            <div className="h-96 bg-gray-200 rounded"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-96 bg-muted rounded"></div>
+            <div className="h-96 bg-muted rounded"></div>
           </div>
         </div>
       </div>
@@ -246,8 +246,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">System overview and management</p>
+          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+          <p className="text-muted-foreground mt-2">System overview and management</p>
         </div>
         <div className="flex space-x-3">
           <Button asChild>
@@ -272,9 +272,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* System Health */}
-      <Card className="mb-8 border-blue-200 bg-blue-50">
+      <Card className="mb-8 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-900">
+          <CardTitle className="flex items-center gap-2 text-primary">
             <Shield className="h-5 w-5" />
             System Health
           </CardTitle>
@@ -282,25 +282,25 @@ export default function AdminDashboard() {
         <CardContent>
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="text-center">
-              <div className="text-sm font-medium text-blue-900 mb-1">Database</div>
+              <div className="text-sm font-medium text-primary mb-1">Database</div>
               {getStatusBadge(systemHealth.databaseStatus)}
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-blue-900 mb-1">Server</div>
+              <div className="text-sm font-medium text-primary mb-1">Server</div>
               {getStatusBadge(systemHealth.serverStatus)}
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-blue-900 mb-1">Email</div>
+              <div className="text-sm font-medium text-primary mb-1">Email</div>
               {getStatusBadge(systemHealth.emailStatus)}
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-blue-900 mb-1">Storage</div>
-              <div className="text-lg font-bold text-blue-900">{systemHealth.storageUsage}%</div>
+              <div className="text-sm font-medium text-primary mb-1">Storage</div>
+              <div className="text-lg font-bold text-primary">{systemHealth.storageUsage}%</div>
               <Progress value={systemHealth.storageUsage} className="w-16 mx-auto mt-1" />
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-blue-900 mb-1">API Response</div>
-              <div className="text-lg font-bold text-blue-900">{systemHealth.apiResponseTime}ms</div>
+              <div className="text-sm font-medium text-primary mb-1">API Response</div>
+              <div className="text-lg font-bold text-primary">{systemHealth.apiResponseTime}ms</div>
             </div>
           </div>
         </CardContent>
@@ -374,23 +374,23 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               {recentUsers.length === 0 ? (
                 <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No users yet</h3>
-                  <p className="text-gray-500">Users will appear here as they register</p>
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No users yet</h3>
+                  <p className="text-muted-foreground">Users will appear here as they register</p>
                 </div>
               ) : (
                 recentUsers.map((user) => (
                   <div key={user._id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-muted-foreground flex items-center justify-center">
                         <span className="text-white text-sm font-medium">
                           {user.fullName.split(' ').map((n: string) => n[0]).join('')}
                         </span>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{user.fullName}</h4>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <p className="text-xs text-gray-500">
+                        <h4 className="font-semibold text-foreground">{user.fullName}</h4>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">
                           Joined {new Date(user.createdAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -424,18 +424,18 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               {pendingJobs.length === 0 ? (
                 <div className="text-center py-8">
-                  <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
-                  <p className="text-gray-500">No jobs pending approval</p>
+                  <CheckCircle className="h-12 w-12 text-green-400 dark:text-green-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">All caught up!</h3>
+                  <p className="text-muted-foreground">No jobs pending approval</p>
                 </div>
               ) : (
                 pendingJobs.map((job) => (
                   <div key={job._id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{job.title}</h4>
-                        <p className="text-sm text-gray-600">{job.company.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <h4 className="font-semibold text-foreground">{job.title}</h4>
+                        <p className="text-sm text-muted-foreground">{job.company.name}</p>
+                        <p className="text-xs text-muted-foreground">
                           Posted by {job.createdBy.fullName} • {new Date(job.postedAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -445,7 +445,7 @@ export default function AdminDashboard() {
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {job.applicationsCount} applications
                       </div>
                       <div className="flex gap-2">
@@ -480,9 +480,9 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {recentActivity.length === 0 ? (
               <div className="text-center py-8">
-                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
-                <p className="text-gray-500">Activity will appear here as users interact with the platform</p>
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No recent activity</h3>
+                <p className="text-muted-foreground">Activity will appear here as users interact with the platform</p>
               </div>
             ) : (
               recentActivity.map((activity) => (
@@ -491,8 +491,8 @@ export default function AdminDashboard() {
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.description}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-foreground">{activity.description}</p>
+                    <p className="text-xs text-muted-foreground">
                       {activity.user.fullName} ({activity.user.role}) • {new Date(activity.timestamp).toLocaleString()}
                     </p>
                   </div>
