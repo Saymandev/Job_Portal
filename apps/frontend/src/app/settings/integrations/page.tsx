@@ -7,14 +7,14 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    Briefcase,
-    Calendar,
-    Check,
-    Linkedin,
-    MessageSquare,
-    RefreshCw,
-    X,
-    Zap
+  Briefcase,
+  Calendar,
+  Check,
+  Linkedin,
+  MessageSquare,
+  RefreshCw,
+  X,
+  Zap
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -178,7 +178,7 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -238,8 +238,8 @@ export default function IntegrationsPage() {
                     )}
 
                     {status?.errorMessage && (
-                      <div className="bg-red-50 border border-red-200 rounded-md p-2 mb-4">
-                        <p className="text-xs text-red-600">{status.errorMessage}</p>
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mb-4">
+                        <p className="text-xs text-destructive">{status.errorMessage}</p>
                       </div>
                     )}
 

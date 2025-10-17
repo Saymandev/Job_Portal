@@ -12,22 +12,22 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-    Award,
-    Briefcase,
-    ChevronDown,
-    ChevronUp,
-    Download,
-    Eye,
-    FileText,
-    GraduationCap,
-    Link,
-    Loader2,
-    Plus,
-    Save,
-    Trash2,
-    Upload,
-    User,
-    X
+  Award,
+  Briefcase,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Eye,
+  FileText,
+  GraduationCap,
+  Link,
+  Loader2,
+  Plus,
+  Save,
+  Trash2,
+  Upload,
+  User,
+  X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -494,7 +494,7 @@ export default function CVBuilderPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Redirecting to login...</p>
+          <p className="text-muted-foreground">Redirecting to login...</p>
         </div>
       </div>
     );
@@ -509,12 +509,12 @@ export default function CVBuilderPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold">CV Builder</h1>
-            <p className="text-gray-600 mt-2">Create a professional profile that stands out</p>
+            <p className="text-muted-foreground mt-2">Create a professional profile that stands out</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <div className="text-sm font-medium text-gray-600">Profile Completion</div>
-              <div className="text-2xl font-bold text-blue-600">{profileCompletion}%</div>
+              <div className="text-sm font-medium text-muted-foreground">Profile Completion</div>
+              <div className="text-2xl font-bold text-primary">{profileCompletion}%</div>
             </div>
             <Button onClick={handleSubmit(onSubmit)} disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -524,21 +524,21 @@ export default function CVBuilderPage() {
         </div>
 
         {/* Profile Completion Bar */}
-        <Card className="mb-8 border-blue-200 bg-blue-50">
+        <Card className="mb-8 border-primary/20 bg-primary/5">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-blue-900">Complete Your Profile</h3>
-                <p className="text-blue-700">A complete profile gets 3x more views from employers</p>
+                <h3 className="text-lg font-semibold text-primary">Complete Your Profile</h3>
+                <p className="text-primary/80">A complete profile gets 3x more views from employers</p>
               </div>
               <div className="w-64">
-                <div className="flex justify-between text-sm text-blue-900 mb-1">
+                <div className="flex justify-between text-sm text-primary mb-1">
                   <span>Progress</span>
                   <span>{profileCompletion}%</span>
                 </div>
-                <div className="w-full bg-blue-200 rounded-full h-2">
+                <div className="w-full bg-primary/20 rounded-full h-2">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${profileCompletion}%` }}
                   />
                 </div>
@@ -548,17 +548,17 @@ export default function CVBuilderPage() {
         </Card>
 
         {/* Resume Upload Card - Always Visible */}
-        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center">
-                  <Upload className="h-6 w-6 text-white" />
+                <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
+                  <Upload className="h-6 w-6 text-primary-foreground" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Your Resume/CV</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-2">Upload Your Resume/CV</h3>
+                <p className="text-sm text-muted-foreground mb-4">
                   Upload your latest resume (PDF, DOC, or DOCX format, max 10MB). This helps employers see your complete professional profile.
                 </p>
                 <div className="flex items-center gap-4">
@@ -572,20 +572,20 @@ export default function CVBuilderPage() {
                     />
                   </div>
                   {isUploadingResume && (
-                    <div className="flex items-center gap-2 text-blue-600">
+                    <div className="flex items-center gap-2 text-primary">
                       <Skeleton className="h-5 w-5 rounded-full" />
                       <Skeleton className="h-4 w-20" />
                     </div>
                   )}
                 </div>
                 {cvData?.resume && (
-                  <div className="mt-4 flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
+                  <div className="mt-4 flex items-center gap-3 p-3 bg-background rounded-lg border border-green-200 dark:border-green-800">
                     <div className="flex-shrink-0">
-                      <FileText className="h-5 w-5 text-green-600" />
+                      <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{cvData.resume.filename}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-medium text-foreground truncate">{cvData.resume.filename}</p>
+                      <p className="text-xs text-muted-foreground">
                         Uploaded {new Date(cvData.resume.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -655,7 +655,7 @@ export default function CVBuilderPage() {
                       placeholder="John Doe"
                     />
                     {errors.personalInfo?.fullName && (
-                      <p className="text-sm text-red-500">{errors.personalInfo.fullName.message}</p>
+                      <p className="text-sm text-destructive">{errors.personalInfo.fullName.message}</p>
                     )}
                   </div>
 
@@ -668,7 +668,7 @@ export default function CVBuilderPage() {
                       placeholder="john@example.com"
                     />
                     {errors.personalInfo?.email && (
-                      <p className="text-sm text-red-500">{errors.personalInfo.email.message}</p>
+                      <p className="text-sm text-destructive">{errors.personalInfo.email.message}</p>
                     )}
                   </div>
 
@@ -737,12 +737,12 @@ export default function CVBuilderPage() {
                   </div>
                 </div>
                 
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
                   <div className="flex items-center gap-2 text-blue-700 mb-2">
                     <Upload className="h-4 w-4" />
                     <span className="text-sm font-medium">Resume Upload</span>
                   </div>
-                  <p className="text-xs text-blue-600">
+                  <p className="text-xs text-primary">
                     Your resume can be uploaded in the prominent card above for better visibility to employers.
                   </p>
                 </div>
@@ -953,7 +953,7 @@ function SkillsSection({ skills, onAdd, onRemove, onUpdate }: {
         <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
           <div className="flex-1">
             <div className="font-medium">{skill.name}</div>
-            <div className="text-sm text-gray-600">{skill.category} • {skill.level}</div>
+            <div className="text-sm text-muted-foreground">{skill.category} • {skill.level}</div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => onRemove(index)}>
             <Trash2 className="h-4 w-4" />
@@ -1038,8 +1038,8 @@ function ExperienceSection({ experience, onAdd, onRemove, onUpdate }: {
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <h4 className="font-semibold">{exp.title}</h4>
-              <p className="text-gray-600">{exp.company} • {exp.location}</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-muted-foreground">{exp.company} • {exp.location}</p>
+              <p className="text-sm text-muted-foreground">
                 {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
               </p>
             </div>
@@ -1047,9 +1047,9 @@ function ExperienceSection({ experience, onAdd, onRemove, onUpdate }: {
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-sm text-gray-700 mb-2">{exp.description}</p>
+          <p className="text-sm text-foreground mb-2">{exp.description}</p>
           {exp.achievements.length > 0 && (
-            <ul className="text-sm text-gray-600 list-disc list-inside">
+            <ul className="text-sm text-muted-foreground list-disc list-inside">
               {exp.achievements.map((achievement, i) => (
                 <li key={i}>{achievement}</li>
               ))}
@@ -1155,8 +1155,8 @@ function EducationSection({ education, onAdd, onRemove, onUpdate }: {
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <h4 className="font-semibold">{edu.degree}</h4>
-              <p className="text-gray-600">{edu.institution} • {edu.location}</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-muted-foreground">{edu.institution} • {edu.location}</p>
+              <p className="text-sm text-muted-foreground">
                 {edu.startDate} - {edu.current ? 'Present' : edu.endDate}
                 {edu.gpa && ` • GPA: ${edu.gpa}`}
               </p>
@@ -1166,7 +1166,7 @@ function EducationSection({ education, onAdd, onRemove, onUpdate }: {
             </Button>
           </div>
           {edu.description && (
-            <p className="text-sm text-gray-700">{edu.description}</p>
+            <p className="text-sm text-foreground">{edu.description}</p>
           )}
         </div>
       ))}
@@ -1269,8 +1269,8 @@ function CertificationsSection({ certifications, onAdd, onRemove, onUpdate }: {
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <h4 className="font-semibold">{cert.name}</h4>
-              <p className="text-gray-600">{cert.issuer}</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-muted-foreground">{cert.issuer}</p>
+              <p className="text-sm text-muted-foreground">
                 Issued: {cert.date}
                 {cert.expiryDate && ` • Expires: ${cert.expiryDate}`}
                 {cert.credentialId && ` • ID: ${cert.credentialId}`}
@@ -1382,16 +1382,16 @@ function ProjectsSection({ projects, onAdd, onRemove, onUpdate }: {
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <h4 className="font-semibold">{project.name}</h4>
-              <p className="text-sm text-gray-700 mb-2">{project.description}</p>
+              <p className="text-sm text-foreground mb-2">{project.description}</p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {project.technologies.map((tech, i) => (
                   <Badge key={i} variant="secondary">{tech}</Badge>
                 ))}
               </div>
-              <div className="flex gap-4 text-sm text-gray-500">
+              <div className="flex gap-4 text-sm text-muted-foreground">
                 {project.startDate && <span>{project.startDate} - {project.endDate || 'Present'}</span>}
-                {project.url && <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Live Demo</a>}
-                {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:underline">GitHub</a>}
+                {project.url && <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Live Demo</a>}
+                {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:underline">GitHub</a>}
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => onRemove(index)}>
@@ -1487,7 +1487,7 @@ function LanguagesSection({ languages, onAdd, onRemove, onUpdate }: {
         <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
           <div className="flex-1">
             <div className="font-medium">{lang.language}</div>
-            <div className="text-sm text-gray-600 capitalize">{lang.proficiency}</div>
+            <div className="text-sm text-muted-foreground capitalize">{lang.proficiency}</div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => onRemove(index)}>
             <Trash2 className="h-4 w-4" />

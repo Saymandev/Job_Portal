@@ -198,7 +198,7 @@ export default function AdminUsersPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <Users className="h-8 w-8 text-blue-600" />
+          <Users className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">Users Management</h1>
         </div>
         <Badge variant="outline" className="text-sm">
@@ -211,7 +211,7 @@ export default function AdminUsersPage() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
@@ -223,7 +223,7 @@ export default function AdminUsersPage() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">All Roles</option>
               <option value="admin">Admin</option>
@@ -234,7 +234,7 @@ export default function AdminUsersPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -256,9 +256,9 @@ export default function AdminUsersPage() {
         {filteredUsers.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No users found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No users found</h3>
+              <p className="text-muted-foreground">Try adjusting your search or filter criteria.</p>
             </CardContent>
           </Card>
         ) : (
@@ -283,7 +283,7 @@ export default function AdminUsersPage() {
                         {getStatusBadge(user)}
                       </div>
                       
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <div className="flex items-center space-x-1">
                           <Mail className="h-4 w-4" />
                           <span>{user.email}</span>
@@ -298,7 +298,7 @@ export default function AdminUsersPage() {
                         {user.company && <span>at {user.company}</span>}
                       </div>
                       
-                      <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                      <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
                         <span>Joined: {new Date(user.createdAt).toLocaleDateString()}</span>
                         {user.lastLoginAt && (
                           <span>Last login: {new Date(user.lastLoginAt).toLocaleDateString()}</span>

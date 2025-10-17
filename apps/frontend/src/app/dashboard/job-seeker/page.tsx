@@ -27,9 +27,9 @@ import { useCallback, useEffect, useState } from 'react';
 const Progress = ({ value = 0, className = "" }: { value?: number; className?: string }) => {
   const percentage = Math.min(Math.max(value, 0), 100);
   return (
-    <div className={`relative h-4 w-full overflow-hidden rounded-full bg-gray-200 ${className}`}>
+    <div className={`relative h-4 w-full overflow-hidden rounded-full bg-muted ${className}`}>
       <div
-        className="h-full bg-blue-600 transition-all duration-300 ease-in-out"
+        className="h-full bg-primary transition-all duration-300 ease-in-out"
         style={{ width: `${percentage}%` }}
       />
     </div>
@@ -335,7 +335,7 @@ export default function JobSeekerDashboard() {
       case 'interview':
         return <Badge variant="default" className="gap-1"><Calendar className="h-3 w-3" />Interview</Badge>;
       case 'accepted':
-        return <Badge variant="default" className="gap-1 bg-green-600"><CheckCircle className="h-3 w-3" />Accepted</Badge>;
+        return <Badge variant="default" className="gap-1 bg-green-600 dark:bg-green-700"><CheckCircle className="h-3 w-3" />Accepted</Badge>;
       case 'rejected':
         return <Badge variant="destructive" className="gap-1">Rejected</Badge>;
       default:
@@ -353,15 +353,15 @@ export default function JobSeekerDashboard() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-muted rounded w-1/3"></div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={i} className="h-32 bg-muted rounded"></div>
             ))}
           </div>
           <div className="grid lg:grid-cols-2 gap-6">
-            <div className="h-96 bg-gray-200 rounded"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-96 bg-muted rounded"></div>
+            <div className="h-96 bg-muted rounded"></div>
           </div>
         </div>
       </div>
@@ -373,8 +373,8 @@ export default function JobSeekerDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.fullName}!</h1>
-          <p className="text-gray-600 mt-2">Here&apos;s what&apos;s happening with your job search</p>
+          <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.fullName}!</h1>
+          <p className="text-muted-foreground mt-2">Here&apos;s what&apos;s happening with your job search</p>
         </div>
         <div className="flex space-x-3">
           <Button asChild>
@@ -393,15 +393,15 @@ export default function JobSeekerDashboard() {
       </div>
 
       {/* Profile Completion */}
-      <Card className="mb-8 border-blue-200 bg-blue-50">
+      <Card className="mb-8 border-primary/20 bg-primary/5">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-blue-900">Complete Your Profile</h3>
-              <p className="text-blue-700">A complete profile gets 3x more views from employers</p>
+              <h3 className="text-lg font-semibold text-primary">Complete Your Profile</h3>
+              <p className="text-primary/80">A complete profile gets 3x more views from employers</p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-blue-900">{stats.profileCompletion}%</div>
+              <div className="text-2xl font-bold text-primary">{stats.profileCompletion}%</div>
               <Progress value={stats.profileCompletion} className="w-32 mt-2" />
             </div>
           </div>
@@ -509,7 +509,7 @@ export default function JobSeekerDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-yellow-500" />
+                <Zap className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
                 Recommended for You
               </CardTitle>
               <Button variant="ghost" size="sm" asChild>
@@ -521,9 +521,9 @@ export default function JobSeekerDashboard() {
             <div className="space-y-4">
               {recommendations.length === 0 ? (
                 <div className="text-center py-8">
-                  <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No recommendations yet</h3>
-                  <p className="text-gray-500 mb-4">Complete your profile to get personalized job recommendations</p>
+                  <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No recommendations yet</h3>
+                  <p className="text-muted-foreground mb-4">Complete your profile to get personalized job recommendations</p>
                   <Button asChild>
                     <Link href="/profile">Complete Profile</Link>
                   </Button>
@@ -533,8 +533,8 @@ export default function JobSeekerDashboard() {
                   <div key={job._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{job.title}</h4>
-                        <p className="text-sm text-gray-600">{job.company.name}</p>
+                        <h4 className="font-semibold text-foreground">{job.title}</h4>
+                        <p className="text-sm text-muted-foreground">{job.company.name}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
@@ -545,7 +545,7 @@ export default function JobSeekerDashboard() {
                         </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
                         {job.location}
@@ -560,7 +560,7 @@ export default function JobSeekerDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium text-green-600">
+                      <div className="text-sm font-medium text-green-600 dark:text-green-400">
                         {formatSalary(job.salary)}
                       </div>
                       <div className="flex gap-2">
@@ -593,9 +593,9 @@ export default function JobSeekerDashboard() {
             <div className="space-y-4">
               {recentApplications.length === 0 ? (
                 <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No applications yet</h3>
-                  <p className="text-gray-500 mb-4">Start applying to jobs to track your progress</p>
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No applications yet</h3>
+                  <p className="text-muted-foreground mb-4">Start applying to jobs to track your progress</p>
                   <Button asChild>
                     <Link href="/jobs">Browse Jobs</Link>
                   </Button>
@@ -604,9 +604,9 @@ export default function JobSeekerDashboard() {
                 recentApplications.map((application) => (
                   <div key={application._id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">{application.job?.title || 'Job Title Not Available'}</h4>
-                      <p className="text-sm text-gray-600">{application.job?.company?.name || 'Company Not Available'}</p>
-                      <p className="text-xs text-gray-500">
+                      <h4 className="font-semibold text-foreground">{application.job?.title || 'Job Title Not Available'}</h4>
+                      <p className="text-sm text-muted-foreground">{application.job?.company?.name || 'Company Not Available'}</p>
+                      <p className="text-xs text-muted-foreground">
                         Applied {new Date(application.appliedAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -641,21 +641,21 @@ export default function JobSeekerDashboard() {
                 <div key={savedJob._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">{savedJob.jobId.title}</h4>
-                      <p className="text-sm text-gray-600">{savedJob.jobId.company?.name || 'Unknown Company'}</p>
+                      <h4 className="font-semibold text-foreground">{savedJob.jobId.title}</h4>
+                      <p className="text-sm text-muted-foreground">{savedJob.jobId.company?.name || 'Unknown Company'}</p>
                     </div>
                     <Button variant="ghost" size="sm">
-                      <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                      <Heart className="h-4 w-4 fill-red-500 text-red-500 dark:fill-red-400 dark:text-red-400" />
                     </Button>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {savedJob.jobId.location}
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-green-600">
+                    <div className="text-sm font-medium text-green-600 dark:text-green-400">
                       {savedJob.jobId.salaryMin && savedJob.jobId.salaryMax ? 
                         `$${savedJob.jobId.salaryMin.toLocaleString()} - $${savedJob.jobId.salaryMax.toLocaleString()}` : 
                         'Salary not specified'
@@ -691,15 +691,15 @@ export default function JobSeekerDashboard() {
               recentApplications.slice(0, 3).map((application) => (
                 <div key={application._id} className="flex items-center gap-3 p-3 border rounded-lg">
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-blue-600" />
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-primary" />
                     </div>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       Applied to <span className="font-semibold">{application.job?.title || 'Job'}</span>
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {application.job?.company?.name || 'Company'} • {new Date(application.appliedAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -710,9 +710,9 @@ export default function JobSeekerDashboard() {
               ))
             ) : (
               <div className="text-center py-8">
-                <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
-                <p className="text-gray-500 mb-4">Start applying to jobs to see your activity here</p>
+                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No recent activity</h3>
+                <p className="text-muted-foreground mb-4">Start applying to jobs to see your activity here</p>
                 <Button asChild>
                   <Link href="/jobs">Browse Jobs</Link>
                 </Button>

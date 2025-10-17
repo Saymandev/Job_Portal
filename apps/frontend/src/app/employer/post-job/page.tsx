@@ -359,7 +359,7 @@ export default function PostJobPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -376,7 +376,7 @@ export default function PostJobPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
-                    <Crown className="h-5 w-5 text-yellow-500" />
+                    <Crown className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
                     <span className="font-semibold">
                       {subscriptionInfo.plan.toUpperCase()} Plan
                     </span>
@@ -387,12 +387,12 @@ export default function PostJobPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   {subscriptionInfo.canPostJob ? (
-                    <div className="flex items-center space-x-1 text-green-600">
+                    <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
                       <Check className="h-4 w-4" />
                       <span className="text-sm">Can post job</span>
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-1 text-red-600">
+                    <div className="flex items-center space-x-1 text-destructive">
                       <AlertCircle className="h-4 w-4" />
                       <span className="text-sm">Limit reached</span>
                     </div>
@@ -400,22 +400,22 @@ export default function PostJobPage() {
                 </div>
               </div>
               <div className="mt-3">
-                <div className="flex justify-between text-sm text-gray-600">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Jobs posted: {subscriptionInfo.jobPostsUsed}</span>
                   <span>Limit: {subscriptionInfo.jobPostsLimit}</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div className="w-full bg-muted rounded-full h-2 mt-2">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${(subscriptionInfo.jobPostsUsed / subscriptionInfo.jobPostsLimit) * 100}%` }}
                   />
                 </div>
               </div>
               {!subscriptionInfo.canPostJob && (
-                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                   <div className="flex items-center space-x-2">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <span className="text-sm text-red-700">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <span className="text-sm text-destructive">
                       You&apos;ve reached your job posting limit. Upgrade your subscription to post more jobs.
                     </span>
                   </div>

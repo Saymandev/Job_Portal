@@ -115,14 +115,14 @@ const reasonLabels = {
 };
 
 const reasonColors = {
-  spam: 'bg-yellow-100 text-yellow-800',
-  fraud: 'bg-red-100 text-red-800',
-  abuse: 'bg-red-100 text-red-800',
-  suspicious_activity: 'bg-orange-100 text-orange-800',
-  rate_limit_exceeded: 'bg-blue-100 text-blue-800',
-  multiple_failed_logins: 'bg-purple-100 text-purple-800',
-  malicious_uploads: 'bg-red-100 text-red-800',
-  admin_decision: 'bg-gray-100 text-gray-800',
+  spam: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300',
+  fraud: 'bg-red-500/20 text-red-700 dark:text-red-300',
+  abuse: 'bg-red-500/20 text-red-700 dark:text-red-300',
+  suspicious_activity: 'bg-orange-500/20 text-orange-700 dark:text-orange-300',
+  rate_limit_exceeded: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
+  multiple_failed_logins: 'bg-purple-500/20 text-purple-700 dark:text-purple-300',
+  malicious_uploads: 'bg-red-500/20 text-red-700 dark:text-red-300',
+  admin_decision: 'bg-muted text-muted-foreground',
 };
 
 export default function IpManagementPage() {
@@ -731,12 +731,12 @@ export default function IpManagementPage() {
                       </TableCell>
                       <TableCell>
                         {ip.isActive ? (
-                          <Badge className="bg-red-100 text-red-800">
+                          <Badge className="bg-red-500/20 text-red-700 dark:text-red-300">
                             <XCircle className="h-3 w-3 mr-1" />
                             Active
                           </Badge>
                         ) : (
-                          <Badge className="bg-green-100 text-green-800">
+                          <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Unblocked
                           </Badge>

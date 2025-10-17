@@ -23,18 +23,22 @@ Avatar.displayName = "Avatar"
 interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {}
 
 const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, alt = "", src, width, height, ...props }, ref) => (
-    <Image
-      ref={ref}
-      className={cn("aspect-square h-full w-full object-cover", className)}
-      alt={alt}
-      src={src || ""}
-      fill
-      {...(width && { width: Number(width) })}
-      {...(height && { height: Number(height) })}
-      {...props}
-    />
-  )
+  ({ className, alt = "", src, width, height, ...props }, ref) => {
+    if (!src) {
+      return null;
+    }
+    
+    return (
+      <Image
+        ref={ref}
+        className={cn("aspect-square h-full w-full object-cover", className)}
+        alt={alt}
+        src={src}
+        fill
+        {...props}
+      />
+    );
+  }
 )
 AvatarImage.displayName = "AvatarImage"
 
@@ -45,7 +49,7 @@ const AvatarFallback = React.forwardRef<HTMLDivElement, AvatarFallbackProps>(
     <div
       ref={ref}
       className={cn(
-        "flex h-full w-full items-center justify-center rounded-full bg-gray-100 text-gray-600 text-sm font-medium",
+        "flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-medium",
         className
       )}
       {...props}
@@ -55,3 +59,4 @@ const AvatarFallback = React.forwardRef<HTMLDivElement, AvatarFallbackProps>(
 AvatarFallback.displayName = "AvatarFallback"
 
 export { Avatar, AvatarFallback, AvatarImage }
+

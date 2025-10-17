@@ -147,7 +147,7 @@ export default function InterviewsPage() {
   // Show loading while store is hydrating or data is loading
   if (!isHydrated || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">Loading interviews...</div>
         </div>
@@ -160,7 +160,7 @@ export default function InterviewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -198,7 +198,7 @@ export default function InterviewsPage() {
         ) : filteredInterviews.length === 0 ? (
           <Card>
             <CardContent className="pt-12 pb-12 text-center">
-              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No interviews scheduled</h3>
               <p className="text-muted-foreground">
                 {filter === 'upcoming' ? 'You have no upcoming interviews' : 'No interviews found'}
@@ -278,7 +278,7 @@ export default function InterviewsPage() {
                   </div>
 
                   {interview.notes && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                    <div className="mt-4 p-3 bg-background rounded-md">
                       <p className="text-sm text-muted-foreground">
                         <strong>Notes:</strong> {interview.notes}
                       </p>

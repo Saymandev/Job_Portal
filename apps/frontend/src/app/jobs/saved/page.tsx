@@ -8,16 +8,16 @@ import { useSavedJobs } from '@/hooks/use-saved-jobs';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    Briefcase,
-    Building2,
-    Clock,
-    DollarSign,
-    Filter,
-    Heart,
-    MapPin,
-    Search,
-    SortAsc,
-    Users
+  Briefcase,
+  Building2,
+  Clock,
+  DollarSign,
+  Filter,
+  Heart,
+  MapPin,
+  Search,
+  SortAsc,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -64,7 +64,7 @@ export default function SavedJobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -126,11 +126,11 @@ export default function SavedJobsPage() {
               <Card key={i}>
                 <CardContent className="pt-6">
                   <div className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+                    <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-muted rounded w-1/2 mb-4"></div>
                     <div className="flex gap-2">
-                      <div className="h-6 bg-gray-200 rounded w-20"></div>
-                      <div className="h-6 bg-gray-200 rounded w-24"></div>
+                      <div className="h-6 bg-muted rounded w-20"></div>
+                      <div className="h-6 bg-muted rounded w-24"></div>
                     </div>
                   </div>
                 </CardContent>
@@ -140,7 +140,7 @@ export default function SavedJobsPage() {
         ) : sortedAndFilteredJobs.length === 0 ? (
           <Card>
             <CardContent className="pt-12 pb-12 text-center">
-              <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No saved jobs yet</h3>
               <p className="text-muted-foreground mb-6">
                 Start saving jobs you&apos;re interested in to keep track of them here.

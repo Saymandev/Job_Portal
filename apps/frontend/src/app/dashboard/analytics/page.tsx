@@ -56,7 +56,7 @@ export default function JobSeekerAnalyticsPage() {
   // Show loading while store is hydrating or data is loading
   if (!isHydrated || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">Loading analytics...</div>
         </div>
@@ -70,7 +70,7 @@ export default function JobSeekerAnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">No analytics data available</div>
         </div>
@@ -81,7 +81,7 @@ export default function JobSeekerAnalyticsPage() {
   const { overview, trends, topAppliedCategories } = analytics;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -103,7 +103,7 @@ export default function JobSeekerAnalyticsPage() {
                     All time
                   </p>
                 </div>
-                <FileText className="h-12 w-12 text-blue-500 opacity-20" />
+                <FileText className="h-12 w-12 text-primary opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -114,12 +114,12 @@ export default function JobSeekerAnalyticsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Response Rate</p>
                   <p className="text-3xl font-bold">{overview.responseRate.toFixed(0)}%</p>
-                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     Responded
                   </p>
                 </div>
-                <Target className="h-12 w-12 text-green-500 opacity-20" />
+                <Target className="h-12 w-12 text-green-500 dark:text-green-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -132,7 +132,7 @@ export default function JobSeekerAnalyticsPage() {
                   <p className="text-3xl font-bold">{overview.averageResponseTime}</p>
                   <p className="text-xs text-muted-foreground mt-1">days</p>
                 </div>
-                <Clock className="h-12 w-12 text-purple-500 opacity-20" />
+                <Clock className="h-12 w-12 text-purple-500 dark:text-purple-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -151,7 +151,7 @@ export default function JobSeekerAnalyticsPage() {
                     {overview.applicationsByStatus.accepted || 0} accepted
                   </p>
                 </div>
-                <CheckCircle className="h-12 w-12 text-green-500 opacity-20" />
+                <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -166,16 +166,16 @@ export default function JobSeekerAnalyticsPage() {
             <div className="grid md:grid-cols-3 lg:grid-cols-7 gap-4">
               {Object.entries(overview.applicationsByStatus).map(([status, count]: [string, any]) => {
                 const statusConfig: Record<string, { icon: any; color: string }> = {
-                  pending: { icon: Clock, color: 'text-yellow-600' },
-                  reviewing: { icon: Eye, color: 'text-blue-600' },
-                  shortlisted: { icon: TrendingUp, color: 'text-purple-600' },
-                  interview_scheduled: { icon: Clock, color: 'text-indigo-600' },
-                  interviewed: { icon: Target, color: 'text-orange-600' },
-                  accepted: { icon: CheckCircle, color: 'text-green-600' },
-                  rejected: { icon: XCircle, color: 'text-red-600' },
+                  pending: { icon: Clock, color: 'text-yellow-600 dark:text-yellow-400' },
+                  reviewing: { icon: Eye, color: 'text-blue-600 dark:text-blue-400' },
+                  shortlisted: { icon: TrendingUp, color: 'text-purple-600 dark:text-purple-400' },
+                  interview_scheduled: { icon: Clock, color: 'text-indigo-600 dark:text-indigo-400' },
+                  interviewed: { icon: Target, color: 'text-orange-600 dark:text-orange-400' },
+                  accepted: { icon: CheckCircle, color: 'text-green-600 dark:text-green-400' },
+                  rejected: { icon: XCircle, color: 'text-red-600 dark:text-red-400' },
                 };
 
-                const config = statusConfig[status] || { icon: FileText, color: 'text-gray-600' };
+                const config = statusConfig[status] || { icon: FileText, color: 'text-muted-foreground' };
                 const Icon = config.icon;
 
                 return (
@@ -207,7 +207,7 @@ export default function JobSeekerAnalyticsPage() {
                     </span>
                     <Badge variant="secondary">{category.count} applications</Badge>
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary"
                       style={{

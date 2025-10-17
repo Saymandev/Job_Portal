@@ -54,7 +54,7 @@ export default function AdminAnalyticsPage() {
   // Show loading while store is hydrating or data is loading
   if (!isHydrated || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">Loading analytics...</div>
         </div>
@@ -68,7 +68,7 @@ export default function AdminAnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">No analytics data available</div>
         </div>
@@ -79,7 +79,7 @@ export default function AdminAnalyticsPage() {
   const { overview, growth, topPerformers, platformHealth } = analytics;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -97,12 +97,12 @@ export default function AdminAnalyticsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Users</p>
                   <p className="text-3xl font-bold">{overview.totalUsers}</p>
-                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     {platformHealth.activeUsersLast7Days} active (7d)
                   </p>
                 </div>
-                <Users className="h-12 w-12 text-blue-500 opacity-20" />
+                <Users className="h-12 w-12 text-primary opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -117,7 +117,7 @@ export default function AdminAnalyticsPage() {
                     {overview.activeJobs} active
                   </p>
                 </div>
-                <Briefcase className="h-12 w-12 text-purple-500 opacity-20" />
+                <Briefcase className="h-12 w-12 text-purple-500 dark:text-purple-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -132,7 +132,7 @@ export default function AdminAnalyticsPage() {
                     {overview.pendingApplications} pending
                   </p>
                 </div>
-                <FileText className="h-12 w-12 text-green-500 opacity-20" />
+                <FileText className="h-12 w-12 text-green-500 dark:text-green-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -147,7 +147,7 @@ export default function AdminAnalyticsPage() {
                     registered
                   </p>
                 </div>
-                <Building className="h-12 w-12 text-orange-500 opacity-20" />
+                <Building className="h-12 w-12 text-orange-500 dark:text-orange-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -165,14 +165,14 @@ export default function AdminAnalyticsPage() {
                   <span className="text-sm font-medium">Overall Health</span>
                   <span className="text-2xl font-bold">{platformHealth.healthScore}/100</span>
                 </div>
-                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-4 bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all ${
                       platformHealth.healthScore >= 80
-                        ? 'bg-green-500'
+                        ? 'bg-green-500 dark:bg-green-600'
                         : platformHealth.healthScore >= 60
-                        ? 'bg-yellow-500'
-                        : 'bg-red-500'
+                        ? 'bg-yellow-500 dark:bg-yellow-600'
+                        : 'bg-red-500 dark:bg-red-600'
                     }`}
                     style={{ width: `${platformHealth.healthScore}%` }}
                   />
@@ -237,7 +237,7 @@ export default function AdminAnalyticsPage() {
                     <span className="capitalize">{category.category.replace('-', ' ')}</span>
                     <span className="font-medium">{category.count} jobs</span>
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary"
                       style={{

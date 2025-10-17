@@ -58,13 +58,13 @@ interface Column {
 }
 
 const PIPELINE_STAGES = [
-  { id: 'pending', title: 'New Applications', status: 'pending', color: 'bg-blue-100 border-blue-300' },
-  { id: 'reviewing', title: 'Under Review', status: 'reviewing', color: 'bg-yellow-100 border-yellow-300' },
-  { id: 'shortlisted', title: 'Shortlisted', status: 'shortlisted', color: 'bg-purple-100 border-purple-300' },
-  { id: 'interview_scheduled', title: 'Interview Scheduled', status: 'interview_scheduled', color: 'bg-indigo-100 border-indigo-300' },
-  { id: 'interviewed', title: 'Interviewed', status: 'interviewed', color: 'bg-orange-100 border-orange-300' },
-  { id: 'accepted', title: 'Accepted', status: 'accepted', color: 'bg-green-100 border-green-300' },
-  { id: 'rejected', title: 'Rejected', status: 'rejected', color: 'bg-red-100 border-red-300' },
+  { id: 'pending', title: 'New Applications', status: 'pending', color: 'bg-blue-500/20 border-blue-300 dark:border-blue-700' },
+  { id: 'reviewing', title: 'Under Review', status: 'reviewing', color: 'bg-yellow-500/20 border-yellow-300 dark:border-yellow-700' },
+  { id: 'shortlisted', title: 'Shortlisted', status: 'shortlisted', color: 'bg-purple-500/20 border-purple-300 dark:border-purple-700' },
+  { id: 'interview_scheduled', title: 'Interview Scheduled', status: 'interview_scheduled', color: 'bg-indigo-500/20 border-indigo-300 dark:border-indigo-700' },
+  { id: 'interviewed', title: 'Interviewed', status: 'interviewed', color: 'bg-orange-500/20 border-orange-300 dark:border-orange-700' },
+  { id: 'accepted', title: 'Accepted', status: 'accepted', color: 'bg-green-500/20 border-green-300 dark:border-green-700' },
+  { id: 'rejected', title: 'Rejected', status: 'rejected', color: 'bg-red-500/20 border-red-300 dark:border-red-700' },
 ];
 
 export default function CandidatePipelinePage() {
@@ -122,21 +122,6 @@ export default function CandidatePipelinePage() {
     }
   }, [toast]);
 
-  const organizeApplicationsIntoColumns = useCallback((applications: Application[]) => {
-    const organized = PIPELINE_STAGES.map(stage => ({
-      ...stage,
-      applications: applications.filter(app => {
-        const statusMatch = app.status === stage.status;
-        const jobMatch = selectedJob === 'all' || app.job._id === selectedJob;
-        const searchMatch = searchQuery === '' || 
-          app.applicant.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.applicant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          app.job.title.toLowerCase().includes(searchQuery.toLowerCase());
-        return statusMatch && jobMatch && searchMatch;
-      }),
-    }));
-    setColumns(organized);
-  }, [selectedJob, searchQuery]);
 
   // Wait for Zustand store to hydrate from localStorage
   useEffect(() => {
@@ -155,18 +140,24 @@ export default function CandidatePipelinePage() {
     fetchApplications();
   }, [isAuthenticated, user, router, isHydrated, fetchJobs, fetchApplications]);
 
+  // Organize applications into columns whenever applications, searchQuery, or selectedJob changes
   useEffect(() => {
     if (applications.length > 0) {
-      organizeApplicationsIntoColumns(applications);
+      const organized = PIPELINE_STAGES.map(stage => ({
+        ...stage,
+        applications: applications.filter(app => {
+          const statusMatch = app.status === stage.status;
+          const jobMatch = selectedJob === 'all' || app.job._id === selectedJob;
+          const searchMatch = searchQuery === '' || 
+            app.applicant.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            app.applicant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            app.job.title.toLowerCase().includes(searchQuery.toLowerCase());
+          return statusMatch && jobMatch && searchMatch;
+        }),
+      }));
+      setColumns(organized);
     }
-  }, [applications, organizeApplicationsIntoColumns]);
-
-  useEffect(() => {
-    if (columns.length > 0) {
-      const allApplications = columns.flatMap(col => col.applications);
-      organizeApplicationsIntoColumns(allApplications);
-    }
-  }, [searchQuery, selectedJob, columns, organizeApplicationsIntoColumns]);
+  }, [applications, selectedJob, searchQuery]);
 
   const handleDragStart = (e: React.DragEvent, application: Application) => {
     setDraggedApplication(application);
@@ -294,7 +285,7 @@ export default function CandidatePipelinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">

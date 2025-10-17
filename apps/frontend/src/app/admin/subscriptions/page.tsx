@@ -190,30 +190,30 @@ export default function AdminSubscriptionManagementPage() {
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case 'free':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
       case 'basic':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-500/20 text-blue-700 dark:text-blue-300';
       case 'pro':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-500/20 text-purple-700 dark:text-purple-300';
       case 'enterprise':
-        return 'bg-gold-100 text-gold-800';
+        return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/20 text-green-700 dark:text-green-300';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/20 text-red-700 dark:text-red-300';
       case 'past_due':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300';
       case 'inactive':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 

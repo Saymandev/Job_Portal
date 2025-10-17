@@ -43,13 +43,13 @@ export default function NotificationsPage() {
   const getIcon = (type: string) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />;
       case 'warning':
-        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
+        return <AlertCircle className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />;
       case 'error':
-        return <X className="h-5 w-5 text-red-500" />;
+        return <X className="h-5 w-5 text-red-500 dark:text-red-400" />;
       default:
-        return <Info className="h-5 w-5 text-blue-500" />;
+        return <Info className="h-5 w-5 text-blue-500 dark:text-blue-400" />;
     }
   };
 
@@ -65,8 +65,8 @@ export default function NotificationsPage() {
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
               </CardContent>
             </Card>
           ))}
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <Bell className="h-8 w-8 text-blue-600" />
+          <Bell className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">Notifications</h1>
           {unreadCount > 0 && (
             <Badge variant="destructive" className="text-sm">
@@ -99,9 +99,9 @@ export default function NotificationsPage() {
       {notifications.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-500">You&apos;re all caught up! New notifications will appear here.</p>
+            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No notifications</h3>
+            <p className="text-muted-foreground">You&apos;re all caught up! New notifications will appear here.</p>
           </CardContent>
         </Card>
       ) : (
@@ -110,7 +110,7 @@ export default function NotificationsPage() {
                     <Card 
                       key={notification._id} 
                       className={`transition-all hover:shadow-md ${
-                        !notification.isRead ? 'border-l-4 border-l-blue-500 bg-blue-50/30' : ''
+                        !notification.isRead ? 'border-l-4 border-l-primary bg-primary/5' : ''
                       }`}
                     >
               <CardContent className="p-6">
@@ -119,7 +119,7 @@ export default function NotificationsPage() {
                     {getIcon(notification.type)}
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <h3 className={`font-semibold ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                        <h3 className={`font-semibold ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {notification.title}
                         </h3>
                         {!notification.isRead && (
@@ -128,10 +128,10 @@ export default function NotificationsPage() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-gray-600 text-sm mb-2">
+                      <p className="text-muted-foreground text-sm mb-2">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {new Date(notification.createdAt).toLocaleDateString()} at{' '}
                         {new Date(notification.createdAt).toLocaleTimeString()}
                       </p>
@@ -144,7 +144,7 @@ export default function NotificationsPage() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleMarkAsRead(notification._id)}
-                                className="text-gray-500 hover:text-gray-700"
+                                className="text-muted-foreground hover:text-foreground"
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -153,7 +153,7 @@ export default function NotificationsPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDeleteNotification(notification._id)}
-                              className="text-gray-500 hover:text-red-600"
+                              className="text-muted-foreground hover:text-destructive"
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
                 </div>
                 
                 {notification.actionUrl && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="mt-3 pt-3 border-t border-border">
                     <Button 
                       size="sm" 
                       variant="outline"

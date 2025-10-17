@@ -205,13 +205,26 @@ export class SavedJobsService {
       .exec();
 
     if (savedJobs.length === 0) {
-      // If no saved jobs, return featured jobs
-      return await this.jobModel
+      // If no saved jobs, return featured jobs with random match scores
+      const featuredJobs = await this.jobModel
         .find({ status: 'open', isFeatured: true })
         .populate('company', 'name logo location')
         .sort({ createdAt: -1 })
         .limit(limit)
         .exec();
+
+      return featuredJobs.map(job => {
+        const jobObj = job.toObject();
+        return {
+          ...jobObj,
+          matchScore: Math.floor(Math.random() * 30) + 70, // Random score between 70-100 for featured jobs
+          salary: jobObj.salaryMin && jobObj.salaryMax ? {
+            min: jobObj.salaryMin,
+            max: jobObj.salaryMax,
+            currency: jobObj.currency || 'USD'
+          } : undefined
+        };
+      });
     }
 
     // Analyze user preferences from saved jobs
@@ -250,7 +263,22 @@ export class SavedJobsService {
       .limit(limit)
       .exec();
 
-    return recommendations;
+    // Calculate match scores for each recommendation
+    const recommendationsWithScores = recommendations.map(job => {
+      const matchScore = this.calculateMatchScore(job, preferences);
+      const jobObj = job.toObject();
+      return {
+        ...jobObj,
+        matchScore,
+        salary: jobObj.salaryMin && jobObj.salaryMax ? {
+          min: jobObj.salaryMin,
+          max: jobObj.salaryMax,
+          currency: jobObj.currency || 'USD'
+        } : undefined
+      };
+    });
+
+    return recommendationsWithScores;
   }
 
   private analyzeUserPreferences(savedJobs: SavedJobDocument[]): {
@@ -297,5 +325,60 @@ export class SavedJobsService {
       locations: Array.from(locations),
       companies: Array.from(companies),
     };
+  }
+
+  private calculateMatchScore(job: any, preferences: any): number {
+    let score = 0;
+    let totalWeight = 0;
+
+    // Skills match (40% weight)
+    if (preferences.skills.length > 0) {
+      const matchingSkills = job.skills.filter((skill: string) => 
+        preferences.skills.some((prefSkill: string) => 
+          skill.toLowerCase().includes(prefSkill.toLowerCase()) || 
+          prefSkill.toLowerCase().includes(skill.toLowerCase())
+        )
+      ).length;
+      const skillScore = (matchingSkills / preferences.skills.length) * 100;
+      score += skillScore * 0.4;
+      totalWeight += 0.4;
+    }
+
+    // Experience level match (20% weight)
+    if (preferences.experienceLevels.length > 0) {
+      const experienceMatch = preferences.experienceLevels.includes(job.experienceLevel);
+      score += (experienceMatch ? 100 : 0) * 0.2;
+      totalWeight += 0.2;
+    }
+
+    // Job type match (20% weight)
+    if (preferences.jobTypes.length > 0) {
+      const jobTypeMatch = preferences.jobTypes.includes(job.jobType);
+      score += (jobTypeMatch ? 100 : 0) * 0.2;
+      totalWeight += 0.2;
+    }
+
+    // Location match (20% weight)
+    if (preferences.locations.length > 0) {
+      const locationMatch = preferences.locations.some((location: string) => 
+        job.location.toLowerCase().includes(location.toLowerCase())
+      );
+      score += (locationMatch ? 100 : 0) * 0.2;
+      totalWeight += 0.2;
+    }
+
+    // If no preferences, give a base score
+    if (totalWeight === 0) {
+      return Math.floor(Math.random() * 30) + 60; // Random score between 60-90
+    }
+
+    // Normalize score based on total weight
+    const normalizedScore = totalWeight > 0 ? score / totalWeight : 0;
+    
+    // Add some randomness to make it more realistic
+    const randomFactor = (Math.random() - 0.5) * 10; // ±5 points
+    const finalScore = Math.max(0, Math.min(100, normalizedScore + randomFactor));
+    
+    return Math.round(finalScore);
   }
 }

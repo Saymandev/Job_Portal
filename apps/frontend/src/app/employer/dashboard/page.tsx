@@ -27,9 +27,9 @@ import { useCallback, useEffect, useState } from 'react';
 const Progress = ({ value = 0, className = "" }: { value?: number; className?: string }) => {
   const percentage = Math.min(Math.max(value, 0), 100);
   return (
-    <div className={`relative h-4 w-full overflow-hidden rounded-full bg-gray-200 ${className}`}>
+    <div className={`relative h-4 w-full overflow-hidden rounded-full bg-muted ${className}`}>
       <div
-        className="h-full bg-blue-600 transition-all duration-300 ease-in-out"
+        className="h-full bg-primary transition-all duration-300 ease-in-out"
         style={{ width: `${percentage}%` }}
       />
     </div>
@@ -249,7 +249,7 @@ export default function EmployerDashboard() {
       case 'interview':
         return <Badge variant="default" className="gap-1"><Calendar className="h-3 w-3" />Interview</Badge>;
       case 'hired':
-        return <Badge variant="default" className="gap-1 bg-green-600"><CheckCircle className="h-3 w-3" />Hired</Badge>;
+        return <Badge variant="default" className="gap-1 bg-green-600 dark:bg-green-700"><CheckCircle className="h-3 w-3" />Hired</Badge>;
       case 'rejected':
         return <Badge variant="destructive" className="gap-1">Rejected</Badge>;
       default:
@@ -260,7 +260,7 @@ export default function EmployerDashboard() {
   const getJobStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case 'active':
-        return <Badge variant="default" className="gap-1 bg-green-600"><CheckCircle className="h-3 w-3" />Active</Badge>;
+        return <Badge variant="default" className="gap-1 bg-green-600 dark:bg-green-700"><CheckCircle className="h-3 w-3" />Active</Badge>;
       case 'paused':
         return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />Paused</Badge>;
       case 'closed':
@@ -281,15 +281,15 @@ export default function EmployerDashboard() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-muted rounded w-1/3"></div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={i} className="h-32 bg-muted rounded"></div>
             ))}
           </div>
           <div className="grid lg:grid-cols-2 gap-6">
-            <div className="h-96 bg-gray-200 rounded"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-96 bg-muted rounded"></div>
+            <div className="h-96 bg-muted rounded"></div>
           </div>
         </div>
       </div>
@@ -301,8 +301,8 @@ export default function EmployerDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employer Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage your job postings and candidate pipeline</p>
+          <h1 className="text-3xl font-bold text-foreground">Employer Dashboard</h1>
+          <p className="text-muted-foreground mt-2">Manage your job postings and candidate pipeline</p>
         </div>
         <div className="flex space-x-3">
           <Button asChild>
@@ -365,7 +365,7 @@ export default function EmployerDashboard() {
             <p className="text-xs text-muted-foreground">
               Scheduled this week
               {(stats.pendingRescheduleRequests || 0) > 0 && (
-                <span className="block text-red-600 font-medium">
+                <span className="block text-destructive font-medium">
                   {stats.pendingRescheduleRequests || 0} reschedule request{(stats.pendingRescheduleRequests || 0) > 1 ? 's' : ''} pending
                 </span>
               )}
@@ -459,19 +459,19 @@ export default function EmployerDashboard() {
                 <h4 className="font-semibold mb-2">Plan Features</h4>
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className={`h-4 w-4 ${(subscriptionLimits?.jobPostsLimit || 5) > 5 ? 'text-green-500' : 'text-gray-400'}`} />
+                    <CheckCircle className={`h-4 w-4 ${(subscriptionLimits?.jobPostsLimit || 5) > 5 ? 'text-green-500 dark:text-green-400 ' : 'text-muted-foreground'}`} />
                     <span>{subscriptionLimits?.jobPostsLimit || 5} job posts/month</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className={`h-4 w-4 ${(subscriptionLimits?.boostsAvailable || 0) > 0 ? 'text-green-500' : 'text-gray-400'}`} />
+                    <CheckCircle className={`h-4 w-4 ${(subscriptionLimits?.boostsAvailable || 0) > 0 ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                     <span>{subscriptionLimits?.boostsAvailable || 0} job boosts/month</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className={`h-4 w-4 ${subscription?.featuredJobsEnabled ? 'text-green-500' : 'text-gray-400'}`} />
+                    <CheckCircle className={`h-4 w-4 ${subscription?.featuredJobsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                     <span>Featured job listings</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className={`h-4 w-4 ${subscription?.advancedAnalyticsEnabled ? 'text-green-500' : 'text-gray-400'}`} />
+                    <CheckCircle className={`h-4 w-4 ${subscription?.advancedAnalyticsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                     <span>Enhanced analytics</span>
                   </div>
                 </div>
@@ -500,10 +500,10 @@ export default function EmployerDashboard() {
 
       {/* Job Boosts Section */}
       {subscriptionLimits && subscriptionLimits.boostsAvailable > 0 && (
-        <Card className="mb-8 border-yellow-200 bg-gradient-to-r from-yellow-50 to-transparent">
+        <Card className="mb-8 border-yellow-200 dark:border-yellow-800 bg-gradient-to-r from-yellow-50 dark:from-yellow-900/20 to-transparent">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-600" />
+              <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               Job Boosts Available
             </CardTitle>
           </CardHeader>
@@ -546,26 +546,26 @@ export default function EmployerDashboard() {
         <CardContent>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{analytics.applicationsThisMonth || 0}</div>
-              <p className="text-sm text-gray-600">Applications This Month</p>
+              <div className="text-2xl font-bold text-primary">{analytics.applicationsThisMonth || 0}</div>
+              <p className="text-sm text-muted-foreground">Applications This Month</p>
               <div className="flex items-center justify-center mt-1">
-                <TrendingUp className={`h-4 w-4 ${getConversionRate() >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-                <span className={`text-sm ${getConversionRate() >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <TrendingUp className={`h-4 w-4 ${getConversionRate() >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`} />
+                <span className={`text-sm ${getConversionRate() >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
                   {Math.abs(getConversionRate())}%
                 </span>
               </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{analytics.conversionRate || 0}%</div>
-              <p className="text-sm text-gray-600">Conversion Rate</p>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{analytics.conversionRate || 0}%</div>
+              <p className="text-sm text-muted-foreground">Conversion Rate</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{analytics.averageTimeToHire || 0} days</div>
-              <p className="text-sm text-gray-600">Avg. Time to Hire</p>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{analytics.averageTimeToHire || 0} days</div>
+              <p className="text-sm text-muted-foreground">Avg. Time to Hire</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{stats.profileViews || 0}</div>
-              <p className="text-sm text-gray-600">Company Profile Views</p>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.profileViews || 0}</div>
+              <p className="text-sm text-muted-foreground">Company Profile Views</p>
             </div>
           </div>
         </CardContent>
@@ -586,9 +586,9 @@ export default function EmployerDashboard() {
             <div className="space-y-4">
               {candidates.length === 0 ? (
                 <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No candidates yet</h3>
-                  <p className="text-gray-500 mb-4">Post your first job to start receiving applications</p>
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No candidates yet</h3>
+                  <p className="text-muted-foreground mb-4">Post your first job to start receiving applications</p>
                   <Button asChild>
                     <Link href="/employer/post-job">Post a Job</Link>
                   </Button>
@@ -600,15 +600,15 @@ export default function EmployerDashboard() {
                   return (
                     <div key={candidate._id} className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
                           <span className="text-white text-sm font-medium">
                             {initials}
                           </span>
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">{fullName}</h4>
-                          <p className="text-sm text-gray-600">{candidate.job?.title || 'Unknown Job'}</p>
-                          <p className="text-xs text-gray-500">
+                          <h4 className="font-semibold text-foreground">{fullName}</h4>
+                          <p className="text-sm text-muted-foreground">{candidate.job?.title || 'Unknown Job'}</p>
+                          <p className="text-xs text-muted-foreground">
                             Applied {new Date(candidate.appliedAt).toLocaleDateString()}
                           </p>
                         </div>
@@ -655,9 +655,9 @@ export default function EmployerDashboard() {
             <div className="space-y-4">
               {recentJobs.length === 0 ? (
                 <div className="text-center py-8">
-                  <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No jobs posted yet</h3>
-                  <p className="text-gray-500 mb-4">Create your first job posting to start attracting candidates</p>
+                  <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No jobs posted yet</h3>
+                  <p className="text-muted-foreground mb-4">Create your first job posting to start attracting candidates</p>
                   <Button asChild>
                     <Link href="/employer/post-job">Post a Job</Link>
                   </Button>
@@ -667,8 +667,8 @@ export default function EmployerDashboard() {
                   <div key={job._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{job.title}</h4>
-                        <p className="text-xs text-gray-500">
+                        <h4 className="font-semibold text-foreground">{job.title}</h4>
+                        <p className="text-xs text-muted-foreground">
                           Posted {new Date(job.postedAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -682,7 +682,7 @@ export default function EmployerDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-4 text-gray-600">
+                      <div className="flex items-center gap-4 text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
                           {job.applicationsCount} applications
@@ -714,7 +714,7 @@ export default function EmployerDashboard() {
         <Card className="mt-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-500" />
+              <Zap className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
               Top Performing Jobs
             </CardTitle>
           </CardHeader>
@@ -723,19 +723,19 @@ export default function EmployerDashboard() {
               {analytics.topPerformingJobs.map((job, index) => (
                 <div key={job._id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-4">
-                    <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">{job.title}</h4>
-                      <p className="text-sm text-gray-600">
+                      <h4 className="font-semibold text-foreground">{job.title}</h4>
+                      <p className="text-sm text-muted-foreground">
                         {job.applicationsCount} applications • {job.views} views
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <div className="text-sm font-medium text-green-600">
+                      <div className="text-sm font-medium text-green-600 dark:text-green-400">
                         {job.views > 0 ? Math.round((job.applicationsCount / job.views) * 100) : 0}% conversion
                       </div>
                     </div>

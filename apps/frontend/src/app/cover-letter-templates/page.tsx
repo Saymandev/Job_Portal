@@ -156,7 +156,7 @@ export default function CoverLetterTemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -242,7 +242,7 @@ export default function CoverLetterTemplatesPage() {
           ) : templates.length === 0 ? (
             <Card>
               <CardContent className="pt-12 pb-12 text-center">
-                <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No templates yet</h3>
                 <p className="text-muted-foreground mb-6">
                   Create your first cover letter template to speed up your job applications
@@ -262,7 +262,7 @@ export default function CoverLetterTemplatesPage() {
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-lg">{template.name}</CardTitle>
                         {template.isDefault && (
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 dark:fill-yellow-500 dark:text-yellow-500" />
                         )}
                       </div>
                       <CardDescription>

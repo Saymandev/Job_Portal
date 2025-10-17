@@ -55,7 +55,7 @@ export default function EmployerAnalyticsPage() {
   // Show loading while store is hydrating or data is loading
   if (!isHydrated || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">Loading analytics...</div>
         </div>
@@ -69,7 +69,7 @@ export default function EmployerAnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">No analytics data available</div>
         </div>
@@ -80,7 +80,7 @@ export default function EmployerAnalyticsPage() {
   const { overview, trends, topPerformingJobs, conversion, timeToHire } = analytics;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -102,7 +102,7 @@ export default function EmployerAnalyticsPage() {
                     {overview.activeJobs} active
                   </p>
                 </div>
-                <Briefcase className="h-12 w-12 text-blue-500 opacity-20" />
+                <Briefcase className="h-12 w-12 text-primary opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -113,12 +113,12 @@ export default function EmployerAnalyticsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Applications</p>
                   <p className="text-3xl font-bold">{overview.totalApplications}</p>
-                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     All time
                   </p>
                 </div>
-                <Users className="h-12 w-12 text-green-500 opacity-20" />
+                <Users className="h-12 w-12 text-green-500 dark:text-green-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -131,7 +131,7 @@ export default function EmployerAnalyticsPage() {
                   <p className="text-3xl font-bold">{timeToHire.averageDays}</p>
                   <p className="text-xs text-muted-foreground mt-1">days</p>
                 </div>
-                <Clock className="h-12 w-12 text-purple-500 opacity-20" />
+                <Clock className="h-12 w-12 text-purple-500 dark:text-purple-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -146,7 +146,7 @@ export default function EmployerAnalyticsPage() {
                     {conversion.conversionRates.toHire.toFixed(1)}% conversion
                   </p>
                 </div>
-                <CheckCircle className="h-12 w-12 text-green-500 opacity-20" />
+                <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -183,8 +183,8 @@ export default function EmployerAnalyticsPage() {
                   <span>Applied ({conversion.applied})</span>
                   <span className="font-medium">100%</span>
                 </div>
-                <div className="h-8 bg-blue-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500" style={{ width: '100%' }} />
+                <div className="h-8 bg-primary/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary" style={{ width: '100%' }} />
                 </div>
               </div>
 
@@ -193,9 +193,9 @@ export default function EmployerAnalyticsPage() {
                   <span>Under Review ({conversion.reviewing})</span>
                   <span className="font-medium">{conversion.conversionRates.toReview.toFixed(1)}%</span>
                 </div>
-                <div className="h-8 bg-yellow-100 rounded-full overflow-hidden">
+                <div className="h-8 bg-yellow-100 dark:bg-yellow-900/20 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-yellow-500" 
+                    className="h-full bg-yellow-500 dark:bg-yellow-600" 
                     style={{ width: `${conversion.conversionRates.toReview}%` }} 
                   />
                 </div>
@@ -206,9 +206,9 @@ export default function EmployerAnalyticsPage() {
                   <span>Shortlisted ({conversion.shortlisted})</span>
                   <span className="font-medium">{conversion.conversionRates.toShortlist.toFixed(1)}%</span>
                 </div>
-                <div className="h-8 bg-purple-100 rounded-full overflow-hidden">
+                <div className="h-8 bg-purple-100 dark:bg-purple-900/20 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-purple-500" 
+                    className="h-full bg-purple-500 dark:bg-purple-600" 
                     style={{ width: `${conversion.conversionRates.toShortlist}%` }} 
                   />
                 </div>
@@ -219,9 +219,9 @@ export default function EmployerAnalyticsPage() {
                   <span>Interviewed ({conversion.interviewed})</span>
                   <span className="font-medium">{conversion.conversionRates.toInterview.toFixed(1)}%</span>
                 </div>
-                <div className="h-8 bg-orange-100 rounded-full overflow-hidden">
+                <div className="h-8 bg-orange-100 dark:bg-orange-900/20 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-orange-500" 
+                    className="h-full bg-orange-500 dark:bg-orange-600" 
                     style={{ width: `${conversion.conversionRates.toInterview}%` }} 
                   />
                 </div>
@@ -232,9 +232,9 @@ export default function EmployerAnalyticsPage() {
                   <span>Hired ({conversion.hired})</span>
                   <span className="font-medium">{conversion.conversionRates.toHire.toFixed(1)}%</span>
                 </div>
-                <div className="h-8 bg-green-100 rounded-full overflow-hidden">
+                <div className="h-8 bg-green-100 dark:bg-green-900/20 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-green-500" 
+                    className="h-full bg-green-500 dark:bg-green-600" 
                     style={{ width: `${conversion.conversionRates.toHire}%` }} 
                   />
                 </div>
@@ -290,7 +290,7 @@ export default function EmployerAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Clock className="h-8 w-8 text-blue-500" />
+                <Clock className="h-8 w-8 text-primary" />
                 <div>
                   <p className="text-3xl font-bold">{timeToHire.averageDays}</p>
                   <p className="text-sm text-muted-foreground">days</p>
@@ -305,7 +305,7 @@ export default function EmployerAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-8 w-8 text-green-500" />
+                <TrendingUp className="h-8 w-8 text-green-500 dark:text-green-400" />
                 <div>
                   <p className="text-3xl font-bold">{timeToHire.fastestDays}</p>
                   <p className="text-sm text-muted-foreground">days</p>
@@ -320,7 +320,7 @@ export default function EmployerAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <TrendingDown className="h-8 w-8 text-orange-500" />
+                <TrendingDown className="h-8 w-8 text-orange-500 dark:text-orange-400" />
                 <div>
                   <p className="text-3xl font-bold">{timeToHire.slowestDays}</p>
                   <p className="text-sm text-muted-foreground">days</p>

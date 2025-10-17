@@ -17,8 +17,8 @@ const plans = [
     price: 0,
     interval: 'forever',
     icon: Zap,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-100',
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted',
     features: [
       '5 job postings per month',
       'Basic analytics dashboard',
@@ -39,8 +39,8 @@ const plans = [
     price: 49,
     interval: 'month',
     icon: Rocket,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-500/20',
     popular: false,
     features: [
       '25 job postings per month',
@@ -63,8 +63,8 @@ const plans = [
     price: 149,
     interval: 'month',
     icon: Crown,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-500 dark:bg-purple-600/20',
     popular: true,
     features: [
       '100 job postings per month',
@@ -88,8 +88,8 @@ const plans = [
     price: 499,
     interval: 'month',
     icon: Crown,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100',
+    color: 'text-yellow-600 dark:text-yellow-400',
+    bgColor: 'bg-yellow-500/20',
     popular: false,
     features: [
       '1000 job postings per month',
@@ -190,7 +190,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-12">
@@ -209,16 +209,16 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`relative ${
                   plan.popular ? 'border-2 border-primary shadow-xl' : 
-                  currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 shadow-lg bg-green-50' : ''
+                  currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 dark:border-green-400 shadow-lg bg-green-50 dark:bg-green-900/20' : ''
                 }`}
               >
                 {/* Badge Container */}
                 <div className="absolute -top-4 left-0 right-0 flex justify-center items-center gap-2">
                   {plan.popular && (
-                    <Badge className="px-4 py-1 text-sm bg-purple-500 text-white">Most Popular</Badge>
+                    <Badge className="px-4 py-1 text-sm bg-purple-500 dark:bg-purple-600 text-white">Most Popular</Badge>
                   )}
                   {currentSubscription && currentSubscription.plan === plan.id && (
-                    <Badge className="px-4 py-1 text-sm bg-green-500 text-white">Current Plan</Badge>
+                    <Badge className="px-4 py-1 text-sm bg-green-50 dark:bg-green-900/200 text-white">Current Plan</Badge>
                   )}
                 </div>
                 <CardHeader className="pt-8">
@@ -237,7 +237,7 @@ export default function PricingPage() {
                   <ul className="space-y-3 mb-6">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                        <Check className="h-5 w-5 text-green-500 dark:text-green-400 shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}

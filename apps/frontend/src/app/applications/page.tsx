@@ -55,14 +55,14 @@ export default function ApplicationsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: any = {
-      pending: 'bg-yellow-500',
-      reviewing: 'bg-blue-500',
-      shortlisted: 'bg-green-500',
-      interview_scheduled: 'bg-purple-500',
-      rejected: 'bg-red-500',
-      accepted: 'bg-green-600',
+      pending: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300',
+      reviewing: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
+      shortlisted: 'bg-green-500/20 text-green-700 dark:text-green-300',
+      interview_scheduled: 'bg-purple-500/20 text-purple-700 dark:text-purple-300',
+      rejected: 'bg-red-500/20 text-red-700 dark:text-red-300',
+      accepted: 'bg-green-600/20 text-green-700 dark:text-green-300',
     };
-    return colors[status] || 'bg-gray-500';
+    return colors[status] || 'bg-muted text-muted-foreground';
   };
 
   // Show loading while store is hydrating or data is loading

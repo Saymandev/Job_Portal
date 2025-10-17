@@ -36,7 +36,7 @@ const AvatarImage = ({ src, alt, className = "", ...props }: any) => {
 };
 
 const AvatarFallback = ({ className = "", children, ...props }: any) => (
-  <div className={`flex h-full w-full items-center justify-center rounded-full bg-gray-100 text-gray-600 text-sm font-medium ${className}`} {...props}>
+  <div className={`flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-medium ${className}`} {...props}>
     {children}
   </div>
 );
@@ -329,14 +329,14 @@ export default function MessagesPage() {
           <div className="lg:col-span-1">
             <Card className="h-full animate-pulse">
               <CardContent className="p-4">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
                 <div className="space-y-3 max-h-[450px] overflow-y-auto">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                      <div className="h-10 w-10 bg-muted rounded-full"></div>
                       <div className="flex-1">
-                        <div className="h-3 bg-gray-200 rounded w-1/2 mb-1"></div>
-                        <div className="h-2 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-muted rounded w-1/2 mb-1"></div>
+                        <div className="h-2 bg-muted rounded w-3/4"></div>
                       </div>
                     </div>
                   ))}
@@ -347,10 +347,10 @@ export default function MessagesPage() {
           <div className="lg:col-span-2">
             <Card className="h-full animate-pulse">
               <CardContent className="p-4">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+                <div className="h-4 bg-muted rounded w-1/4 mb-4"></div>
                 <div className="space-y-3 max-h-[450px] overflow-y-auto">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-12 bg-gray-200 rounded"></div>
+                    <div key={i} className="h-12 bg-muted rounded"></div>
                   ))}
                 </div>
               </CardContent>
@@ -365,17 +365,17 @@ export default function MessagesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <MessageSquare className="h-8 w-8 text-blue-600" />
+          <MessageSquare className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">Messages</h1>
         </div>
       </div>
 
       {/* Error Display */}
       {error && (
-        <Card className="mb-6 border-red-200 bg-red-50">
+        <Card className="mb-6 border-destructive/20 bg-destructive/10">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <p className="text-red-800">{error}</p>
+              <p className="text-destructive">{error}</p>
               <Button variant="ghost" size="sm" onClick={clearError}>
                 <X className="h-4 w-4" />
               </Button>
@@ -390,7 +390,7 @@ export default function MessagesPage() {
           <Card className="h-full">
             <CardHeader className="pb-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search conversations..."
                   value={searchTerm}
@@ -402,9 +402,9 @@ export default function MessagesPage() {
             <CardContent className="p-0 overflow-y-auto">
               {filteredConversations.length === 0 ? (
                 <div className="p-8 text-center">
-                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No conversations</h3>
-                  <p className="text-gray-500">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No conversations</h3>
+                  <p className="text-muted-foreground">
                     {searchTerm ? 'No conversations match your search.' : 'Start a conversation to begin messaging.'}
                   </p>
                 </div>
@@ -416,9 +416,9 @@ export default function MessagesPage() {
                     return (
                       <div
                         key={conversation._id}
-                        className={`p-4 cursor-pointer hover:bg-gray-50 border-l-4 transition-colors ${
+                        className={`p-4 cursor-pointer hover:bg-accent border-l-4 transition-colors ${
                           currentConversation?._id === conversation._id 
-                            ? 'bg-blue-50 border-l-blue-500' 
+                            ? 'bg-primary/5 border-l-primary' 
                             : 'border-l-transparent'
                         }`}
                         onClick={() => selectConversation(conversation._id)}
@@ -436,7 +436,7 @@ export default function MessagesPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <p className={`text-sm font-medium truncate ${
-                                conversation.unreadCount > 0 ? 'text-gray-900' : 'text-gray-700'
+                                conversation.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground'
                               }`}>
                                 {otherParticipant?.fullName || 'Unknown User'}
                               </p>
@@ -446,11 +446,11 @@ export default function MessagesPage() {
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 truncate capitalize">
+                            <p className="text-xs text-muted-foreground truncate capitalize">
                               {otherParticipant?.role?.replace('_', ' ') || 'Unknown'}
                             </p>
                             <p className={`text-xs truncate ${
-                              conversation.unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'
+                              conversation.unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
                             }`}>
                               {conversation.lastMessage ? conversation.lastMessage.content : 'No messages yet'}
                             </p>
@@ -474,7 +474,7 @@ export default function MessagesPage() {
                   {(() => {
                     const otherParticipant = getOtherParticipant(currentConversation);
                     if (!otherParticipant) {
-                      return <div className="text-sm text-gray-500">Unable to load participant information</div>;
+                      return <div className="text-sm text-muted-foreground">Unable to load participant information</div>;
                     }
                     return (
                       <div className="flex items-center justify-between">
@@ -487,7 +487,7 @@ export default function MessagesPage() {
                           </Avatar>
                           <div>
                             <h3 className="font-semibold">{otherParticipant?.fullName || 'Unknown User'}</h3>
-                            <p className="text-sm text-gray-500 capitalize">
+                            <p className="text-sm text-muted-foreground capitalize">
                               {otherParticipant?.role?.replace('_', ' ') || 'Unknown'}
                             </p>
                           </div>
@@ -524,8 +524,8 @@ export default function MessagesPage() {
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                             isOwnMessage
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-900'
+                              ? 'bg-primary text-white'
+                              : 'bg-muted text-foreground'
                           }`}
                         >
                           {message.attachment && (
@@ -598,7 +598,7 @@ export default function MessagesPage() {
                             <p className="text-sm">{message.content}</p>
                           )}
                           <p className={`text-xs mt-1 ${
-                            isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                            isOwnMessage ? 'text-primary-foreground' : 'text-muted-foreground'
                           }`}>
                             {new Date(message.createdAt).toLocaleTimeString()}
                           </p>
@@ -613,13 +613,13 @@ export default function MessagesPage() {
                   
                   {/* File Preview */}
                   {showFilePreview && selectedFile && (
-                    <div className="border-t p-4 bg-gray-50">
+                    <div className="border-t p-4 bg-muted/50">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <span className="text-lg">{getFileIcon(selectedFile.type)}</span>
                           <div>
-                            <p className="text-sm font-medium text-gray-700">{selectedFile.name}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm font-medium text-muted-foreground">{selectedFile.name}</p>
+                            <p className="text-xs text-muted-foreground">
                               {formatFileSize(selectedFile.size)} • {selectedFile.type}
                             </p>
                           </div>
@@ -668,9 +668,9 @@ export default function MessagesPage() {
             ) : (
               <CardContent className="flex-1 flex items-center justify-center">
                 <div className="text-center">
-                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a conversation</h3>
-                  <p className="text-gray-500">Choose a conversation from the list to start messaging.</p>
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Select a conversation</h3>
+                  <p className="text-muted-foreground">Choose a conversation from the list to start messaging.</p>
                 </div>
               </CardContent>
             )}

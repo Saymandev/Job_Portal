@@ -109,7 +109,7 @@ export default function SubscriptionPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading subscription details...</p>
@@ -131,7 +131,7 @@ export default function SubscriptionPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -147,20 +147,20 @@ export default function SubscriptionPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-lg ${currentPlan === 'free' ? 'bg-gray-100' : 'bg-primary/10'}`}>
-                    <Crown className={`h-6 w-6 ${currentPlan === 'free' ? 'text-gray-600' : 'text-primary'}`} />
+                  <div className={`p-3 rounded-lg ${currentPlan === 'free' ? 'bg-muted' : 'bg-primary/10'}`}>
+                    <Crown className={`h-6 w-6 ${currentPlan === 'free' ? 'text-muted-foreground' : 'text-primary'}`} />
                   </div>
                   <div>
                     <CardTitle className="text-2xl">{planNames[currentPlan]} Plan</CardTitle>
                     <CardDescription>
                       {subscription ? (
                         subscription.status === 'active' ? (
-                          <span className="flex items-center gap-2 text-green-600">
+                          <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
                             <CheckCircle className="h-4 w-4" />
                             Active
                           </span>
                         ) : (
-                          <span className="flex items-center gap-2 text-yellow-600">
+                          <span className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                             <AlertCircle className="h-4 w-4" />
                             {subscription.status}
                           </span>
@@ -203,8 +203,8 @@ export default function SubscriptionPage() {
                   </div>
 
                   {subscription.cancelAtPeriodEnd && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                      <p className="text-sm text-yellow-800">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
                         <AlertCircle className="inline h-4 w-4 mr-2" />
                         Your subscription is set to cancel at the end of the billing period.
                       </p>
@@ -221,12 +221,12 @@ export default function SubscriptionPage() {
                   </div>
 
                   {/* Contact Admin for Cancellation */}
-                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <AlertCircle className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <h4 className="font-medium text-blue-900">Need to Cancel Your Subscription?</h4>
-                        <p className="text-sm text-blue-700 mt-1">
+                        <h4 className="font-medium text-primary">Need to Cancel Your Subscription?</h4>
+                        <p className="text-sm text-primary/80 mt-1">
                           To cancel your subscription, please contact our support team. We&apos;ll help you through the process and ensure a smooth transition.
                         </p>
                         <Button variant="outline" size="sm" className="mt-2">
@@ -294,7 +294,7 @@ export default function SubscriptionPage() {
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex items-start gap-3">
-                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.featuredJobsEnabled ? 'text-green-500' : 'text-gray-300'}`} />
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.featuredJobsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                 <div>
                   <p className="font-semibold">Featured Job Listings</p>
                   <p className="text-sm text-muted-foreground">
@@ -304,7 +304,7 @@ export default function SubscriptionPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.advancedAnalyticsEnabled ? 'text-green-500' : 'text-gray-300'}`} />
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.advancedAnalyticsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                 <div>
                   <p className="font-semibold">Advanced Analytics</p>
                   <p className="text-sm text-muted-foreground">
@@ -314,7 +314,7 @@ export default function SubscriptionPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.prioritySupportEnabled ? 'text-green-500' : 'text-gray-300'}`} />
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.prioritySupportEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                 <div>
                   <p className="font-semibold">Priority Support</p>
                   <p className="text-sm text-muted-foreground">
@@ -324,7 +324,7 @@ export default function SubscriptionPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <CheckCircle className={`h-5 w-5 mt-0.5 ${(boostStats?.boostsAvailable || 0) > 0 ? 'text-green-500' : 'text-gray-300'}`} />
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${(boostStats?.boostsAvailable || 0) > 0 ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                 <div>
                   <p className="font-semibold">Job Boosts ({boostStats?.boostsAvailable || 0}/month)</p>
                   <p className="text-sm text-muted-foreground">
@@ -348,7 +348,7 @@ export default function SubscriptionPage() {
                 {boostStats.boostedJobs.map((job) => (
                   <div key={job.jobId} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-yellow-500" />
+                      <Zap className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
                       <div>
                         <p className="font-semibold">{job.title}</p>
                         <p className="text-sm text-muted-foreground">
