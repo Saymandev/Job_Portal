@@ -12,6 +12,7 @@
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "check:env": "node scripts/check-env.js",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "clean": "rm -rf dist",
     "seed": "node seed.js",
