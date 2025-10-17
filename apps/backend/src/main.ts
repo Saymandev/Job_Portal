@@ -33,9 +33,14 @@ async function bootstrap() {
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      
-      // In production, only allow the configured frontend URL
-      if (configService.get('NODE_ENV') === 'production') {
+
+      const isProduction = configService.get('NODE_ENV') === 'production';
+      if (isProduction) {
+        // Allow exact configured frontend and Vercel preview/prod domains
+        const isVercel = origin.startsWith('https://') && origin.endsWith('.vercel.app');
+        if (origin === frontendUrl || isVercel) {
+          return callback(null, true);
+        }
         return callback(new Error('Not allowed by CORS'), false);
       }
       
