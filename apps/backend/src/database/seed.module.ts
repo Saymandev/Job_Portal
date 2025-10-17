@@ -11,17 +11,18 @@ import { User, UserSchema } from '../modules/users/schemas/user.schema';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', 'apps/backend/.env'],
-      validate: (config: Record<string, any>) => {
+      validate: (parsedEnv: Record<string, any>) => {
+        const merged = { ...parsedEnv, ...process.env } as Record<string, any>;
         const requiredKeys = ['MONGODB_URI'];
         const missingKeys = requiredKeys.filter(
-          (key) => !config[key] || String(config[key]).trim() === '',
+          (key) => !merged[key] || String(merged[key]).trim() === '',
         );
         if (missingKeys.length > 0) {
           throw new Error(
             `Missing required environment variables: ${missingKeys.join(', ')}`,
           );
         }
-        return config;
+        return merged;
       },
     }),
     MongooseModule.forRootAsync({
