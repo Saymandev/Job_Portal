@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { UsersModule } from '../users/users.module';
 import { AccountManagersController } from './account-managers.controller';
 import { AccountManagersService } from './account-managers.service';
 import { AccountManager, AccountManagerSchema } from './schemas/account-manager.schema';
@@ -13,6 +15,8 @@ import { ClientAssignment, ClientAssignmentSchema } from './schemas/client-assig
       { name: ClientAssignment.name, schema: ClientAssignmentSchema },
     ]),
     SubscriptionsModule,
+    NotificationsModule,
+    UsersModule,
   ],
   controllers: [AccountManagersController],
   providers: [AccountManagersService],

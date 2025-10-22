@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { UsersService } from '../users/users.service';
 import { AccountManager, AccountManagerDocument, AccountManagerStatus } from './schemas/account-manager.schema';
 import { AssignmentStatus, ClientAssignment, ClientAssignmentDocument } from './schemas/client-assignment.schema';
 
@@ -11,6 +13,8 @@ export class AccountManagersService {
     @InjectModel(AccountManager.name) private accountManagerModel: Model<AccountManagerDocument>,
     @InjectModel(ClientAssignment.name) private clientAssignmentModel: Model<ClientAssignmentDocument>,
     private subscriptionsService: SubscriptionsService,
+    private notificationsService: NotificationsService,
+    private usersService: UsersService,
   ) {}
 
   async createAccountManager(accountManagerData: Partial<AccountManager>): Promise<AccountManager> {
@@ -240,15 +244,97 @@ export class AccountManagersService {
     const availableManagers = await this.getAvailableManagers();
     
     if (availableManagers.length === 0) {
+      // Notify admins that no account managers are available
+      await this.notifyAdminsNoManagersAvailable(clientId);
       throw new BadRequestException('No available account managers');
     }
 
     // Assign to manager with least clients
     const manager = availableManagers[0];
-    return this.assignClientToManager(clientId, (manager as any)._id.toString(), assignedBy);
+    const assignment = await this.assignClientToManager(clientId, (manager as any)._id.toString(), assignedBy);
+    
+    // Notify the assigned manager
+    await this.notifyManagerNewAssignment((manager as any)._id.toString(), clientId);
+    
+    // Notify the client
+    await this.notifyClientAssignment(clientId, (manager as any)._id.toString());
+    
+    return assignment;
   }
 
   private hasDedicatedSupportAccess(plan: string): boolean {
     return plan === 'enterprise';
+  }
+
+  private async notifyAdminsNoManagersAvailable(clientId: string): Promise<void> {
+    try {
+      // Get all admin users
+      const admins = await this.usersService.findByRole('admin');
+      
+      // Get client info
+      const client = await this.usersService.findById(clientId);
+      
+      for (const admin of admins) {
+        await this.notificationsService.createNotification({
+          user: admin._id.toString(),
+          title: 'Account Manager Request - No Available Managers',
+          message: `${client.fullName} (${client.email}) requested a dedicated account manager, but no managers are currently available.`,
+          type: 'account_manager_request',
+          actionUrl: '/admin/account-managers',
+          metadata: {
+            clientId,
+            clientName: client.fullName,
+            clientEmail: client.email,
+            requestType: 'no_managers_available'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error notifying admins about no available managers:', error);
+    }
+  }
+
+  private async notifyManagerNewAssignment(managerId: string, clientId: string): Promise<void> {
+    try {
+      const client = await this.usersService.findById(clientId);
+      
+      await this.notificationsService.createNotification({
+        user: managerId,
+        title: 'New Client Assignment',
+        message: `You have been assigned a new client: ${client.fullName} (${client.email})`,
+        type: 'new_client_assignment',
+        actionUrl: `/admin/account-managers/clients/${clientId}`,
+        metadata: {
+          clientId,
+          clientName: client.fullName,
+          clientEmail: client.email,
+          assignmentType: 'auto_assigned'
+        }
+      });
+    } catch (error) {
+      console.error('Error notifying manager about new assignment:', error);
+    }
+  }
+
+  private async notifyClientAssignment(clientId: string, managerId: string): Promise<void> {
+    try {
+      const manager = await this.accountManagerModel.findById(managerId);
+      
+      await this.notificationsService.createNotification({
+        user: clientId,
+        title: 'Account Manager Assigned',
+        message: `You have been assigned a dedicated account manager: ${manager.name}. They will contact you soon to provide personalized support.`,
+        type: 'account_manager_assigned',
+        actionUrl: '/settings/account-manager',
+        metadata: {
+          managerId,
+          managerName: manager.name,
+          managerEmail: manager.email,
+          assignmentType: 'auto_assigned'
+        }
+      });
+    } catch (error) {
+      console.error('Error notifying client about assignment:', error);
+    }
   }
 }

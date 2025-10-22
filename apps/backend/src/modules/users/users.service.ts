@@ -28,6 +28,10 @@ export class UsersService {
     return this.userModel.findOne({ email });
   }
 
+  async findByRole(role: string): Promise<UserDocument[]> {
+    return this.userModel.find({ role }).exec();
+  }
+
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
     if (!user) {
