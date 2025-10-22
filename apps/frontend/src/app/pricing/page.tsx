@@ -28,6 +28,52 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+// Base features that all plans include
+const baseFeatures = [
+  { text: 'Email support', icon: MessageSquare },
+  { text: 'Job board listing', icon: null },
+];
+
+// Additional features for each plan tier
+const planFeatures = {
+  free: [
+    { text: '5 job postings per month', icon: null },
+    { text: 'Basic analytics dashboard', icon: BarChart3 },
+    { text: '30-day job duration', icon: null },
+  ],
+  basic: [
+    { text: '25 job postings per month', icon: null },
+    { text: '3 job boosts per month', icon: Star },
+    { text: 'Enhanced analytics', icon: BarChart3 },
+    { text: '60-day job duration', icon: null },
+    { text: 'Featured job priority', icon: Star },
+    { text: 'Priority application processing', icon: Target },
+    { text: 'Enhanced candidate matching', icon: Search },
+    { text: 'Application analytics dashboard', icon: BarChart3 },
+    { text: 'Unlimited resume downloads', icon: Download },
+  ],
+  pro: [
+    { text: '100 job postings per month', icon: null },
+    { text: '10 job boosts per month', icon: Star },
+    { text: 'Featured job listings', icon: Star },
+    { text: '90-day job duration', icon: null },
+    { text: 'Priority job visibility', icon: Star },
+    { text: 'Direct candidate messaging', icon: MessageSquare },
+    { text: 'Featured company profile', icon: Building },
+    { text: 'Salary insights & market data', icon: DollarSign },
+    { text: 'Interview preparation tools', icon: Mic },
+  ],
+  enterprise: [
+    { text: 'Unlimited job postings', icon: null },
+    { text: 'Unlimited job boosts', icon: Star },
+    { text: 'Always featured listings', icon: Star },
+    { text: 'Custom job duration', icon: null },
+    { text: 'Custom branding', icon: Building },
+    { text: 'API access', icon: Code },
+    { text: 'Dedicated account manager', icon: User },
+  ],
+};
+
 const plans = [
   {
     id: 'free',
@@ -39,13 +85,7 @@ const plans = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-200',
     buttonStyle: 'outline',
-    features: [
-      { text: '5 job postings per month', icon: null },
-      { text: 'Basic analytics dashboard', icon: BarChart3 },
-      { text: 'Email support', icon: MessageSquare },
-      { text: 'Job board listing', icon: null },
-      { text: '30-day job duration', icon: null },
-    ],
+    features: [...baseFeatures, ...planFeatures.free],
     limits: {
       jobPosts: 5,
       boosts: 0,
@@ -64,18 +104,7 @@ const plans = [
     borderColor: 'border-blue-200',
     buttonStyle: 'default',
     popular: false,
-    features: [
-      { text: '25 job postings per month', icon: null },
-      { text: '3 job boosts per month', icon: Star },
-      { text: 'Enhanced analytics', icon: BarChart3 },
-      { text: 'Email support', icon: MessageSquare },
-      { text: '60-day job duration', icon: null },
-      { text: 'Featured job priority', icon: Star },
-      { text: 'Priority application processing', icon: Target },
-      { text: 'Enhanced candidate matching', icon: Search },
-      { text: 'Application analytics dashboard', icon: BarChart3 },
-      { text: 'Unlimited resume downloads', icon: Download },
-    ],
+    features: [...baseFeatures, ...planFeatures.basic],
     limits: {
       jobPosts: 25,
       boosts: 3,
@@ -94,23 +123,7 @@ const plans = [
     borderColor: 'border-purple-300',
     buttonStyle: 'default',
     popular: true,
-    features: [
-      { text: '100 job postings per month', icon: null },
-      { text: '10 job boosts per month', icon: Star },
-      { text: 'Featured job listings', icon: Star },
-      { text: 'Enhanced analytics & insights', icon: BarChart3 },
-      { text: 'Email support', icon: MessageSquare },
-      { text: '90-day job duration', icon: null },
-      { text: 'Priority job visibility', icon: Star },
-      { text: 'Priority application processing', icon: Target },
-      { text: 'Enhanced candidate matching', icon: Search },
-      { text: 'Application analytics dashboard', icon: BarChart3 },
-      { text: 'Unlimited resume downloads', icon: Download },
-      { text: 'Direct candidate messaging', icon: MessageSquare },
-      { text: 'Featured company profile', icon: Building },
-      { text: 'Salary insights & market data', icon: DollarSign },
-      { text: 'Interview preparation tools', icon: Mic },
-    ],
+    features: [...baseFeatures, ...planFeatures.basic, ...planFeatures.pro],
     limits: {
       jobPosts: 100,
       boosts: 10,
@@ -129,27 +142,7 @@ const plans = [
     borderColor: 'border-amber-300',
     buttonStyle: 'default',
     popular: false,
-    features: [
-      { text: 'Unlimited job postings', icon: null },
-      { text: 'Unlimited job boosts', icon: Star },
-      { text: 'Always featured listings', icon: Star },
-      { text: 'Enhanced analytics & insights', icon: BarChart3 },
-      { text: 'Email support', icon: MessageSquare },
-      { text: '90-day job duration', icon: null },
-      { text: 'Priority job visibility', icon: Star },
-      { text: 'Custom job duration', icon: null },
-      { text: 'Priority application processing', icon: Target },
-      { text: 'Enhanced candidate matching', icon: Search },
-      { text: 'Application analytics dashboard', icon: BarChart3 },
-      { text: 'Unlimited resume downloads', icon: Download },
-      { text: 'Direct candidate messaging', icon: MessageSquare },
-      { text: 'Featured company profile', icon: Building },
-      { text: 'Salary insights & market data', icon: DollarSign },
-      { text: 'Interview preparation tools', icon: Mic },
-      { text: 'Custom branding', icon: Building },
-      { text: 'API access', icon: Code },
-      { text: 'Dedicated account manager', icon: User },
-    ],
+    features: [...baseFeatures, ...planFeatures.basic, ...planFeatures.pro, ...planFeatures.enterprise],
     limits: {
       jobPosts: 1000,
       boosts: 50,
@@ -284,22 +277,194 @@ export default function PricingPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, index) => {
-                      const FeatureIcon = feature.icon;
-                      return (
-                        <li key={index} className="flex items-start gap-3">
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                            {FeatureIcon && (
-                              <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                          <span className="text-sm text-muted-foreground">{feature.text}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <div className="space-y-4 mb-6">
+                    {/* Base Features */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        Core Features
+                      </h4>
+                      <ul className="space-y-2">
+                        {baseFeatures.map((feature, index) => {
+                          const FeatureIcon = feature.icon;
+                          return (
+                            <li key={index} className="flex items-start gap-3">
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                {FeatureIcon && (
+                                  <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
+                              <span className="text-sm text-muted-foreground">{feature.text}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+
+                    {/* Plan-specific features */}
+                    {plan.id === 'free' && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                          Free Plan
+                        </h4>
+                        <ul className="space-y-2">
+                          {planFeatures.free.map((feature, index) => {
+                            const FeatureIcon = feature.icon;
+                            return (
+                              <li key={index} className="flex items-start gap-3">
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                  {FeatureIcon && (
+                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <span className="text-sm text-muted-foreground">{feature.text}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+
+                    {plan.id === 'basic' && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
+                          Basic Plan
+                        </h4>
+                        <ul className="space-y-2">
+                          {planFeatures.basic.map((feature, index) => {
+                            const FeatureIcon = feature.icon;
+                            return (
+                              <li key={index} className="flex items-start gap-3">
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                  {FeatureIcon && (
+                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <span className="text-sm text-muted-foreground">{feature.text}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+
+                    {plan.id === 'pro' && (
+                      <>
+                        <div>
+                          <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
+                            Basic Plan Features
+                          </h4>
+                          <ul className="space-y-2">
+                            {planFeatures.basic.map((feature, index) => {
+                              const FeatureIcon = feature.icon;
+                              return (
+                                <li key={index} className="flex items-start gap-3">
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                    {FeatureIcon && (
+                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
+                            + Professional Features
+                          </h4>
+                          <ul className="space-y-2">
+                            {planFeatures.pro.map((feature, index) => {
+                              const FeatureIcon = feature.icon;
+                              return (
+                                <li key={index} className="flex items-start gap-3">
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                    {FeatureIcon && (
+                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      </>
+                    )}
+
+                    {plan.id === 'enterprise' && (
+                      <>
+                        <div>
+                          <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
+                            Basic Plan Features
+                          </h4>
+                          <ul className="space-y-2">
+                            {planFeatures.basic.map((feature, index) => {
+                              const FeatureIcon = feature.icon;
+                              return (
+                                <li key={index} className="flex items-start gap-3">
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                    {FeatureIcon && (
+                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
+                            + Professional Features
+                          </h4>
+                          <ul className="space-y-2">
+                            {planFeatures.pro.map((feature, index) => {
+                              const FeatureIcon = feature.icon;
+                              return (
+                                <li key={index} className="flex items-start gap-3">
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                    {FeatureIcon && (
+                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">
+                            + Enterprise Features
+                          </h4>
+                          <ul className="space-y-2">
+                            {planFeatures.enterprise.map((feature, index) => {
+                              const FeatureIcon = feature.icon;
+                              return (
+                                <li key={index} className="flex items-start gap-3">
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                    {FeatureIcon && (
+                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <Button
                     className={`w-full ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white' : ''}`}
                     variant={plan.buttonStyle === 'outline' ? 'outline' : 'default'}
