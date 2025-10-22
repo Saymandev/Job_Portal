@@ -112,8 +112,8 @@ export class AccountManagersController {
   }
 
   @Post('auto-assign')
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Auto-assign client to available manager (Admin only)' })
+  @Roles(Role.EMPLOYER, Role.ADMIN)
+  @ApiOperation({ summary: 'Auto-assign client to available manager' })
   async autoAssignClient(
     @Body('clientId') clientId: string,
     @CurrentUser('id') assignedBy: string,
@@ -128,6 +128,7 @@ export class AccountManagersController {
   }
 
   @Get('client/me')
+  @Roles(Role.EMPLOYER)
   @ApiOperation({ summary: 'Get current user client assignment' })
   async getMyClientAssignment(@CurrentUser('id') userId: string) {
     const assignment = await this.accountManagersService.getClientAssignment(userId);
