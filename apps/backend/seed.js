@@ -77,6 +77,29 @@ async function seed() {
       jobPostsUsed: Number,
       currentPeriodStart: Date,
       currentPeriodEnd: Date,
+      // Enhanced Employer Features
+      priorityApplicationsEnabled: { type: Boolean, default: false },
+      enhancedMatchingEnabled: { type: Boolean, default: false },
+      applicationAnalyticsEnabled: { type: Boolean, default: false },
+      directMessagingEnabled: { type: Boolean, default: false },
+      featuredProfileEnabled: { type: Boolean, default: false },
+      unlimitedResumeDownloads: { type: Boolean, default: false },
+      salaryInsightsEnabled: { type: Boolean, default: false },
+      interviewPrepEnabled: { type: Boolean, default: false },
+      // Other features
+      featuredJobsEnabled: { type: Boolean, default: false },
+      advancedAnalyticsEnabled: { type: Boolean, default: false },
+      prioritySupportEnabled: { type: Boolean, default: false },
+      // API Access Features
+      apiAccessEnabled: { type: Boolean, default: false },
+      maxApiKeys: { type: Number, default: 0 },
+      apiRateLimitPerHour: { type: Number, default: 0 },
+      // Custom Branding Features
+      customBrandingEnabled: { type: Boolean, default: false },
+      whiteLabelEnabled: { type: Boolean, default: false },
+      // Bulk Operations
+      bulkJobImportEnabled: { type: Boolean, default: false },
+      maxBulkJobsPerImport: { type: Number, default: 0 },
     }, { timestamps: true });
 
     const ActivitySchema = new mongoose.Schema({
@@ -255,37 +278,6 @@ async function seed() {
     await User.findByIdAndUpdate(employers[0]._id, { company: companies[0]._id });
     await User.findByIdAndUpdate(employers[1]._id, { company: companies[1]._id });
     await User.findByIdAndUpdate(employers[2]._id, { company: companies[2]._id });
-
-    // Create Subscriptions
-    console.log('💳 Creating subscriptions...');
-    await Subscription.insertMany([
-      {
-        user: employers[0]._id,
-        plan: 'pro',
-        status: 'active',
-        jobPostsLimit: 100,
-        jobPostsUsed: 4,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
-      {
-        user: employers[1]._id,
-        plan: 'basic',
-        status: 'active',
-        jobPostsLimit: 25,
-        jobPostsUsed: 5,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
-      {
-        user: employers[2]._id,
-        plan: 'free',
-        status: 'active',
-        jobPostsLimit: 5,
-        jobPostsUsed: 1,
-      },
-    ]);
-    console.log('✅ Created subscriptions\n');
 
     // Create Jobs
     console.log('💼 Creating job listings...');
@@ -555,28 +547,71 @@ Key Responsibilities:
     await Subscription.insertMany([
       {
         user: employers[0]._id,
-        plan: 'pro',
+        plan: 'enterprise',
         status: 'active',
-        jobPostsLimit: 100,
-        jobPostsUsed: 4,
+        jobPostsLimit: 1000,
+        jobPostsUsed: 6,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        // Enhanced Employer Features - All enabled for Enterprise
+        priorityApplicationsEnabled: true,
+        enhancedMatchingEnabled: true,
+        applicationAnalyticsEnabled: true,
+        directMessagingEnabled: true,
+        featuredProfileEnabled: true,
+        unlimitedResumeDownloads: true,
+        salaryInsightsEnabled: true,
+        interviewPrepEnabled: true,
+        // Other features
+        featuredJobsEnabled: true,
+        advancedAnalyticsEnabled: true,
+        prioritySupportEnabled: true,
+        // API Access Features
+        apiAccessEnabled: true,
+        maxApiKeys: 10,
+        apiRateLimitPerHour: 1000,
+        // Custom Branding Features
+        customBrandingEnabled: true,
+        whiteLabelEnabled: true,
+        // Bulk Operations
+        bulkJobImportEnabled: true,
+        maxBulkJobsPerImport: 100,
       },
       {
         user: employers[1]._id,
-        plan: 'basic',
+        plan: 'pro',
         status: 'active',
-        jobPostsLimit: 25,
+        jobPostsLimit: 100,
         jobPostsUsed: 5,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        // Pro plan features
+        priorityApplicationsEnabled: true,
+        enhancedMatchingEnabled: true,
+        applicationAnalyticsEnabled: true,
+        directMessagingEnabled: true,
+        featuredJobsEnabled: true,
+        advancedAnalyticsEnabled: true,
+        apiAccessEnabled: true,
+        maxApiKeys: 5,
+        apiRateLimitPerHour: 500,
+        customBrandingEnabled: true,
+        bulkJobImportEnabled: true,
+        maxBulkJobsPerImport: 50,
       },
       {
         user: employers[2]._id,
-        plan: 'free',
+        plan: 'basic',
         status: 'active',
-        jobPostsLimit: 5,
+        jobPostsLimit: 25,
         jobPostsUsed: 1,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        // Basic plan features
+        featuredJobsEnabled: true,
+        apiAccessEnabled: true,
+        maxApiKeys: 2,
+        apiRateLimitPerHour: 100,
       },
     ]);
     console.log('✅ Created subscriptions\n');

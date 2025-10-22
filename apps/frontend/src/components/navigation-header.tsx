@@ -14,16 +14,20 @@ import {
   CreditCard,
   FileText,
   Heart,
+  Key,
   LayoutDashboard,
   LogOut,
   Menu,
   MessageCircle,
   MessageSquare,
   Moon,
+  Palette,
   Settings,
   Shield,
   Sun,
+  Upload,
   User,
+  UserCheck,
   Users,
   X
 } from 'lucide-react';
@@ -332,6 +336,66 @@ export default function NavigationHeader() {
                               <BarChart3 className="mr-2 h-4 w-4" />
                               Analytics
                             </Link>
+                            
+                            {/* Enhanced Features Section */}
+                            <div className="border-t border-border my-1"></div>
+                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Enhanced Features
+                            </div>
+                            <Link 
+                              href="/settings/api-keys" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Key className="mr-2 h-4 w-4" />
+                              API Keys
+                            </Link>
+                            <Link 
+                              href="/settings/branding" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Palette className="mr-2 h-4 w-4" />
+                              Custom Branding
+                            </Link>
+                            <Link 
+                              href="/settings/bulk-import" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Bulk Job Import
+                            </Link>
+                            <Link 
+                              href="/settings/account-manager" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Account Manager
+                            </Link>
+                            <Link 
+                              href="/settings/priority-support" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Shield className="mr-2 h-4 w-4" />
+                              Priority Support
+                            </Link>
+                            <Link 
+                              href="/settings/advanced-analytics" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <BarChart3 className="mr-2 h-4 w-4" />
+                              Advanced Analytics
+                            </Link>
+                            
+                            {/* Account & Billing Section */}
+                            <div className="border-t border-border my-1"></div>
+                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Account & Billing
+                            </div>
                             <Link 
                               href="/messaging-permissions" 
                               className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
@@ -355,6 +419,14 @@ export default function NavigationHeader() {
                             >
                               <Briefcase className="mr-2 h-4 w-4" />
                               Pricing
+                            </Link>
+                            <Link 
+                              href="/settings" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Settings className="mr-2 h-4 w-4" />
+                              Settings
                             </Link>
                           </>
                         )}
