@@ -59,7 +59,7 @@ export class Branding {
   @Prop()
   tagline?: string;
 
-  @Prop()
+  @Prop({ type: Object })
   socialLinks?: {
     website?: string;
     linkedin?: string;
