@@ -233,9 +233,21 @@ export class InterviewPrepService {
       throw new Error('Interview session is not in progress');
     }
 
+    // Map questions to include the question text
+    const questionsWithText = questions.map(q => {
+      const question = this.questions.find(question => question._id === q.questionId);
+      return {
+        questionId: q.questionId,
+        question: question?.question || 'Question not found',
+        answer: q.answer,
+        rating: q.rating,
+        notes: q.notes,
+      };
+    });
+
     session.status = 'completed';
     session.completedAt = new Date();
-    session.questions = questions;
+    session.questions = questionsWithText;
     session.rating = overallRating;
     session.feedback = feedback;
     session.updatedAt = new Date();
