@@ -68,7 +68,7 @@ export default function ApplicationAnalytics({ isEnabled, timeRange = '30d' }: A
     setError(null);
     
     try {
-      const response = await api.get(`/api/v1/analytics/applications?timeRange=${timeRange}`);
+      const response = await api.get(`/analytics/applications?timeRange=${timeRange}`);
       if (response.data.success) {
         setAnalytics(response.data.data);
       }
