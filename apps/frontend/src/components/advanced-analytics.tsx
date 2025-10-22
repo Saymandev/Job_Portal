@@ -7,18 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import {
-    AlertCircle,
-    BarChart3,
-    Brain,
-    CheckCircle,
-    Clock,
-    DollarSign,
-    Eye,
-    Lightbulb,
-    RefreshCw,
-    Target,
-    TrendingUp,
-    Users
+  AlertCircle,
+  BarChart3,
+  Brain,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Eye,
+  Lightbulb,
+  RefreshCw,
+  Target,
+  TrendingUp,
+  Users
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -86,8 +86,8 @@ export default function AdvancedAnalytics() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [filters, setFilters] = useState({
-    type: '',
-    category: '',
+    type: 'all',
+    category: 'all',
     isRead: undefined as boolean | undefined,
   });
   const { toast } = useToast();
@@ -110,7 +110,13 @@ export default function AdvancedAnalytics() {
 
   const fetchInsights = useCallback(async () => {
     try {
-      const response = await api.get('/advanced-analytics/insights', { params: filters });
+      // Convert filters to API params
+      const params: any = {};
+      if (filters.type !== 'all') params.type = filters.type;
+      if (filters.category !== 'all') params.category = filters.category;
+      if (filters.isRead !== undefined) params.isRead = filters.isRead;
+      
+      const response = await api.get('/advanced-analytics/insights', { params });
       setInsights(response.data.data);
     } catch (error: any) {
       toast({
@@ -342,7 +348,7 @@ export default function AdvancedAnalytics() {
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="market_trend">Market Trends</SelectItem>
                   <SelectItem value="candidate_demographics">Candidate Demographics</SelectItem>
                   <SelectItem value="salary_analysis">Salary Analysis</SelectItem>
@@ -360,7 +366,7 @@ export default function AdvancedAnalytics() {
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="general">General</SelectItem>
                   <SelectItem value="industry_specific">Industry Specific</SelectItem>
                   <SelectItem value="company_specific">Company Specific</SelectItem>
@@ -375,7 +381,7 @@ export default function AdvancedAnalytics() {
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="false">Unread</SelectItem>
                   <SelectItem value="true">Read</SelectItem>
                 </SelectContent>

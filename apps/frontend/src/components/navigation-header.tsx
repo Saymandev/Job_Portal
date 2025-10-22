@@ -242,7 +242,7 @@ export default function NavigationHeader() {
                   </Button>
                   
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-popover border border-border rounded-md shadow-lg z-50">
+                    <div className="absolute right-0 mt-2 w-64 bg-popover border border-border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
                       <div className="py-1">
                         <Link 
                           href={getDashboardPath()} 

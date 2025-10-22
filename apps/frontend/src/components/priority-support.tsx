@@ -10,15 +10,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import {
-    AlertCircle,
-    CheckCircle,
-    Clock,
-    Headphones,
-    MessageSquare,
-    Plus,
-    Shield,
-    Star,
-    Zap
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Headphones,
+  MessageSquare,
+  Plus,
+  Shield,
+  Star,
+  Zap
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -74,9 +74,9 @@ export default function PrioritySupport() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [filters, setFilters] = useState({
-    status: '',
-    category: '',
-    priority: '',
+    status: 'all',
+    category: 'all',
+    priority: 'all',
   });
   const { toast } = useToast();
 
@@ -90,7 +90,13 @@ export default function PrioritySupport() {
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/priority-support/tickets', { params: filters });
+      // Convert filters to API params
+      const params: any = {};
+      if (filters.status !== 'all') params.status = filters.status;
+      if (filters.category !== 'all') params.category = filters.category;
+      if (filters.priority !== 'all') params.priority = filters.priority;
+      
+      const response = await api.get('/priority-support/tickets', { params });
       setTickets(response.data.data);
     } catch (error: any) {
       toast({
@@ -340,7 +346,7 @@ export default function PrioritySupport() {
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="open">Open</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
@@ -355,7 +361,7 @@ export default function PrioritySupport() {
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="technical">Technical</SelectItem>
                   <SelectItem value="billing">Billing</SelectItem>
                   <SelectItem value="feature_request">Feature Request</SelectItem>
@@ -372,7 +378,7 @@ export default function PrioritySupport() {
                   <SelectValue placeholder="All Priorities" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Priorities</SelectItem>
+                  <SelectItem value="all">All Priorities</SelectItem>
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
