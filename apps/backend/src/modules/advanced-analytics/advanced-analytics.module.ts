@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ApplicationsModule } from '../applications/applications.module';
 import { JobsModule } from '../jobs/jobs.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { AdvancedAnalyticsController } from './advanced-analytics.controller';
 import { AdvancedAnalyticsService } from './advanced-analytics.service';
@@ -10,6 +11,7 @@ import { AnalyticsInsight, AnalyticsInsightSchema } from './schemas/analytics-in
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: AnalyticsInsight.name, schema: AnalyticsInsightSchema }]),
+    NotificationsModule,
     SubscriptionsModule,
     JobsModule,
     ApplicationsModule,

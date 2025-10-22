@@ -2,8 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Model } from 'mongoose';
+import { AdvancedAnalyticsService } from '../advanced-analytics/advanced-analytics.service';
+import { ApiKeysService } from '../api-keys/api-keys.service';
+import { BrandingService } from '../branding/branding.service';
 import { Job, JobDocument } from '../jobs/schemas/job.schema';
 import { EnhancedNotificationsService } from '../notifications/enhanced-notifications.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { JobBoostService } from '../subscriptions/job-boost.service';
 import { Subscription, SubscriptionDocument } from '../subscriptions/schemas/subscription.schema';
 
 @Injectable()
@@ -14,6 +19,11 @@ export class NotificationCronService {
     @InjectModel(Job.name) private jobModel: Model<JobDocument>,
     @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
     private enhancedNotificationsService: EnhancedNotificationsService,
+    private notificationsService: NotificationsService,
+    private jobBoostService: JobBoostService,
+    private apiKeysService: ApiKeysService,
+    private advancedAnalyticsService: AdvancedAnalyticsService,
+    private brandingService: BrandingService,
   ) {}
 
   /**
@@ -140,6 +150,144 @@ export class NotificationCronService {
     } catch (error) {
       this.logger.error('❌ Error in subscription expiry notification cron job:', error);
     }
+  }
+
+  /**
+   * 🚀 Daily job boost expiry check
+   * Runs every day at 11 AM to check for expired job boosts
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_11AM)
+  async handleJobBoostExpiryCheck(): Promise<void> {
+    this.logger.log('🚀 Starting daily job boost expiry check...');
+
+    try {
+      await this.jobBoostService.checkExpiredBoosts();
+      this.logger.log('✅ Job boost expiry check completed');
+    } catch (error) {
+      this.logger.error('❌ Error in job boost expiry check:', error);
+    }
+  }
+
+  /**
+   * 🔑 Hourly API key usage check
+   * Runs every hour to check API key usage and send warnings
+   */
+  @Cron('0 * * * *') // Every hour at minute 0
+  async handleApiKeyUsageCheck(): Promise<void> {
+    this.logger.log('🔑 Starting API key usage check...');
+
+    try {
+      await this.apiKeysService.checkApiKeyUsage();
+      this.logger.log('✅ API key usage check completed');
+    } catch (error) {
+      this.logger.error('❌ Error in API key usage check:', error);
+    }
+  }
+
+  /**
+   * 📊 Daily analytics insights check
+   * Runs every day at 2 PM to check for high-priority analytics insights
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_2PM)
+  async handleAnalyticsInsightsCheck(): Promise<void> {
+    this.logger.log('📊 Starting analytics insights check...');
+
+    try {
+      // Get all users with advanced analytics access
+      const users = await this.subscriptionModel.find({
+        status: 'active',
+        $or: [
+          { plan: 'pro' },
+          { plan: 'enterprise' }
+        ]
+      }).populate('user');
+
+      for (const subscription of users) {
+        const user = (subscription as any).user;
+        if (user) {
+          await this.advancedAnalyticsService.checkHighPriorityInsights(user._id.toString());
+        }
+      }
+
+      this.logger.log('✅ Analytics insights check completed');
+    } catch (error) {
+      this.logger.error('❌ Error in analytics insights check:', error);
+    }
+  }
+
+  /**
+   * 🏷️ Weekly white-label domain check
+   * Runs every Sunday at 6 PM to check white-label domain status
+   */
+  @Cron('0 18 * * SUN')
+  async handleWhiteLabelDomainCheck(): Promise<void> {
+    this.logger.log('🏷️ Starting white-label domain check...');
+
+    try {
+      // Get all users with white-label enabled
+      const whiteLabelUsers = await this.subscriptionModel.find({
+        status: 'active',
+        plan: 'enterprise',
+      }).populate('user');
+
+      for (const subscription of whiteLabelUsers) {
+        const user = (subscription as any).user;
+        if (user) {
+          const branding = await this.brandingService.getBranding(user._id.toString());
+          
+          if (branding && branding.whiteLabelEnabled && branding.customDomain) {
+            // Check if domain is properly configured
+            const domainStatus = await this.checkDomainStatus(branding.customDomain);
+            
+            if (domainStatus.needsAttention) {
+              await this.notificationsService.createNotification({
+                user: user._id.toString(),
+                title: '🌐 White-label Domain Status',
+                message: `Your custom domain ${branding.customDomain} ${domainStatus.message}. Please check your DNS settings.`,
+                type: domainStatus.severity,
+                actionUrl: '/settings/branding',
+                metadata: {
+                  domain: branding.customDomain,
+                  status: domainStatus.status,
+                  message: domainStatus.message,
+                  checkedAt: new Date(),
+                },
+              });
+            }
+          }
+        }
+      }
+
+      this.logger.log('✅ White-label domain check completed');
+    } catch (error) {
+      this.logger.error('❌ Error in white-label domain check:', error);
+    }
+  }
+
+  /**
+   * Check domain status (placeholder implementation)
+   */
+  private async checkDomainStatus(domain: string): Promise<{
+    status: string;
+    message: string;
+    severity: 'info' | 'warning' | 'error';
+    needsAttention: boolean;
+  }> {
+    // This is a placeholder implementation
+    // In a real implementation, you would check:
+    // - DNS resolution
+    // - SSL certificate status
+    // - Domain configuration
+    
+    // For demo purposes, simulate different statuses
+    const statuses = [
+      { status: 'active', message: 'is working correctly', severity: 'info' as const, needsAttention: false },
+      { status: 'pending', message: 'is still propagating', severity: 'warning' as const, needsAttention: true },
+      { status: 'error', message: 'has configuration issues', severity: 'error' as const, needsAttention: true },
+    ];
+    
+    // Return a random status for demo
+    return statuses[Math.floor(Math.random() * statuses.length)];
   }
 
   /**

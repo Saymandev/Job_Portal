@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
 import { Model } from 'mongoose';
 import { JobsService } from '../jobs/jobs.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { BulkImport, BulkImportDocument, BulkImportStatus } from './schemas/bulk-import.schema';
 
@@ -30,6 +31,7 @@ export class BulkImportService {
     @InjectModel(BulkImport.name) private bulkImportModel: Model<BulkImportDocument>,
     private jobsService: JobsService,
     private subscriptionsService: SubscriptionsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createBulkImport(
@@ -63,6 +65,20 @@ export class BulkImportService {
 
     bulkImport.status = BulkImportStatus.PROCESSING;
     await bulkImport.save();
+
+    // Send notification that import has started
+    await this.notificationsService.createNotification({
+      user: bulkImport.user,
+      title: '📊 Bulk Import Started',
+      message: `Your bulk import "${bulkImport.originalFileName}" has started processing. You will be notified when it's complete.`,
+      type: 'info',
+      actionUrl: '/settings/bulk-import',
+      metadata: {
+        importId: bulkImport._id.toString(),
+        fileName: bulkImport.originalFileName,
+        totalJobs: bulkImport.totalJobs,
+      },
+    });
 
     try {
       const results = await this.parseAndValidateCSV(bulkImport.filePath);
@@ -118,11 +134,58 @@ export class BulkImportService {
 
       if (failedJobs === 0) {
         bulkImport.status = BulkImportStatus.COMPLETED;
+        
+        // Send success notification
+        await this.notificationsService.createNotification({
+          user: bulkImport.user,
+          title: '✅ Bulk Import Completed Successfully',
+          message: `All ${successfulJobs} jobs from "${bulkImport.originalFileName}" have been imported successfully!`,
+          type: 'success',
+          actionUrl: '/settings/bulk-import',
+          metadata: {
+            importId: bulkImport._id.toString(),
+            fileName: bulkImport.originalFileName,
+            successfulJobs,
+            failedJobs: 0,
+          },
+        });
       } else if (successfulJobs === 0) {
         bulkImport.status = BulkImportStatus.FAILED;
         bulkImport.errorMessage = 'All jobs failed to import';
+        
+        // Send failure notification
+        await this.notificationsService.createNotification({
+          user: bulkImport.user,
+          title: '❌ Bulk Import Failed',
+          message: `All jobs from "${bulkImport.originalFileName}" failed to import. Please check your CSV format and try again.`,
+          type: 'error',
+          actionUrl: '/settings/bulk-import',
+          metadata: {
+            importId: bulkImport._id.toString(),
+            fileName: bulkImport.originalFileName,
+            successfulJobs: 0,
+            failedJobs,
+            errors: errors.slice(0, 5), // Include first 5 errors
+          },
+        });
       } else {
         bulkImport.status = BulkImportStatus.PARTIALLY_COMPLETED;
+        
+        // Send partial success notification
+        await this.notificationsService.createNotification({
+          user: bulkImport.user,
+          title: '⚠️ Bulk Import Partially Completed',
+          message: `${successfulJobs} jobs imported successfully, ${failedJobs} failed from "${bulkImport.originalFileName}". Check the details for more information.`,
+          type: 'warning',
+          actionUrl: '/settings/bulk-import',
+          metadata: {
+            importId: bulkImport._id.toString(),
+            fileName: bulkImport.originalFileName,
+            successfulJobs,
+            failedJobs,
+            errors: errors.slice(0, 5), // Include first 5 errors
+          },
+        });
       }
 
       await bulkImport.save();
@@ -130,6 +193,20 @@ export class BulkImportService {
       bulkImport.status = BulkImportStatus.FAILED;
       bulkImport.errorMessage = error.message;
       await bulkImport.save();
+      
+      // Send error notification
+      await this.notificationsService.createNotification({
+        user: bulkImport.user,
+        title: '❌ Bulk Import Error',
+        message: `Bulk import "${bulkImport.originalFileName}" failed due to an error: ${error.message}`,
+        type: 'error',
+        actionUrl: '/settings/bulk-import',
+        metadata: {
+          importId: bulkImport._id.toString(),
+          fileName: bulkImport.originalFileName,
+          error: error.message,
+        },
+      });
     }
   }
 

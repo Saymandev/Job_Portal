@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ApplicationsService } from '../applications/applications.service';
 import { JobsService } from '../jobs/jobs.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { AnalyticsInsight, AnalyticsInsightDocument, InsightCategory, InsightType } from './schemas/analytics-insight.schema';
 
@@ -13,6 +14,7 @@ export class AdvancedAnalyticsService {
     private subscriptionsService: SubscriptionsService,
     private jobsService: JobsService,
     private applicationsService: ApplicationsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async generateInsights(userId: string, filters: any = {}): Promise<AnalyticsInsight[]> {
@@ -53,6 +55,42 @@ export class AdvancedAnalyticsService {
     if (predictiveInsight) insights.push(predictiveInsight);
 
     return insights;
+  }
+
+  async generateAndSaveInsights(userId: string, filters: any = {}): Promise<AnalyticsInsight[]> {
+    // Generate insights
+    const insights = await this.generateInsights(userId, filters);
+    
+    if (insights.length > 0) {
+      // Save insights to database
+      const savedInsights = await this.analyticsInsightModel.insertMany(
+        insights.map(insight => ({
+          ...insight,
+          userId,
+          isActive: true,
+          isRead: false,
+        }))
+      );
+
+      // Send notification about new insights
+      await this.notificationsService.createNotification({
+        user: userId,
+        title: '📊 New Analytics Insights Available',
+        message: `${insights.length} new analytics insights have been generated for your account. Check them out to optimize your hiring strategy.`,
+        type: 'info',
+        actionUrl: '/settings/advanced-analytics',
+        metadata: {
+          insightsCount: insights.length,
+          categories: [...new Set(insights.map(i => i.category))],
+          types: [...new Set(insights.map(i => i.type))],
+          generatedAt: new Date(),
+        },
+      });
+
+      return savedInsights;
+    }
+
+    return [];
   }
 
   async getInsights(userId: string, filters: any = {}): Promise<AnalyticsInsight[]> {
@@ -680,6 +718,34 @@ export class AdvancedAnalyticsService {
     });
 
     return insight.save();
+  }
+
+  /**
+   * Check for high-priority insights and send notifications
+   */
+  async checkHighPriorityInsights(userId: string): Promise<void> {
+    const highPriorityInsights = await this.analyticsInsightModel.find({
+      userId,
+      isActive: true,
+      isRead: false,
+      priority: { $gte: 8 }, // High priority insights
+    }).sort({ createdAt: -1 }).limit(5);
+
+    if (highPriorityInsights.length > 0) {
+      await this.notificationsService.createNotification({
+        user: userId,
+        title: '🚨 High-Priority Analytics Alert',
+        message: `You have ${highPriorityInsights.length} high-priority analytics insights that require your attention. These insights could significantly impact your hiring strategy.`,
+        type: 'warning',
+        actionUrl: '/settings/advanced-analytics',
+        metadata: {
+          insightsCount: highPriorityInsights.length,
+          insightIds: highPriorityInsights.map(i => i._id.toString()),
+          categories: [...new Set(highPriorityInsights.map(i => i.category))],
+          checkedAt: new Date(),
+        },
+      });
+    }
   }
 
   private hasAdvancedAnalyticsAccess(plan: string): boolean {

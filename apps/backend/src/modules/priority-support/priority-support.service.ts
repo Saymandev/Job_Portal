@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { SupportTicket, SupportTicketDocument, TicketCategory, TicketPriority, TicketStatus } from './schemas/support-ticket.schema';
 
@@ -9,6 +10,7 @@ export class PrioritySupportService {
   constructor(
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicketDocument>,
     private subscriptionsService: SubscriptionsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createTicket(userId: string, ticketData: any): Promise<SupportTicket> {
@@ -31,7 +33,26 @@ export class PrioritySupportService {
       },
     });
 
-    return ticket.save();
+    const savedTicket = await ticket.save();
+
+    // Send notification about ticket creation
+    await this.notificationsService.createNotification({
+      user: userId,
+      title: '🎫 Support Ticket Created',
+      message: `Your support ticket #${savedTicket._id.toString().slice(-8)} has been created with ${priority} priority. Our team will respond within the expected timeframe.`,
+      type: 'info',
+      actionUrl: '/settings/priority-support',
+      metadata: {
+        ticketId: savedTicket._id.toString(),
+        ticketNumber: savedTicket._id.toString().slice(-8),
+        priority,
+        category: ticketData.category,
+        subject: ticketData.subject,
+        createdAt: new Date(),
+      },
+    });
+
+    return savedTicket;
   }
 
   async getTickets(userId: string, filters: any = {}): Promise<SupportTicket[]> {
@@ -78,6 +99,21 @@ export class PrioritySupportService {
       throw new NotFoundException('Support ticket not found');
     }
 
+    // Send notification about ticket update
+    await this.notificationsService.createNotification({
+      user: userId,
+      title: '📝 Support Ticket Updated',
+      message: `Your support ticket #${ticket._id.toString().slice(-8)} has been updated. Check the details for the latest information.`,
+      type: 'info',
+      actionUrl: '/settings/priority-support',
+      metadata: {
+        ticketId: ticket._id.toString(),
+        ticketNumber: ticket._id.toString().slice(-8),
+        updatedFields: Object.keys(updateData),
+        updatedAt: new Date(),
+      },
+    });
+
     return ticket;
   }
 
@@ -107,6 +143,23 @@ export class PrioritySupportService {
     }
 
     await ticket.save();
+
+    // Send notification about new message
+    await this.notificationsService.createNotification({
+      user: userId,
+      title: '💬 New Message Added',
+      message: `You've added a new message to support ticket #${ticket._id.toString().slice(-8)}. Our team will review it shortly.`,
+      type: 'info',
+      actionUrl: '/settings/priority-support',
+      metadata: {
+        ticketId: ticket._id.toString(),
+        ticketNumber: ticket._id.toString().slice(-8),
+        messageLength: messageData.message.length,
+        status: ticket.status,
+        addedAt: new Date(),
+      },
+    });
+
     return ticket;
   }
 
@@ -123,6 +176,22 @@ export class PrioritySupportService {
     if (!ticket) {
       throw new NotFoundException('Support ticket not found');
     }
+
+    // Send notification about ticket assignment
+    await this.notificationsService.createNotification({
+      user: ticket.userId,
+      title: '👤 Support Ticket Assigned',
+      message: `Your support ticket #${ticket._id.toString().slice(-8)} has been assigned to a support agent and is now in progress.`,
+      type: 'info',
+      actionUrl: '/settings/priority-support',
+      metadata: {
+        ticketId: ticket._id.toString(),
+        ticketNumber: ticket._id.toString().slice(-8),
+        assignedTo: agentId,
+        status: ticket.status,
+        assignedAt: new Date(),
+      },
+    });
 
     return ticket;
   }
@@ -145,6 +214,23 @@ export class PrioritySupportService {
     }
 
     await ticket.save();
+
+    // Send notification about ticket resolution
+    await this.notificationsService.createNotification({
+      user: ticket.userId,
+      title: '✅ Support Ticket Resolved',
+      message: `Your support ticket #${ticket._id.toString().slice(-8)} has been resolved! Thank you for using our priority support.`,
+      type: 'success',
+      actionUrl: '/settings/priority-support',
+      metadata: {
+        ticketId: ticket._id.toString(),
+        ticketNumber: ticket._id.toString().slice(-8),
+        resolvedBy: agentId,
+        resolutionTime: ticket.resolutionTime,
+        resolvedAt: ticket.resolvedAt,
+      },
+    });
+
     return ticket;
   }
 

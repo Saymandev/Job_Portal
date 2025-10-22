@@ -76,7 +76,55 @@ export class JobBoostService {
     job.expiresAt = undefined;
     await job.save();
 
+    // Send notification about boost removal
+    await this.notificationsService.createNotification({
+      user: userId,
+      title: 'Job Boost Removed',
+      message: `The boost for job "${job.title}" has been removed. It will no longer appear as featured.`,
+      type: 'info',
+      actionUrl: `/employer/jobs/${jobId}`,
+    });
+
     return { job };
+  }
+
+  /**
+   * Check for expired job boosts and send notifications
+   */
+  async checkExpiredBoosts(): Promise<void> {
+    const now = new Date();
+    
+    // Find jobs with expired boosts
+    const expiredBoostedJobs = await this.jobModel.find({
+      isFeatured: true,
+      expiresAt: { $lte: now },
+    }).populate('postedBy');
+
+    for (const job of expiredBoostedJobs) {
+      // Remove the boost
+      job.isFeatured = false;
+      job.expiresAt = undefined;
+      await job.save();
+
+      // Send notification to job owner
+      const jobOwner = job.postedBy as any;
+      await this.notificationsService.createNotification({
+        user: jobOwner._id.toString(),
+        title: '⏰ Job Boost Expired',
+        message: `The boost for your job "${job.title}" has expired. It will no longer appear as featured. Consider boosting it again to get more visibility.`,
+        type: 'reminder',
+        actionUrl: `/employer/jobs/${job._id}`,
+        metadata: {
+          jobId: job._id.toString(),
+          jobTitle: job.title,
+          expiredAt: now,
+        },
+      });
+    }
+
+    if (expiredBoostedJobs.length > 0) {
+      console.log(`📊 Processed ${expiredBoostedJobs.length} expired job boosts`);
+    }
   }
 
   async getBoostedJobs(userId: string): Promise<JobDocument[]> {

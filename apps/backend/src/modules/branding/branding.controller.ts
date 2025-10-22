@@ -198,4 +198,79 @@ export class BrandingController {
       data: assets,
     };
   }
+
+  @Post('white-label/enable')
+  @ApiOperation({ summary: 'Enable white-label features' })
+  async enableWhiteLabel(
+    @CurrentUser('id') userId: string,
+    @Body() whiteLabelData: any,
+  ) {
+    const branding = await this.brandingService.enableWhiteLabel(userId, whiteLabelData);
+
+    return {
+      success: true,
+      message: 'White-label features enabled successfully',
+      data: branding,
+    };
+  }
+
+  @Put('white-label/domain')
+  @ApiOperation({ summary: 'Update custom domain' })
+  async updateCustomDomain(
+    @CurrentUser('id') userId: string,
+    @Body('domain') domain: string,
+  ) {
+    const branding = await this.brandingService.updateCustomDomain(userId, domain);
+
+    return {
+      success: true,
+      message: 'Custom domain updated successfully',
+      data: branding,
+    };
+  }
+
+  @Put('white-label/seo')
+  @ApiOperation({ summary: 'Update SEO settings' })
+  async updateSEOSettings(
+    @CurrentUser('id') userId: string,
+    @Body() seoSettings: any,
+  ) {
+    const branding = await this.brandingService.updateSEOSettings(userId, seoSettings);
+
+    return {
+      success: true,
+      message: 'SEO settings updated successfully',
+      data: branding,
+    };
+  }
+
+  @Put('white-label/email-templates')
+  @ApiOperation({ summary: 'Update email templates' })
+  async updateEmailTemplates(
+    @CurrentUser('id') userId: string,
+    @Body() emailTemplates: any,
+  ) {
+    const branding = await this.brandingService.updateEmailTemplates(userId, emailTemplates);
+
+    return {
+      success: true,
+      message: 'Email templates updated successfully',
+      data: branding,
+    };
+  }
+
+  @Put('white-label/legal-pages')
+  @ApiOperation({ summary: 'Update legal pages' })
+  async updateLegalPages(
+    @CurrentUser('id') userId: string,
+    @Body() legalPages: any,
+  ) {
+    const branding = await this.brandingService.updateLegalPages(userId, legalPages);
+
+    return {
+      success: true,
+      message: 'Legal pages updated successfully',
+      data: branding,
+    };
+  }
 }

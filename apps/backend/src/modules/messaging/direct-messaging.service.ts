@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Application, ApplicationDocument } from '../applications/schemas/application.schema';
+import { NotificationsService } from '../notifications/notifications.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 
 export interface DirectMessage {
@@ -23,6 +24,7 @@ export class DirectMessagingService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
+    private notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -79,7 +81,7 @@ export class DirectMessagingService {
     this.messages.push(directMessage);
 
     // Send notification to candidate
-    await this.notifyCandidate(candidateId, subject, message);
+    await this.notifyCandidate(candidateId, subject, message, employerId);
 
     return directMessage;
   }
@@ -169,18 +171,32 @@ export class DirectMessagingService {
   /**
    * Notify candidate about new message
    */
-  private async notifyCandidate(candidateId: string, subject: string, message: string): Promise<void> {
-    // In a real implementation, you would:
-    // 1. Send email notification
-    // 2. Send push notification
-    // 3. Update in-app notification system
-    
-    console.log(`Notifying candidate ${candidateId} about new message: ${subject}`);
-    
-    // For demo purposes, we'll just log it
-    const candidate = await this.userModel.findById(candidateId);
-    if (candidate) {
-      console.log(`Email notification sent to ${candidate.email}`);
+  private async notifyCandidate(candidateId: string, subject: string, message: string, fromUserId: string): Promise<void> {
+    try {
+      // Get sender information
+      const sender = await this.userModel.findById(fromUserId);
+      if (!sender) return;
+
+      // Send in-app notification
+      await this.notificationsService.createNotification({
+        user: candidateId,
+        title: `💬 New Message from ${sender.fullName}`,
+        message: `${subject}: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`,
+        type: 'message',
+        actionUrl: '/messages',
+        metadata: {
+          fromUserId,
+          fromUserName: sender.fullName,
+          fromUserEmail: sender.email,
+          subject,
+          messagePreview: message.substring(0, 200),
+        },
+      });
+
+      // Send email notification (this would be handled by the mail service)
+      // await this.mailService.sendDirectMessageEmail(candidate.email, sender.fullName, subject, message);
+    } catch (error) {
+      console.error('Error notifying candidate about new message:', error);
     }
   }
 
