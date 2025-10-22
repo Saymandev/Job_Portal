@@ -51,6 +51,5 @@ export class ApiKey {
 export const ApiKeySchema = SchemaFactory.createForClass(ApiKey);
 
 ApiKeySchema.index({ user: 1 });
-ApiKeySchema.index({ keyId: 1 });
 ApiKeySchema.index({ status: 1 });
 ApiKeySchema.index({ expiresAt: 1 });

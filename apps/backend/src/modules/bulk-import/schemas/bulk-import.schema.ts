@@ -11,7 +11,7 @@ export enum BulkImportStatus {
   PARTIALLY_COMPLETED = 'partially_completed',
 }
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, suppressReservedKeysWarning: true })
 export class BulkImport {
   @Prop({ type: 'ObjectId', ref: 'User', required: true })
   user: string;

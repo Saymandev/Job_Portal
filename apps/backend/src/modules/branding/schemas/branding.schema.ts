@@ -105,5 +105,4 @@ export class Branding {
 
 export const BrandingSchema = SchemaFactory.createForClass(Branding);
 
-BrandingSchema.index({ user: 1 });
 BrandingSchema.index({ customDomain: 1 });
