@@ -22,8 +22,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       try {
         const token = safeGetItem('accessToken');
         
-        // If we have a token but no user data, try to fetch user to validate the token
-        if (token && !user && isAuthenticated) {
+        // Only validate token if we have a token but no user data AND we're not already authenticated
+        // This prevents unnecessary validation after successful login
+        if (token && !user && !isAuthenticated) {
           try {
             console.log('Validating stored token...');
             await fetchUser();
