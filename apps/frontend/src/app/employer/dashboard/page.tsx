@@ -9,19 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    BarChart3,
-    Briefcase,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Eye,
-    FileText,
-    MessageSquare,
-    Plus,
-    TrendingUp,
-    UserPlus,
-    Users,
-    Zap
+  BarChart3,
+  Briefcase,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Eye,
+  FileText,
+  MessageSquare,
+  Plus,
+  TrendingUp,
+  UserPlus,
+  Users,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -241,15 +241,24 @@ export default function EmployerDashboard() {
     // Only check authentication after the store has hydrated
     if (!isHydrated) return;
 
-    if (!isAuthenticated || user?.role !== 'employer') {
-      router.push('/login');
-      return;
-    }
-    
-    // Only fetch data if user is properly authenticated
-    if (isAuthenticated && user?.role === 'employer') {
-      fetchDashboardData();
-    }
+    console.log('Dashboard: useEffect', { isAuthenticated, user: !!user, userRole: user?.role, isHydrated });
+
+    // Add a small delay to allow auth state to settle
+    const timeoutId = setTimeout(() => {
+      if (!isAuthenticated || user?.role !== 'employer') {
+        console.log('Dashboard: Redirecting to login - not authenticated or not employer');
+        router.push('/login');
+        return;
+      }
+      
+      console.log('Dashboard: User is authenticated employer, fetching data');
+      // Only fetch data if user is properly authenticated
+      if (isAuthenticated && user?.role === 'employer') {
+        fetchDashboardData();
+      }
+    }, 100); // 100ms delay
+
+    return () => clearTimeout(timeoutId);
   }, [isAuthenticated, user, router, isHydrated, fetchDashboardData]);
 
   const getStatusBadge = (status: string) => {

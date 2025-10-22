@@ -131,9 +131,7 @@ export const useAuthStore = create<AuthState>()(
 
       fetchUser: async () => {
         try {
-          console.log('Auth Store: fetchUser called');
           const { data }: any = await api.get('/auth/me');
-          console.log('Auth Store: fetchUser response received', data);
           
           // Ensure user object has 'id' field (fallback from '_id' if needed)
           const normalizedUserData = {
@@ -141,7 +139,6 @@ export const useAuthStore = create<AuthState>()(
             id: data.data.id || data.data._id
           };
 
-          console.log('Auth Store: Setting user data from fetchUser', normalizedUserData);
           set({
             user: normalizedUserData,
             isAuthenticated: true,

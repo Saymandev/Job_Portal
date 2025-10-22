@@ -39,7 +39,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           // The store will be updated by the fetchUser error handler
         }
       } else if (!token) {
-        // No token - this is normal for unauthenticated state
         console.log('AuthProvider: No token - normal unauthenticated state');
       }
     } catch (error) {
