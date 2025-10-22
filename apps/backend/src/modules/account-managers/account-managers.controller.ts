@@ -127,6 +127,17 @@ export class AccountManagersController {
     };
   }
 
+  @Get('client/me')
+  @ApiOperation({ summary: 'Get current user client assignment' })
+  async getMyClientAssignment(@CurrentUser('id') userId: string) {
+    const assignment = await this.accountManagersService.getClientAssignment(userId);
+
+    return {
+      success: true,
+      data: assignment,
+    };
+  }
+
   @Get('client/:clientId')
   @ApiOperation({ summary: 'Get client assignment' })
   async getClientAssignment(@Param('clientId') clientId: string) {

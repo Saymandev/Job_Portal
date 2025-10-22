@@ -573,9 +573,11 @@ Key Responsibilities:
         // Custom Branding Features
         customBrandingEnabled: true,
         whiteLabelEnabled: true,
-        // Bulk Operations
-        bulkJobImportEnabled: true,
-        maxBulkJobsPerImport: 100,
+            // Bulk Operations
+            bulkJobImportEnabled: true,
+            maxBulkJobsPerImport: 100,
+            // Dedicated Account Manager
+            dedicatedAccountManagerEnabled: true,
       },
       {
         user: employers[1]._id,

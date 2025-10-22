@@ -5,17 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/auth-store';
 import {
-    AlertCircle,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Mail,
-    MessageSquare,
-    Phone,
-    Star,
-    User,
-    Users
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Mail,
+  MessageSquare,
+  Phone,
+  Star,
+  User,
+  Users
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
@@ -77,6 +78,7 @@ export default function DedicatedAccountManager() {
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuthStore();
 
   const fetchAssignment = useCallback(async () => {
     try {
@@ -105,7 +107,17 @@ export default function DedicatedAccountManager() {
   const requestAccountManager = async () => {
     try {
       setRequesting(true);
-      await api.post('/account-managers/auto-assign', { clientId: 'me' });
+      
+      if (!user?.id) {
+        toast({
+          title: 'Error',
+          description: 'User not authenticated',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      await api.post('/account-managers/auto-assign', { clientId: user.id });
       
       toast({
         title: 'Success',

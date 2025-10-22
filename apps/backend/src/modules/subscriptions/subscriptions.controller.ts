@@ -79,6 +79,27 @@ export class SubscriptionsController {
       featuredJobsEnabled: subscription.featuredJobsEnabled || false,
       advancedAnalyticsEnabled: subscription.advancedAnalyticsEnabled || false,
       prioritySupportEnabled: subscription.prioritySupportEnabled || false,
+      // Enhanced Employer Features
+      priorityApplicationsEnabled: subscription.priorityApplicationsEnabled || false,
+      enhancedMatchingEnabled: subscription.enhancedMatchingEnabled || false,
+      applicationAnalyticsEnabled: subscription.applicationAnalyticsEnabled || false,
+      unlimitedResumeDownloads: subscription.unlimitedResumeDownloads || false,
+      directMessagingEnabled: subscription.directMessagingEnabled || false,
+      featuredProfileEnabled: subscription.featuredProfileEnabled || false,
+      salaryInsightsEnabled: subscription.salaryInsightsEnabled || false,
+      interviewPrepEnabled: subscription.interviewPrepEnabled || false,
+      // API Access Features
+      apiAccessEnabled: subscription.apiAccessEnabled || false,
+      maxApiKeys: subscription.maxApiKeys || 0,
+      apiRateLimitPerHour: subscription.apiRateLimitPerHour || 0,
+      // Custom Branding Features
+      customBrandingEnabled: subscription.customBrandingEnabled || false,
+      whiteLabelEnabled: subscription.whiteLabelEnabled || false,
+      // Bulk Operations
+      bulkJobImportEnabled: subscription.bulkJobImportEnabled || false,
+      maxBulkJobsPerImport: subscription.maxBulkJobsPerImport || 0,
+      // Dedicated Account Manager
+      dedicatedAccountManagerEnabled: subscription.dedicatedAccountManagerEnabled || false,
     };
 
     return {

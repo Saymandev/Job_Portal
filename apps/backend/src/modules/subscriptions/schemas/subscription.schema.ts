@@ -121,6 +121,10 @@ export class Subscription {
 
   @Prop({ default: 0 })
   maxBulkJobsPerImport: number;
+
+  // Dedicated Account Manager
+  @Prop({ default: false })
+  dedicatedAccountManagerEnabled: boolean;
 }
 
 export const SubscriptionSchema = SchemaFactory.createForClass(Subscription);
