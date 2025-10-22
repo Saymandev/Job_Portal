@@ -6,7 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
-import { Check, Crown, Rocket, Zap } from 'lucide-react';
+import {
+  ArrowRight,
+  BarChart3,
+  Building,
+  Check,
+  Code,
+  Crown,
+  DollarSign,
+  Download,
+  MessageSquare,
+  Mic,
+  Rocket,
+  Search,
+  Sparkles,
+  Star,
+  Target,
+  User,
+  Zap
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -17,14 +35,16 @@ const plans = [
     price: 0,
     interval: 'forever',
     icon: Zap,
-    color: 'text-muted-foreground',
-    bgColor: 'bg-muted',
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-200',
+    buttonStyle: 'outline',
     features: [
-      '5 job postings per month',
-      'Basic analytics dashboard',
-      'Email support',
-      'Job board listing',
-      '30-day job duration',
+      { text: '5 job postings per month', icon: null },
+      { text: 'Basic analytics dashboard', icon: BarChart3 },
+      { text: 'Email support', icon: MessageSquare },
+      { text: 'Job board listing', icon: null },
+      { text: '30-day job duration', icon: null },
     ],
     limits: {
       jobPosts: 5,
@@ -39,20 +59,22 @@ const plans = [
     price: 49,
     interval: 'month',
     icon: Rocket,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-500/20',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
+    buttonStyle: 'default',
     popular: false,
     features: [
-      '25 job postings per month',
-      '3 job boosts per month',
-      'Enhanced analytics',
-      'Email support',
-      '60-day job duration',
-      'Featured job priority',
-      '🎯 Priority application processing',
-      '🔍 Enhanced candidate matching',
-      '📊 Application analytics dashboard',
-      '📄 Unlimited resume downloads',
+      { text: '25 job postings per month', icon: null },
+      { text: '3 job boosts per month', icon: Star },
+      { text: 'Enhanced analytics', icon: BarChart3 },
+      { text: 'Email support', icon: MessageSquare },
+      { text: '60-day job duration', icon: null },
+      { text: 'Featured job priority', icon: Star },
+      { text: 'Priority application processing', icon: Target },
+      { text: 'Enhanced candidate matching', icon: Search },
+      { text: 'Application analytics dashboard', icon: BarChart3 },
+      { text: 'Unlimited resume downloads', icon: Download },
     ],
     limits: {
       jobPosts: 25,
@@ -67,25 +89,27 @@ const plans = [
     price: 149,
     interval: 'month',
     icon: Crown,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-500 dark:bg-purple-600/20',
+    color: 'text-purple-600',
+    bgColor: 'bg-gradient-to-br from-purple-50 to-indigo-50',
+    borderColor: 'border-purple-300',
+    buttonStyle: 'default',
     popular: true,
     features: [
-      '100 job postings per month',
-      '10 job boosts per month',
-      'Featured job listings',
-      'Enhanced analytics & insights',
-      'Email support',
-      '90-day job duration',
-      'Priority job visibility',
-      '🎯 Priority application processing',
-      '🔍 Enhanced candidate matching',
-      '📊 Application analytics dashboard',
-      '📄 Unlimited resume downloads',
-      '💬 Direct candidate messaging',
-      '⭐ Featured company profile',
-      '💰 Salary insights & market data',
-      '🎤 Interview preparation tools',
+      { text: '100 job postings per month', icon: null },
+      { text: '10 job boosts per month', icon: Star },
+      { text: 'Featured job listings', icon: Star },
+      { text: 'Enhanced analytics & insights', icon: BarChart3 },
+      { text: 'Email support', icon: MessageSquare },
+      { text: '90-day job duration', icon: null },
+      { text: 'Priority job visibility', icon: Star },
+      { text: 'Priority application processing', icon: Target },
+      { text: 'Enhanced candidate matching', icon: Search },
+      { text: 'Application analytics dashboard', icon: BarChart3 },
+      { text: 'Unlimited resume downloads', icon: Download },
+      { text: 'Direct candidate messaging', icon: MessageSquare },
+      { text: 'Featured company profile', icon: Building },
+      { text: 'Salary insights & market data', icon: DollarSign },
+      { text: 'Interview preparation tools', icon: Mic },
     ],
     limits: {
       jobPosts: 100,
@@ -100,29 +124,31 @@ const plans = [
     price: 499,
     interval: 'month',
     icon: Crown,
-    color: 'text-yellow-600 dark:text-yellow-400',
-    bgColor: 'bg-yellow-500/20',
+    color: 'text-amber-600',
+    bgColor: 'bg-gradient-to-br from-amber-50 to-orange-50',
+    borderColor: 'border-amber-300',
+    buttonStyle: 'default',
     popular: false,
     features: [
-      'Unlimited job postings',
-      'Unlimited job boosts',
-      'Always featured listings',
-      'Enhanced analytics & insights',
-      'Email support',
-      '90-day job duration',
-      'Priority job visibility',
-      'Custom job duration',
-      '🎯 Priority application processing',
-      '🔍 Enhanced candidate matching',
-      '📊 Application analytics dashboard',
-      '📄 Unlimited resume downloads',
-      '💬 Direct candidate messaging',
-      '⭐ Featured company profile',
-      '💰 Salary insights & market data',
-      '🎤 Interview preparation tools',
-      '🏢 Custom branding',
-      '🔌 API access',
-      '👨‍💼 Dedicated account manager',
+      { text: 'Unlimited job postings', icon: null },
+      { text: 'Unlimited job boosts', icon: Star },
+      { text: 'Always featured listings', icon: Star },
+      { text: 'Enhanced analytics & insights', icon: BarChart3 },
+      { text: 'Email support', icon: MessageSquare },
+      { text: '90-day job duration', icon: null },
+      { text: 'Priority job visibility', icon: Star },
+      { text: 'Custom job duration', icon: null },
+      { text: 'Priority application processing', icon: Target },
+      { text: 'Enhanced candidate matching', icon: Search },
+      { text: 'Application analytics dashboard', icon: BarChart3 },
+      { text: 'Unlimited resume downloads', icon: Download },
+      { text: 'Direct candidate messaging', icon: MessageSquare },
+      { text: 'Featured company profile', icon: Building },
+      { text: 'Salary insights & market data', icon: DollarSign },
+      { text: 'Interview preparation tools', icon: Mic },
+      { text: 'Custom branding', icon: Building },
+      { text: 'API access', icon: Code },
+      { text: 'Dedicated account manager', icon: User },
     ],
     limits: {
       jobPosts: 1000,
@@ -230,9 +256,10 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative ${
-                  plan.popular ? 'border-2 border-primary shadow-xl' : 
-                  currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 dark:border-green-400 shadow-lg bg-green-50 dark:bg-green-900/20' : ''
+                className={`relative transition-all duration-300 hover:shadow-lg ${
+                  plan.popular ? `border-2 ${plan.borderColor} shadow-xl ${plan.bgColor}` : 
+                  currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 dark:border-green-400 shadow-lg bg-green-50 dark:bg-green-900/20' : 
+                  `border ${plan.borderColor} ${plan.bgColor}`
                 }`}
               >
                 {/* Badge Container */}
@@ -258,16 +285,24 @@ export default function PricingPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-green-500 dark:text-green-400 shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
+                    {plan.features.map((feature, index) => {
+                      const FeatureIcon = feature.icon;
+                      return (
+                        <li key={index} className="flex items-start gap-3">
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                            {FeatureIcon && (
+                              <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <span className="text-sm text-muted-foreground">{feature.text}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                   <Button
-                    className="w-full"
-                    variant={plan.popular ? 'default' : 'outline'}
+                    className={`w-full ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white' : ''}`}
+                    variant={plan.buttonStyle === 'outline' ? 'outline' : 'default'}
                     onClick={() => handleSelectPlan(plan.id)}
                     disabled={loadingPlan === plan.id || isLoadingSubscription}
                   >
@@ -285,12 +320,26 @@ export default function PricingPage() {
         </div>
 
         {/* Coming Soon Features */}
-        <div className="mt-16 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">🚀 Coming Soon</h2>
+        <div className="mt-20 max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Rocket className="h-8 w-8 text-purple-600" />
+              <h2 className="text-4xl font-bold">Coming Soon</h2>
+            </div>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Exciting new features in development to enhance your hiring experience
+            </p>
+          </div>
+          
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">API Access</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-purple-100 hover:border-purple-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                    <Code className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <CardTitle className="text-lg">API Access</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -299,9 +348,14 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Company Branding</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-blue-100 hover:border-blue-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                    <Building className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <CardTitle className="text-lg">Company Branding</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -310,9 +364,14 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Bulk Job Import</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-green-100 hover:border-green-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+                    <Download className="h-5 w-5 text-green-600" />
+                  </div>
+                  <CardTitle className="text-lg">Bulk Job Import</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -321,9 +380,14 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Priority Support</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-orange-100 hover:border-orange-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                    <MessageSquare className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <CardTitle className="text-lg">Priority Support</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -332,9 +396,14 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Advanced Analytics</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-indigo-100 hover:border-indigo-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <CardTitle className="text-lg">Advanced Analytics</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -343,9 +412,14 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">White-label Options</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-amber-100 hover:border-amber-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
+                    <Sparkles className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <CardTitle className="text-lg">White-label Options</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -357,12 +431,20 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ or Additional Info */}
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Frequently Asked Questions</h2>
+            <p className="text-xl text-muted-foreground">
+              Everything you need to know about our pricing and features
+            </p>
+          </div>
           <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">What are job boosts?</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-100 hover:border-slate-300">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  What are job boosts?
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -372,9 +454,12 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Can I cancel anytime?</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-100 hover:border-slate-300">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ArrowRight className="h-5 w-5 text-green-500" />
+                  Can I cancel anytime?
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -384,9 +469,12 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">What happens to my jobs if I downgrade?</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-100 hover:border-slate-300">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Target className="h-5 w-5 text-blue-500" />
+                  What happens to my jobs if I downgrade?
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -396,9 +484,12 @@ export default function PricingPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Do you offer refunds?</CardTitle>
+            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-100 hover:border-slate-300">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-green-500" />
+                  Do you offer refunds?
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
