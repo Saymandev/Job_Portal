@@ -4,6 +4,7 @@ import { SanitizationService } from '@/common/services/sanitization.service';
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ApplicationsModule } from '../applications/applications.module';
+import { Application, ApplicationSchema } from '../applications/schemas/application.schema';
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Subscription, SubscriptionSchema } from '../subscriptions/schemas/subscription.schema';
@@ -23,6 +24,7 @@ import { SavedJob, SavedJobSchema } from './schemas/saved-job.schema';
       { name: Job.name, schema: JobSchema },
       { name: Company.name, schema: CompanySchema },
       { name: User.name, schema: UserSchema },
+      { name: Application.name, schema: ApplicationSchema },
       { name: SavedJob.name, schema: SavedJobSchema },
       { name: Subscription.name, schema: SubscriptionSchema },
       { name: AuditLog.name, schema: AuditLogSchema },
