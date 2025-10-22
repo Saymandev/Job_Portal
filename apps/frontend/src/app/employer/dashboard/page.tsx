@@ -247,8 +247,9 @@ export default function EmployerDashboard() {
     const timeoutId = setTimeout(() => {
       if (!isAuthenticated || user?.role !== 'employer') {
         console.log('Dashboard: Redirecting to login - not authenticated or not employer');
-        router.push('/login');
         return;
+        // router.push('/login');
+       
       }
       
       console.log('Dashboard: User is authenticated employer, fetching data');
