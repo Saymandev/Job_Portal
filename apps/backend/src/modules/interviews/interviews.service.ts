@@ -269,7 +269,7 @@ export class InterviewsService {
 
     // Send notification to interviewer about reschedule request
     try {
-      console.log('Sending notification to interviewer:', interview.interviewer.toString());
+    
       const notification = await this.notificationsService.createNotification({
         user: interview.interviewer.toString(),
         title: 'Interview Reschedule Request',
@@ -283,7 +283,7 @@ export class InterviewsService {
           rescheduleReason: rescheduleReason,
         },
       });
-      console.log('Notification created successfully:', notification._id);
+      
     } catch (error) {
       console.error('Error sending reschedule notification:', error);
       // Don't fail the reschedule request if notification fails
@@ -348,7 +348,7 @@ export class InterviewsService {
 
     // Send notification to candidate about reschedule decision
     try {
-      console.log('Sending reschedule decision notification to candidate:', interview.candidate.toString());
+      
       const notification = await this.notificationsService.createNotification({
         user: interview.candidate.toString(),
         title: approved ? 'Interview Reschedule Approved' : 'Interview Reschedule Rejected',
@@ -364,7 +364,7 @@ export class InterviewsService {
           notes: notes,
         },
       });
-      console.log('Reschedule decision notification created successfully:', notification._id);
+      
     } catch (error) {
       console.error('Error sending reschedule approval notification:', error);
       // Don't fail the approval if notification fails

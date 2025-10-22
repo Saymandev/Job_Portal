@@ -96,12 +96,12 @@ export default function AdminMessagesPage() {
 
   // Auto-scroll to bottom function
   const scrollToBottom = useCallback(() => {
-    console.log('📜 Attempting to scroll to bottom...');
+      
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      console.log('📜 Scrolled to bottom successfully');
+      
     } else {
-      console.log('📜 messagesEndRef is null, cannot scroll');
+        
     }
   }, []);
 
@@ -110,12 +110,7 @@ export default function AdminMessagesPage() {
       setIsLoading(true);
       
       // Debug: Check current user and authentication
-      console.log('Admin Messages - Current user:', {
-        user: user,
-        isAuthenticated: isAuthenticated,
-        userRole: user?.role,
-        userId: user?.id
-      });
+      
       
       // Check if user is admin
       if (user?.role !== 'admin') {
@@ -137,21 +132,17 @@ export default function AdminMessagesPage() {
         setUsers(usersResponse.data.data);
       }
       if (conversationsResponse.data.success) {
-        console.log('Fetched conversations:', conversationsResponse.data.data);
+        
         conversationsResponse.data.data.forEach((conv: any) => {
-          console.log('Conversation participants:', conv.participants);
+         
         });
         const fetchedConversations = conversationsResponse.data.data;
         setConversations(fetchedConversations);
         
         // Auto-select the first conversation if none is selected and there are conversations
         if (fetchedConversations.length > 0 && !selectedConversationRef.current) {
-          console.log('🔄 Auto-selecting first conversation after page load:', fetchedConversations[0]._id);
-          console.log('🔄 First conversation details:', {
-            id: fetchedConversations[0]._id,
-            participants: fetchedConversations[0].participants.map((p: any) => ({ id: p._id, name: p.fullName })),
-            lastMessage: fetchedConversations[0].lastMessage
-          });
+          
+         
           setSelectedConversation(fetchedConversations[0]);
           // Messages will be fetched by the useEffect that watches selectedConversation
         }
@@ -178,27 +169,11 @@ export default function AdminMessagesPage() {
   }, [toast, isAuthenticated, user]);
 
   // Monitor user object changes for debugging
-  useEffect(() => {
-    console.log('User object changed:', {
-      userId: user?.id,
-      userRole: user?.role,
-      userFullName: user?.fullName,
-      userEmail: user?.email,
-      hasId: !!user?.id,
-      hasRole: !!user?.role
-    });
-  }, [user]);
+ 
 
   // Socket initialization - run once when user changes
   useEffect(() => {
-    console.log('Admin messages page - Auth check:', {
-      isAuthenticated,
-      userRole: user?.role,
-      userId: user?.id,
-      userEmail: user?.email,
-      userFullName: user?.fullName,
-      userObject: user
-    });
+      
 
     if (!isAuthenticated || user?.role !== 'admin') {
       router.push('/login');
@@ -207,7 +182,7 @@ export default function AdminMessagesPage() {
 
     // Force refresh user data if user.id is undefined
     if (user && !user.id && user.fullName) {
-      console.log('User ID is undefined, forcing user data refresh...');
+ 
       useAuthStore.getState().fetchUser();
     }
 
@@ -216,24 +191,24 @@ export default function AdminMessagesPage() {
     // Initialize socket for real-time messaging
     if (user?.id || user?.email || user?.role === 'admin') {
       const userId = user?.id || user?.email || '68ebabe6199695f6bf0fdf33'; // Fallback to known admin ID
-      console.log('Admin initializing socket with user ID:', userId);
+      
       const socket = initSocket(userId);
-      console.log('Admin socket initialized:', socket);
+      
       
       // Add socket connection debugging
       socket.on('connect', () => {
-        console.log('🔌 Admin socket connected:', socket.id);
+       
         // Rejoin all conversation rooms when reconnecting
         if (selectedConversationRef.current) {
-          console.log('🔌 Rejoining conversation room on connect:', selectedConversationRef.current._id);
+         
           socket.emit('joinConversation', selectedConversationRef.current._id);
         }
       });
       
       socket.on('disconnect', (reason) => {
-        console.log('🔌 Admin socket disconnected:', reason);
-      });
       
+      });
+
       socket.on('connect_error', (error) => {
         console.error('🔌 Admin socket connection error:', error);
       });
@@ -241,43 +216,32 @@ export default function AdminMessagesPage() {
       // Debug: Log all socket events for admin
       const originalEmit = socket.emit;
       socket.emit = function(event: string, ...args: any[]) {
-        console.log('📤 Admin socket emitting:', { event, args });
+        
         return originalEmit.apply(this, [event, ...args]);
       };
       
       // Listen for new messages - use ref to access current selected conversation
       socket.off('newMessage'); // Remove any existing listeners
       socket.on('newMessage', (message) => {
-        console.log('🔵 Admin received new message:', {
-          messageId: message._id,
-          messageContent: message.content,
-          messageSender: message.sender?.fullName,
-          messageSenderId: message.sender?._id,
-          messageSenderRole: message.sender?.role,
-          messageConversationId: message.conversation,
-          currentConversationId: selectedConversationRef.current?._id,
-          isForCurrentConversation: selectedConversationRef.current?._id === message.conversation,
-          timestamp: new Date().toISOString(),
-          fullMessage: message
-        });
+        
         
         // Update messages if it's for the currently selected conversation
         const currentConversation = selectedConversationRef.current;
         if (currentConversation && currentConversation._id === message.conversation) {
-          console.log('🟢 Message is for current conversation, adding to messages');
+          
           setMessages(prev => {
-            console.log('🟡 Current messages count before adding:', prev.length);
+            
             
             // Check for duplicates
             const messageExists = prev.some(m => m._id === message._id);
             if (messageExists) {
-              console.log('🔴 Message already exists, not adding duplicate');
+              
               return prev;
             }
             
-            console.log('✅ Adding new message to admin messages');
+            
             const newMessages = [...prev, message];
-            console.log('🟡 New messages count after adding:', newMessages.length);
+            
             
             // Auto-scroll to bottom when new message is added
             setTimeout(() => {
@@ -287,22 +251,18 @@ export default function AdminMessagesPage() {
             return newMessages;
           });
         } else {
-          console.log('🟡 Message is NOT for current conversation:', {
-            selectedConversationId: currentConversation?._id,
-            messageConversationId: message.conversation,
-            hasSelectedConversation: !!currentConversation
-          });
+          
         }
         
         // Update conversation list with new last message
         setConversations(prev => {
-          console.log('🔄 Updating conversation list with new last message');
+          
           const updated = prev.map(conv => 
             conv._id === message.conversation 
               ? { ...conv, lastMessage: message, updatedAt: new Date().toISOString() }
               : conv
           ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-          console.log('🔄 Conversation list updated');
+          
           return updated;
         });
       });
@@ -312,7 +272,7 @@ export default function AdminMessagesPage() {
       // Listen for typing indicators
       socket.off('userTyping'); // Remove any existing listeners
       socket.on('userTyping', (data) => {
-        console.log('User typing:', data);
+        
         // You can implement typing indicators here if needed
       });
 
@@ -344,7 +304,7 @@ export default function AdminMessagesPage() {
   };
 
   const fetchMessages = useCallback(async (conversationId: string, page = 1, reset = true) => {
-    console.log('📥 fetchMessages called for conversation:', conversationId, 'page:', page, 'reset:', reset);
+    
     
     if (reset) {
       setIsLoadingMore(false);

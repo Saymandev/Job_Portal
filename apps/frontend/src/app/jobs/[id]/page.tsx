@@ -46,29 +46,24 @@ export default function JobDetailPage() {
     }
 
     try {
-      console.log('Checking application status for job:', params.id);
+      
       const { data } = await api.get(`/applications/my-applications`);
-      console.log('My applications response:', data);
+      
       
       if (data.success) {
         const userApplications = data.data;
-        console.log('User applications:', userApplications);
-        console.log('Current job ID from URL:', params.id);
-        console.log('Job IDs in applications:', userApplications.map((app: any) => ({
-          jobId: app.job._id,
-          jobTitle: app.job.title,
-          match: app.job._id === params.id
-        })));
+        
+        
         
         const jobApplication = userApplications.find((app: any) => app.job._id === params.id);
-        console.log('Found job application:', jobApplication);
+        
         
         if (jobApplication) {
-          console.log('Setting hasApplied to true, status:', jobApplication.status);
+          
           setHasApplied(true);
           setApplicationStatus(jobApplication.status);
         } else {
-          console.log('No application found for this job');
+          
           setHasApplied(false);
           setApplicationStatus(null);
         }

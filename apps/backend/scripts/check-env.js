@@ -51,11 +51,11 @@ function maskValue(value) {
 }
 
 function report(keys, label) {
-  console.log(`\n${label}:`);
+ 
   for (const key of keys) {
     const val = process.env[key];
     const ok = Boolean(val && String(val).trim());
-    console.log(`- ${key}: ${ok ? 'SET' : 'MISSING'}${ok ? ` -> ${maskValue(String(val))}` : ''}`);
+    
   }
 }
 
@@ -68,7 +68,7 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-console.log('\nAll required environment variables are set.');
+
 process.exit(0);
 
 

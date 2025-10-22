@@ -105,12 +105,7 @@ async function bootstrap() {
   const port = configService.get('PORT') || 5000;
   await app.listen(port);
 
-  console.log(`
-    🚀 Server is running!
-    🔉 Listening on port ${port}
-    📚 API Documentation: http://localhost:${port}/api-docs
-    🌍 Environment: ${configService.get('NODE_ENV')}
-  `);
+  
 }
 
 bootstrap();

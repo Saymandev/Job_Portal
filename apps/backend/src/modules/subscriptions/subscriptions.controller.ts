@@ -145,11 +145,7 @@ export class SubscriptionsController {
     const payload = req.body as Buffer;
 
     try {
-      console.log('📡 Webhook received:', {
-        signature: signature ? 'present' : 'missing',
-        payloadSize: payload.length,
-        contentType: req.headers['content-type']
-      });
+      
 
       await this.subscriptionsService.handleWebhook(signature, payload);
       res.json({ received: true });
@@ -163,7 +159,7 @@ export class SubscriptionsController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Test webhook endpoint (for development)' })
   async testWebhook(@Body() body: any) {
-    console.log('🧪 Test webhook called:', body);
+   
     return { 
       success: true, 
       message: 'Test webhook endpoint working',

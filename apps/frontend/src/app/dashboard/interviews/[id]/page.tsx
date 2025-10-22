@@ -96,9 +96,7 @@ export default function InterviewDetailPage() {
       return;
     }
 
-    console.log('Current user:', user);
-    console.log('Interview ID:', interviewId);
-    console.log('Reschedule data:', rescheduleData);
+    
 
     try {
       const response = await api.post(`/interviews/${interviewId}/request-reschedule`, {

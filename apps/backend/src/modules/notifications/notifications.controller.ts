@@ -89,9 +89,9 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Get unread notifications count' })
   async getUnreadCount(@CurrentUser('id') userId: string) {
     try {
-      console.log(`📊 Fetching unread count for user: ${userId}`);
+      
       const count = await this.notificationsService.getUnreadCount(userId);
-      console.log(`✅ Unread count for user ${userId}: ${count}`);
+    
 
       return {
         success: true,

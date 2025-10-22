@@ -87,16 +87,16 @@ export class UsersController {
   @ApiOperation({ summary: 'Upload resume' })
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(@CurrentUser('id') userId: string, @UploadedFile() file: Express.Multer.File) {
-    console.log('Upload resume controller called with:', { userId, file: file ? { originalname: file.originalname, path: file.path, size: file.size } : null });
+    
     
     if (!file) {
-      console.log('No file provided');
+      
       throw new BadRequestException('No file uploaded');
     }
 
-    console.log('Calling usersService.uploadResume...');
-    const result = await this.usersService.uploadResume(userId, file.path);
-    console.log('Upload resume service result:', result);
+      
+      const result = await this.usersService.uploadResume(userId, file.path);
+    
 
     const response = {
       success: true,
@@ -104,7 +104,7 @@ export class UsersController {
       data: result,
     };
     
-    console.log('Returning response:', response);
+ 
     return response;
   }
 
@@ -125,22 +125,14 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user CV data' })
   async getCV(@CurrentUser('id') userId: string) {
     try {
-      console.log('CV endpoint called for user:', userId);
+      
       
       // First, let's check the raw user data
       const rawUser = await this.usersService.findById(userId);
-      console.log('Raw user data:', {
-        id: rawUser._id,
-        email: rawUser.email,
-        resume: rawUser.resume,
-        resumeFile: (rawUser as any).resumeFile,
-        cvSkills: (rawUser as any).cvSkills,
-        cvExperience: (rawUser as any).cvExperience,
-        cvEducation: (rawUser as any).cvEducation,
-      });
+    
       
       const cvData = await this.usersService.getCV(userId);
-      console.log('CV data retrieved successfully:', cvData);
+      
 
       return {
         success: true,
@@ -156,7 +148,7 @@ export class UsersController {
   @Post(':id/view')
   @ApiOperation({ summary: 'Track profile view' })
   async trackProfileView(@Param('id') id: string, @CurrentUser('id') viewerId: string) {
-    console.log(`Profile view tracking: candidateId=${id}, viewerId=${viewerId}`);
+  
     await this.usersService.incrementProfileViews(id, viewerId);
 
     return {

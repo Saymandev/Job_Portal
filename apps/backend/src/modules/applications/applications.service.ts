@@ -401,7 +401,7 @@ export class ApplicationsService {
 
   private async trackResumeDownload(employerId: string, applicationId: string): Promise<void> {
     // Track download for analytics
-    console.log(`Resume downloaded by employer ${employerId} for application ${applicationId}`);
+    // Resume downloaded by employer
   }
 
   private generateMockResume(applicant: any): Buffer {

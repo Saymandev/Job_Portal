@@ -57,7 +57,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   const fetchJob = React.useCallback(async () => {
     // Double check authentication before making any API calls
     if (!isAuthenticated || user?.role !== 'employer') {
-      console.log('User not authenticated, skipping job fetch');
+      
       return;
     }
 

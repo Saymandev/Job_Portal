@@ -6,16 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    Award,
-    Briefcase,
-    Download,
-    Globe,
-    GraduationCap,
-    Mail,
-    MapPin,
-    MessageSquare,
-    Phone,
-    User
+  Award,
+  Briefcase,
+  Download,
+  Globe,
+  GraduationCap,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  User
 } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
@@ -111,10 +111,10 @@ export default function CandidateProfilePage() {
   useEffect(() => {
     if (candidateId && user?.id && user?.role === 'employer') {
       // Track profile view for employers
-      console.log('Tracking profile view for candidate:', candidateId, 'by user:', user.id);
+      
       api.post(`/users/${candidateId}/view`)
         .then(response => {
-          console.log('Profile view tracked successfully:', response.data);
+          
         })
         .catch(error => {
           console.error('Error tracking profile view:', error);

@@ -162,23 +162,23 @@ export default function CVBuilderPage() {
 
   const fetchCVData = useCallback(async () => {
     try {
-      console.log('Attempting to fetch CV data from API...');
+      // Attempting to fetch CV data from API
       const response = await api.get('/users/cv');
       if (response.data.success) {
         const data = response.data.data;
-        console.log('CV data fetched successfully from API:', data);
+        
         setCvData(data);
         reset(data);
         return; // Success, exit early
       }
     } catch (error: any) {
       console.error('Error fetching CV data from API:', error);
-      console.log('Falling back to user data...');
+     
     }
     
     // Fallback to user data if API fails
     if (user) {
-      console.log('Using fallback user data:', user);
+     
       const userData: CVFormData = {
         personalInfo: {
           fullName: user.fullName || '',
@@ -206,7 +206,7 @@ export default function CVBuilderPage() {
       
       // Try to get resume data from user object - check multiple possible fields
       const resumeData = (user as any)?.resumeFile || (user as any)?.resume;
-      console.log('Resume data found in user:', resumeData);
+    
       
       if (resumeData) {
         if (typeof resumeData === 'string') {
@@ -216,15 +216,15 @@ export default function CVBuilderPage() {
             url: resumeData,
             uploadedAt: new Date().toISOString(),
           };
-          console.log('Using string resume data:', resumeInfo);
+          
           setCvData({ ...userData, resume: resumeInfo });
         } else {
           // New format - object with filename, url, uploadedAt
-          console.log('Using object resume data:', resumeData);
+          
           setCvData({ ...userData, resume: resumeData });
         }
       } else {
-        console.log('No resume data found in user object');
+      
         setCvData(userData);
       }
       
@@ -243,10 +243,10 @@ export default function CVBuilderPage() {
     const initializeAuth = async () => {
       const token = localStorage.getItem('accessToken');
       
-      console.log('Auth initialization:', { token: !!token, isAuthenticated, user: !!user });
+      
       
       if (!token) {
-        console.log('No token found, redirecting to login');
+        
         router.push('/login');
         return;
       }
@@ -254,7 +254,7 @@ export default function CVBuilderPage() {
       // If we have a token but no user data, try to fetch user
       if (!user && token) {
         try {
-          console.log('Fetching user data...');
+          
           await fetchUser();
         } catch (error) {
           console.error('Failed to fetch user:', error);
@@ -327,13 +327,13 @@ export default function CVBuilderPage() {
 
     try {
       setIsUploadingResume(true);
-      console.log('Uploading file:', file.name, 'Size:', file.size, 'Type:', file.type);
+      
       
       const response = await api.post('/users/upload-resume', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
-      console.log('Upload response:', response.data);
+
       
       // Update CV data with the new resume
       const newResumeData = response.data.data;

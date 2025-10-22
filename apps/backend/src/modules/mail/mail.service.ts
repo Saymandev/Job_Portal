@@ -245,7 +245,7 @@ export class MailService {
           </div>
         `,
       });
-      console.log(`📧 Email notification sent to ${email}: ${title}`);
+      // Email notification sent
       return true;
     } catch (error) {
       console.error(`❌ Failed to send email notification to ${email}:`, error);

@@ -33,10 +33,10 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         try {
-          console.log('Auth Store: login called');
+          // Auth Store: login called
           set({ isLoading: true });
           const { data }: any = await api.post('/auth/login', { email, password });
-          console.log('Auth Store: login response received');
+          // Auth Store: login response received
 
           safeSetItem('accessToken', data.data.accessToken);
           if (data.data.refreshToken) {
@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
             id: data.data.user.id || data.data.user._id
           };
 
-          console.log('Auth Store: Setting user data', normalizedUserData);
+          // Auth Store: Setting user data
           set({
             user: normalizedUserData,
             isAuthenticated: true,
@@ -180,7 +180,7 @@ export const useAuthStore = create<AuthState>()(
             clearAuthData();
           }
         } else {
-          console.log('Auth store rehydration successful:', state);
+          // Auth store rehydration successful
         }
       },
       // Skip hydration on server side

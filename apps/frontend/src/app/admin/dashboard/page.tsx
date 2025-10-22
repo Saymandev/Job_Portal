@@ -139,7 +139,7 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     // Double check authentication before making any API calls
     if (!isAuthenticated || user?.role !== 'admin') {
-      console.log('User not authenticated, skipping API calls');
+      // User not authenticated, skipping API calls
       return;
     }
     

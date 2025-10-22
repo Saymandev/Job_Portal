@@ -66,7 +66,7 @@ export default function InterviewsPage() {
   const fetchInterviews = useCallback(async () => {
     // Double check authentication before making any API calls
     if (!isAuthenticated) {
-      console.log('User not authenticated, skipping API calls');
+      // User not authenticated, skipping API calls
       return;
     }
     

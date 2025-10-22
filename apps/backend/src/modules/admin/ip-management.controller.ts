@@ -177,7 +177,7 @@ export class IpManagementController {
     @Query('userId') userId?: string,
   ) {
     try {
-      console.log(`📡 Recent activity endpoint called: page=${page}, limit=${limit}, userId=${userId}`);
+      
       
       const result = await this.ipBlockService.getRecentActivityWithIps(
         parseInt(page),
@@ -185,11 +185,7 @@ export class IpManagementController {
         userId,
       );
 
-      console.log(`✅ Recent activity result:`, {
-        activitiesCount: result.activities?.length || 0,
-        ipGroupsCount: result.ipGroups?.length || 0,
-        pagination: result.pagination
-      });
+      
 
       return {
         success: true,
@@ -207,14 +203,11 @@ export class IpManagementController {
   @Get('user-ips/:userId')
   async getUserIps(@Param('userId') userId: string) {
     try {
-      console.log(`📡 getUserIps endpoint called for userId: ${userId}`);
+    
       
       const userIps = await this.ipBlockService.getUserIps(userId);
       
-      console.log(`✅ getUserIps result:`, {
-        userId,
-        ipCount: userIps.length
-      });
+      
       
       return {
         success: true,
@@ -255,7 +248,7 @@ export class IpManagementController {
   @Get('search-users')
   async searchUsers(@Query('q') query: string) {
     try {
-      console.log(`🔍 Searching users with query: ${query}`);
+     
       
       if (!query || query.trim().length < 2) {
         return {
@@ -275,7 +268,7 @@ export class IpManagementController {
         .limit(10)
         .sort({ fullName: 1 });
 
-      console.log(`👥 Found ${users.length} users matching "${query}"`);
+      
 
       return {
         success: true,

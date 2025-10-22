@@ -207,7 +207,7 @@ export class ChatService {
     targetUserId: string,
     initialMessage?: string
   ): Promise<ConversationDocument> {
-    console.log('Creating admin conversation:', { adminId, targetUserId });
+   
     
     // Check if conversation already exists between admin and target user
     let conversation = await this.conversationModel.findOne({
@@ -222,9 +222,9 @@ export class ChatService {
         createdBy: adminId,
         isAdminConversation: true, // Mark as admin conversation
       });
-      console.log('Created new admin conversation:', conversation._id);
+      
     } else {
-      console.log('Found existing admin conversation:', conversation._id);
+      
     }
 
     // If initial message provided, send it
@@ -240,7 +240,7 @@ export class ChatService {
     adminId: string,
     initialMessage?: string
   ): Promise<ConversationDocument> {
-    console.log('Creating user to admin conversation:', { userId, adminId });
+    
     
     // Check if conversation already exists
     let conversation = await this.conversationModel.findOne({
@@ -255,9 +255,9 @@ export class ChatService {
         createdBy: adminId, // Admin is the creator
         isAdminConversation: true, // Mark as admin conversation
       });
-      console.log('Created new user-to-admin conversation:', conversation._id);
+      
     } else {
-      console.log('Found existing user-to-admin conversation:', conversation._id);
+    
     }
 
     // If initial message provided, send it
@@ -279,44 +279,30 @@ export class ChatService {
       size: number;
     }
   ): Promise<MessageDocument> {
-    console.log('🟠 createAdminMessage service called:', {
-      conversationId,
-      adminId,
-      content,
-      hasAttachment: !!attachment,
-      timestamp: new Date().toISOString()
-    });
+  
 
     // Get conversation to validate it exists
     const conversation = await this.conversationModel.findById(conversationId);
-    console.log('🟠 Found conversation:', {
-      conversationId: conversation?._id,
-      participants: conversation?.participants,
-      isAdminConversation: conversation?.isAdminConversation,
-      lastMessage: conversation?.lastMessage
-    });
+   
     
     if (!conversation) {
-      console.log('🟠 ERROR: Conversation not found:', conversationId);
+      
       throw new NotFoundException('Conversation not found');
     }
 
     // Verify admin is a participant
     if (!conversation.participants.includes(adminId)) {
-      console.log('🟠 ERROR: Admin not participant:', {
-        adminId,
-        participants: conversation.participants
-      });
+      
       throw new ForbiddenException('You are not a participant in this conversation');
     }
 
     // Validate content
     if (!content && !attachment) {
-      console.log('🟠 ERROR: No content or attachment provided');
+      
       throw new BadRequestException('Message must have either content or attachment');
     }
 
-    console.log('🟠 Creating admin message in database...');
+   
     // Create message (admin messages bypass permission checks)
     const message = await this.messageModel.create({
       conversation: conversationId,
@@ -326,14 +312,7 @@ export class ChatService {
       isAdminMessage: true, // Mark as admin message
     });
 
-    console.log('🟠 Admin message created in database:', {
-      messageId: message._id,
-      conversationId: message.conversation,
-      senderId: message.sender,
-      content: message.content,
-      isAdminMessage: message.isAdminMessage,
-      createdAt: (message as any).createdAt
-    });
+   
 
     // Update conversation with last message
     await this.conversationModel.findByIdAndUpdate(conversationId, {
@@ -341,19 +320,16 @@ export class ChatService {
       $inc: { unreadCount: 1 },
     });
 
-    console.log('🟠 Updated conversation with last message');
+    
 
     const populatedMessage = await message.populate('sender', 'fullName avatar email role');
-    console.log('🟠 Returning populated message:', {
-      messageId: populatedMessage._id,
-      sender: populatedMessage.sender
-    });
+    
 
     return populatedMessage;
   }
 
   async getAdminConversations(adminId: string): Promise<ConversationDocument[]> {
-    console.log('Fetching admin conversations for admin:', adminId);
+   
     
     const conversations = await this.conversationModel
       .find({
@@ -364,16 +340,9 @@ export class ChatService {
       .populate('lastMessage')
       .sort({ updatedAt: -1 });
       
-    console.log('Found admin conversations:', conversations.length);
+   
     conversations.forEach(conv => {
-      console.log('Conversation:', {
-        id: conv._id,
-        participants: conv.participants.map(p => ({ 
-          id: typeof p === 'string' ? p : (p as any)._id, 
-          name: typeof p === 'string' ? 'Unknown' : (p as any).fullName 
-        })),
-        isAdminConversation: conv.isAdminConversation
-      });
+      
     });
     
     return conversations;
@@ -424,7 +393,7 @@ export class ChatService {
       sender: adminId
     });
     
-    console.log(`Cleaned up ${result.deletedCount} conversations for admin ${adminId}`);
+    
     return { deletedCount: result.deletedCount };
   }
 }

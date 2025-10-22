@@ -121,21 +121,15 @@ export class MessagingPermissionsService {
 
       // If either user is admin, allow messaging (admin can message anyone, users can respond to admin)
       if (sender?.role === 'admin' || receiver?.role === 'admin') {
-        console.log('Allowing admin messaging:', { senderRole: sender?.role, receiverRole: receiver?.role });
+        
         return { canMessage: true };
       }
     } catch (error) {
-      console.error('Error checking admin messaging permission:', error);
+      // Error checking admin messaging permission
     }
-
-    // TEMPORARY: Allow all messaging for testing
-    console.log('TEMPORARY: Allowing all messaging for testing');
-    return { canMessage: true };
 
     // Check if this is an employer-candidate relationship (employers can always message candidates who applied to their jobs)
     try {
-      console.log('Checking employer-candidate relationship:', { senderId, receiverId });
-      
       const { User } = await import('../users/schemas/user.schema');
       const UserModel = this.messagingPermissionModel.db.model('User');
       
@@ -144,13 +138,9 @@ export class MessagingPermissionsService {
         UserModel.findById(receiverId)
       ]);
 
-      console.log('Sender:', sender?.role, 'Receiver:', receiver?.role);
-
       if (sender && receiver) {
         // If sender is employer and receiver is job seeker
         if (sender.role === 'employer' && receiver.role === 'job_seeker') {
-          console.log('Checking if job seeker has applied to employer jobs...');
-          
           // Check if the job seeker has applied to any job posted by this employer
           const { Application } = await import('../applications/schemas/application.schema');
           const ApplicationModel = this.messagingPermissionModel.db.model('Application');
@@ -159,26 +149,18 @@ export class MessagingPermissionsService {
             applicant: receiverId
           }).populate('job');
           
-          console.log('Found applications:', applications.length);
-          
           const hasAppliedToEmployerJob = applications.some(app => {
             const jobPostedBy = (app.job as any).postedBy?.toString();
-            console.log('Application job posted by:', jobPostedBy, 'Sender ID:', senderId);
             return jobPostedBy === senderId;
           });
           
-          console.log('Has applied to employer job:', hasAppliedToEmployerJob);
-          
           if (hasAppliedToEmployerJob) {
-            console.log('Allowing employer-candidate messaging');
             return { canMessage: true };
           }
         }
         
         // If sender is job seeker and receiver is employer
         if (sender.role === 'job_seeker' && receiver.role === 'employer') {
-          console.log('Checking if job seeker has applied to employer jobs...');
-          
           // Check if the job seeker has applied to any job posted by this employer
           const { Application } = await import('../applications/schemas/application.schema');
           const ApplicationModel = this.messagingPermissionModel.db.model('Application');
@@ -187,25 +169,18 @@ export class MessagingPermissionsService {
             applicant: senderId
           }).populate('job');
           
-          console.log('Found applications:', applications.length);
-          
           const hasAppliedToEmployerJob = applications.some(app => {
             const jobPostedBy = (app.job as any).postedBy?.toString();
-            console.log('Application job posted by:', jobPostedBy, 'Receiver ID:', receiverId);
             return jobPostedBy === receiverId;
           });
           
-          console.log('Has applied to employer job:', hasAppliedToEmployerJob);
-          
           if (hasAppliedToEmployerJob) {
-            console.log('Allowing job seeker-employer messaging');
             return { canMessage: true };
           }
         }
       }
     } catch (error) {
-      console.error('Error checking employer-candidate relationship:', error);
-      // Continue with normal permission check if there's an error
+      // Error checking employer-candidate relationship, continue with normal permission check
     }
 
     const permission = await this.messagingPermissionModel.findOne({

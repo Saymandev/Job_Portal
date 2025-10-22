@@ -38,14 +38,13 @@ export const useSavedJobs = () => {
   const fetchSavedJobs = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching saved jobs...');
+      
       const response = await api.get('/saved-jobs?limit=100'); // Get all saved jobs
-      console.log('Saved jobs response:', response.data);
+      
       
       if (response.data.success) {
         const jobs = response.data.data;
-        console.log('Saved jobs data:', jobs);
-        setSavedJobs(jobs);
+        
         setSavedJobIds(new Set(jobs.map((sj: SavedJob) => sj.jobId._id)));
       } else {
         console.error('API returned success: false', response.data);
@@ -84,7 +83,7 @@ export const useSavedJobs = () => {
         payload.notes = notes;
       }
       
-      console.log('Saving job with payload:', payload);
+      
       const response = await api.post('/saved-jobs', payload);
 
       if (response.data.success) {

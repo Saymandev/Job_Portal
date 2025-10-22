@@ -135,17 +135,17 @@ export default function JobSeekerDashboard() {
   const fetchDashboardData = useCallback(async () => {
     // Double check authentication before making any API calls
     if (!isAuthenticated || user?.role !== 'job_seeker') {
-      console.log('User not authenticated, skipping API calls');
+      // User not authenticated, skipping API calls
       return;
     }
     
     try {
-      console.log('Fetching dashboard data...');
+      // Fetching dashboard data
       
       // Fetch dashboard stats
       try {
         const statsResponse = await api.get('/analytics/job-seeker');
-        console.log('Stats response:', statsResponse.data);
+        // Stats response received
         if (statsResponse.data.success) {
           const analyticsData = statsResponse.data.data;
           setStats({
@@ -178,7 +178,7 @@ export default function JobSeekerDashboard() {
       // Fetch job recommendations
       try {
         const recommendationsResponse = await api.get('/saved-jobs/recommendations');
-        console.log('Recommendations response:', recommendationsResponse.data);
+        // Recommendations response received
         if (recommendationsResponse.data.success) {
           setRecommendations(recommendationsResponse.data.data);
         }
@@ -227,7 +227,7 @@ export default function JobSeekerDashboard() {
       // Fetch saved jobs
       try {
         const savedJobsResponse = await api.get('/saved-jobs?limit=4');
-        console.log('Saved jobs response:', savedJobsResponse.data);
+        // Saved jobs response received
         if (savedJobsResponse.data.success) {
           setSavedJobs(savedJobsResponse.data.data);
           // Update saved jobs count in stats
@@ -243,7 +243,7 @@ export default function JobSeekerDashboard() {
       // Fetch recent applications
       try {
         const applicationsResponse = await api.get('/applications/my-applications');
-        console.log('Applications response:', applicationsResponse.data);
+        // Applications response received
         if (applicationsResponse.data.success) {
           // Limit to 5 applications on the frontend
           setRecentApplications(applicationsResponse.data.data.slice(0, 5));
@@ -255,7 +255,7 @@ export default function JobSeekerDashboard() {
       // Fetch actual interviews
       try {
         const interviewsResponse = await api.get('/interviews');
-        console.log('Interviews response:', interviewsResponse.data);
+        // Interviews response received
         if (interviewsResponse.data.success) {
           const interviews = interviewsResponse.data.data;
           // Count scheduled interviews for this week
@@ -282,12 +282,12 @@ export default function JobSeekerDashboard() {
       // Fetch user profile data for profile views
       if (user?.id) {
         try {
-          console.log('Fetching profile data for user:', user.id);
+          // Fetching profile data for user
           const profileResponse = await api.get(`/users/${user.id}`);
-          console.log('Profile response:', profileResponse.data);
+          // Profile response received
           if (profileResponse.data.success) {
             const profileData = profileResponse.data.data;
-            console.log('Profile views from API:', profileData.profileViews);
+            // Profile views from API
             setStats(prevStats => ({
               ...prevStats,
               profileViews: profileData.profileViews || 0

@@ -95,18 +95,11 @@ export default function MessagesPage() {
     const scrollHeight = container.scrollHeight;
     const clientHeight = container.clientHeight;
     
-    console.log('📜 User scroll event:', {
-      scrollTop,
-      scrollHeight,
-      clientHeight,
-      nearTop: scrollTop < 50,
-      hasMoreMessages,
-      isLoadingMore
-    });
+    
     
     // If scrolled near the top (within 50px), load more messages
     if (scrollTop < 50 && hasMoreMessages && !isLoadingMore) {
-      console.log('📥 Loading more messages due to scroll');
+      
       loadMoreMessages();
     }
   }, [hasMoreMessages, isLoadingMore, loadMoreMessages]);

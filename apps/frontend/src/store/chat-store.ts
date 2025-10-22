@@ -105,15 +105,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Initialize socket listeners
   initSocketListeners: () => {
-    console.log('initSocketListeners called, already initialized:', socketListenersInitialized);
+    
     if (socketListenersInitialized) {
-      console.log('Socket listeners already initialized, skipping...');
+      
       return;
     }
     
     const socket = getSocket();
     if (socket) {
-      console.log('Initializing socket listeners...');
+      
       socketListenersInitialized = true;
       
       // Remove any existing listeners to prevent duplicates
@@ -126,12 +126,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       
       socket.on('newMessage', (message) => {
         try {
-          console.log('Socket received newMessage:', {
-            messageId: message._id,
-            content: message.content,
-            conversationId: message.conversation,
-            currentConversationId: get().currentConversation?._id
-          });
+          
           
           const state = get();
           
@@ -155,14 +150,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           // Add message to messages array if not duplicate
           set(state => {
             const messageExists = state.messages.some(m => m._id === message._id);
-            console.log('Message exists check:', { messageId: message._id, exists: messageExists, currentMessagesCount: state.messages.length });
+            
             
             if (messageExists) {
-              console.log('Message already exists, not adding duplicate');
+             
               return state;
             }
             
-            console.log('Adding new message to state');
+            
             return {
               messages: [...state.messages, message],
             };
@@ -185,11 +180,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const conversations = response.data.data;
         const uniqueConversations = deduplicateConversations(conversations);
         
-        console.log('Fetched conversations:', {
-          total: conversations.length,
-          unique: uniqueConversations.length,
-          duplicates: conversations.length - uniqueConversations.length
-        });
+        
         
         set({ conversations: uniqueConversations, isLoading: false });
       } else {
@@ -216,13 +207,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
           // Check if conversation already exists to prevent duplicates
           const conversationExists = state.conversations.some(conv => conv._id === newConversation._id);
           if (conversationExists) {
-            console.log('Conversation already exists, not adding duplicate');
+            
             return {
               currentConversation: newConversation,
             };
           }
           
-          console.log('Adding new conversation to state');
+          
           const updatedConversations = [newConversation, ...state.conversations];
           return {
             conversations: deduplicateConversations(updatedConversations),
@@ -283,7 +274,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   fetchMessages: async (conversationId: string, page = 1, reset = true) => {
-    console.log('📥 User fetchMessages called for conversation:', conversationId, 'page:', page, 'reset:', reset);
+    
     
     if (reset) {
       set({ isLoading: true, error: null, isLoadingMore: false, currentPage: 1, hasMoreMessages: true });
@@ -296,11 +287,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       
       if (response.data.success) {
         const fetchedMessages = response.data.data;
-        console.log('📥 User messages fetched successfully:', {
-          messageCount: fetchedMessages.length,
-          conversationId: conversationId,
-          page: page
-        });
+        
         
         // Sort messages by creation date to ensure proper order (oldest first)
         const sortedMessages = fetchedMessages.sort((a: any, b: any) => 
@@ -325,7 +312,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           }));
         }
         
-        console.log('📥 User messages state updated, total count:', reset ? sortedMessages.length : 'prepended');
+        
       } else {
         set({ error: 'Failed to fetch messages', isLoading: false, isLoadingMore: false });
       }
@@ -341,14 +328,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadMoreMessages: async () => {
     const state = get();
     if (state.currentConversation && state.hasMoreMessages && !state.isLoadingMore) {
-      console.log('📥 Loading more user messages, current page:', state.currentPage);
+      
       await get().fetchMessages(state.currentConversation._id, state.currentPage, false);
     }
   },
 
   scrollToBottom: () => {
     // This will be implemented in the component using a ref
-    console.log('📜 scrollToBottom called - implement with ref in component');
+    
   },
 
   sendMessage: async (conversationId: string, content: string, attachment?: File) => {
@@ -390,7 +377,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             set(state => {
               const messageExists = state.messages.some(m => m._id === newMessage._id);
               if (!messageExists) {
-                console.log('🔄 Chat Store Fallback: Adding user message to local state');
+                
                 return {
                   messages: [...state.messages, newMessage]
                 };

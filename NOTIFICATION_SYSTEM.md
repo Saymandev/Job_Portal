@@ -337,8 +337,7 @@ await enhancedNotificationsService.createNotification({
 ```typescript
 // Get notification analytics
 const stats = await notificationsService.getNotificationStats();
-console.log(`Total notifications sent: ${stats.total}`);
-console.log(`Email delivery rate: ${stats.emailDeliveryRate}%`);
+
 ```
 
 ---

@@ -299,7 +299,7 @@ export class IpBlockService {
    */
   async getRecentActivityWithIps(page: number = 1, limit: number = 50, userId?: string) {
     try {
-      console.log(`🔍 Getting recent activity with IPs: page=${page}, limit=${limit}, userId=${userId}`);
+      
       
       const skip = (page - 1) * limit;
       const query: any = {};
@@ -308,7 +308,7 @@ export class IpBlockService {
         query.userId = userId;
       }
 
-      console.log('📋 Query:', query);
+      
 
       const activities = await this.activityModel
         .find(query)
@@ -318,7 +318,7 @@ export class IpBlockService {
         .limit(limit)
         .select('type description userId ipAddress userAgent createdAt metadata');
 
-      console.log(`📊 Found ${activities.length} activities`);
+      
 
       const total = await this.activityModel.countDocuments(query);
 
@@ -374,7 +374,7 @@ export class IpBlockService {
    */
   async getUserIps(userId: string) {
     try {
-      console.log(`🔍 Getting user IPs for userId: ${userId}`);
+      
       
       // Validate userId format (should be a valid MongoDB ObjectId)
       if (!userId || typeof userId !== 'string') {
@@ -387,14 +387,14 @@ export class IpBlockService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
       
-      console.log(`👤 User found: ${user.fullName} (${user.email})`);
+     
 
       const activities = await this.activityModel
         .find({ userId })
         .select('ipAddress userAgent createdAt')
         .sort({ createdAt: -1 });
 
-      console.log(`📊 Found ${activities.length} activities for user ${userId}`);
+      
 
       // Group by IP address
       const ipGroups = activities.reduce((acc: any, activity) => {

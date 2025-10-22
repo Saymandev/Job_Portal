@@ -17,7 +17,7 @@ export class InterviewsCronService {
   // Run every hour to check for interview reminders
   @Cron(CronExpression.EVERY_HOUR)
   async sendInterviewReminders() {
-    console.log('Running interview reminders cron job...');
+    
 
     const now = new Date();
     const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -81,7 +81,7 @@ export class InterviewsCronService {
           reminderSent: true,
         });
 
-        console.log(`Sent 24-hour reminder for interview ${interview._id}`);
+        
       } catch (error) {
         console.error(`Error sending reminder for interview ${interview._id}:`, error);
       }
@@ -114,7 +114,7 @@ export class InterviewsCronService {
           actionUrl: `/interviews`,
         });
 
-        console.log(`Sent 1-hour reminder for interview ${interview._id}`);
+        
       } catch (error) {
         console.error(`Error sending 1-hour reminder for interview ${interview._id}:`, error);
       }
@@ -124,7 +124,7 @@ export class InterviewsCronService {
   // Run every hour to update past interviews
   @Cron(CronExpression.EVERY_HOUR)
   async updatePastInterviews() {
-    console.log('Running past interviews update cron job...');
+  
 
     const now = new Date();
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
@@ -141,7 +141,7 @@ export class InterviewsCronService {
         interview.status = 'no_show' as any;
         await interview.save();
 
-        console.log(`Marked interview ${interview._id} as no-show`);
+        
 
         // Notify both parties
         await this.notificationsService.createNotification({
@@ -160,7 +160,7 @@ export class InterviewsCronService {
   // Run daily at 9 AM to send interview prep tips
   @Cron('0 9 * * *')
   async sendInterviewPrepTips() {
-    console.log('Running interview prep tips cron job...');
+    
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -195,7 +195,7 @@ export class InterviewsCronService {
           actionUrl: `/interviews`,
         });
 
-        console.log(`Sent prep tips for interview ${interview._id}`);
+        
       } catch (error) {
         console.error(`Error sending prep tips for interview ${interview._id}:`, error);
       }

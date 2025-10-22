@@ -81,22 +81,9 @@ export class SavedJobsService {
     // Filter out saved jobs where the job was not populated (job deleted)
     const validSavedJobs = savedJobs.filter(savedJob => savedJob.jobId !== null);
     
-    console.log('Total saved jobs found:', savedJobs.length);
-    console.log('Valid saved jobs after filtering:', validSavedJobs.length);
     
-    if (savedJobs.length > 0) {
-      console.log('First saved job details:', {
-        id: savedJobs[0]._id,
-        jobId: savedJobs[0].jobId,
-        jobIdType: typeof savedJobs[0].jobId,
-        isJobIdPopulated: typeof savedJobs[0].jobId === 'object',
-        jobData: savedJobs[0].jobId,
-        jobStatus: typeof savedJobs[0].jobId === 'object' && savedJobs[0].jobId ? (savedJobs[0].jobId as any).status : 'not populated',
-        companyData: typeof savedJobs[0].jobId === 'object' && savedJobs[0].jobId ? (savedJobs[0].jobId as any).company : 'not populated'
-      });
-    } else {
-      console.log('No saved jobs found');
-    }
+    
+    
 
     return {
       data: validSavedJobs,

@@ -81,17 +81,17 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       // Check if user is authenticated before making the API call
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        console.log('⚠️ No access token found, skipping unread count fetch');
+        
         set({ unreadCount: 0 });
         return;
       }
 
-      console.log('📡 Fetching unread notification count...');
+    
       const response = await api.get('/notifications/unread-count');
       
       if (response.data.success) {
         set({ unreadCount: response.data.data.count });
-        console.log(`✅ Unread count fetched: ${response.data.data.count}`);
+        
       } else {
         console.warn('⚠️ API returned success: false');
         set({ unreadCount: 0 });
@@ -111,11 +111,11 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       
       // Handle specific error cases
       if (error.response?.status === 401) {
-        console.log('🔐 Authentication error - user may not be logged in');
+        
       } else if (error.response?.status === 404) {
-        console.log('🔍 Endpoint not found - backend may not be running');
+        
       } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-        console.log('🌐 Network error - backend server may be down');
+        
       }
       
       // Set unread count to 0 if there's an error
@@ -192,25 +192,25 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   clearError: () => set({ error: null }),
 
   initSocketListeners: (userId: string) => {
-    console.log('🔔 Initializing notifications socket listeners for user:', userId);
+   
     
     let socket = getNotificationsSocket();
     if (!socket) {
-      console.log('🔌 Creating new notifications socket connection...');
+      
       socket = initNotificationsSocket(userId);
     }
 
     if (socket) {
-      console.log('✅ Notifications socket available, setting up listeners...');
+      
       
       // Add connection status listeners
       socket.on('connect', () => {
-        console.log('🔌 Notifications socket connected');
+        
         socket?.emit('joinUserRoom', userId);
       });
 
       socket.on('disconnect', () => {
-        console.log('🔌 Notifications socket disconnected');
+       
       });
 
       socket.on('connect_error', (error) => {
@@ -223,7 +223,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       
       // Listen for new notifications
       socket.on('newNotification', (notification: Notification) => {
-        console.log('🔔 Received new notification via socket:', notification.title);
+        
         set(state => ({
           notifications: [notification, ...state.notifications],
           unreadCount: state.unreadCount + 1,
@@ -232,11 +232,11 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
       // Listen for unread count updates
       socket.on('unreadCountUpdate', ({ count }: { count: number }) => {
-        console.log('📊 Received unread count update via socket:', count);
+        
         set({ unreadCount: count });
       });
       
-      console.log('✅ Notifications socket listeners initialized successfully');
+      
     } else {
       console.error('🔔 Failed to initialize notifications socket');
     }

@@ -47,13 +47,13 @@ let notificationsSocket: Socket | null = null;
 
 export const initNotificationsSocket = (userId: string): Socket => {
   if (notificationsSocket) {
-    console.log('🔌 Disconnecting existing notifications socket');
+    // Disconnecting existing notifications socket
     notificationsSocket.disconnect();
     notificationsSocket = null;
   }
   
   const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
-  console.log('🔌 Initializing notifications socket to:', `${socketUrl}/notifications`);
+  // Initializing notifications socket
   
   notificationsSocket = io(`${socketUrl}/notifications`, {
     transports: ['websocket', 'polling'],
@@ -67,30 +67,30 @@ export const initNotificationsSocket = (userId: string): Socket => {
   });
 
   notificationsSocket.on('connect', () => {
-    console.log('🔌 Notifications socket connected successfully');
+    // Notifications socket connected successfully
     // Join user to their personal notification room
     notificationsSocket?.emit('joinUserRoom', userId);
-    console.log('🔌 Joined notifications room for user:', userId);
+    // Joined notifications room for user
   });
 
   notificationsSocket.on('connect_error', (error) => {
-    console.error('🔌 Notifications socket connection error:', error);
+    // Notifications socket connection error
   });
 
   notificationsSocket.on('disconnect', (reason) => {
-    console.log('🔌 Notifications socket disconnected:', reason);
+    // Notifications socket disconnected
     if (reason === 'io server disconnect') {
       notificationsSocket?.connect();
     }
   });
 
   notificationsSocket.on('reconnect', (attemptNumber) => {
-    console.log('🔌 Notifications socket reconnected, attempt:', attemptNumber);
+    // Notifications socket reconnected
     notificationsSocket?.emit('joinUserRoom', userId);
   });
 
   notificationsSocket.on('reconnect_error', (error) => {
-    console.error('🔌 Notifications socket reconnection error:', error);
+    // Notifications socket reconnection error
   });
 
   return notificationsSocket;

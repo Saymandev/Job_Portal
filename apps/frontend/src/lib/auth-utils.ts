@@ -5,7 +5,7 @@
 export const clearAuthData = () => {
   // Check if we're in a browser environment
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    console.log('localStorage not available (SSR)');
+    
     return;
   }
   
@@ -13,7 +13,7 @@ export const clearAuthData = () => {
     localStorage.removeItem('auth-storage');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    console.log('Auth data cleared successfully');
+    
   } catch (error) {
     console.error('Failed to clear auth data:', error);
     // If localStorage is completely unavailable, we can't do much

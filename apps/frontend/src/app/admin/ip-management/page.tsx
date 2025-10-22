@@ -227,17 +227,14 @@ export default function IpManagementPage() {
   const fetchRecentActivity = async () => {
     try {
       setActivityLoading(true);
-      console.log('Fetching recent activity...');
+        
       const response = await api.get(`/admin/ip-management/recent-activity?page=1&limit=50`);
-      console.log('Recent activity response:', response.data);
+        
       
       if (response.data.success) {
         setRecentActivity(response.data.data.activities || []);
         setIpGroups(response.data.data.ipGroups || []);
-        console.log('Recent activity loaded:', {
-          activities: response.data.data.activities?.length || 0,
-          ipGroups: response.data.data.ipGroups?.length || 0
-        });
+        
       } else {
         console.error('API returned unsuccessful response:', response.data);
         toast({
@@ -261,11 +258,11 @@ export default function IpManagementPage() {
 
   const fetchUserIps = async (searchTerm: string) => {
     try {
-      console.log('Searching for user IPs with term:', searchTerm);
+      
       
       // First, search for users by name or email
       const usersResponse = await api.get(`/admin/ip-management/search-users?q=${encodeURIComponent(searchTerm)}`);
-      console.log('Users search response:', usersResponse.data);
+        
       
       if (!usersResponse.data.success || !usersResponse.data.data?.users?.length) {
         toast({
@@ -279,15 +276,15 @@ export default function IpManagementPage() {
       
       // Use the first matching user
       const user = usersResponse.data.data.users[0];
-      console.log('Found user:', user);
+        
       
       // Now get IPs for this user
       const response = await api.get(`/admin/ip-management/user-ips/${user._id}`);
-      console.log('User IPs response:', response.data);
+        
       
       if (response.data.success) {
         setUserIps(response.data.data || []);
-        console.log('User IPs loaded:', response.data.data?.length || 0);
+        
         
         // Update the search input to show the selected user
         setSelectedUserId(`${user.fullName} (${user.email})`);

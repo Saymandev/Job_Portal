@@ -24,7 +24,7 @@ import { UploadController } from './upload.controller';
         const apiSecret = configService.get('CLOUDINARY_API_SECRET');
 
         // Use Cloudinary if credentials are available, otherwise fallback to disk storage
-        console.log('Cloudinary config:', { cloudName: !!cloudName, apiKey: !!apiKey, apiSecret: !!apiSecret });
+        
         if (cloudName && apiKey && apiSecret) {
           cloudinary.config({
             cloud_name: cloudName,

@@ -17,11 +17,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const initializeAuth = useCallback(async () => {
     try {
       const token = safeGetItem('accessToken');
-      console.log('AuthProvider: initializeAuth', { token: !!token, user: !!user, isAuthenticated });
+      // AuthProvider: initializeAuth
       
       // If we already have a user and are authenticated, don't do anything
       if (user && isAuthenticated) {
-        console.log('AuthProvider: Already authenticated, skipping validation');
+        // AuthProvider: Already authenticated, skipping validation
         setIsInitialized(true);
         return;
       }
@@ -29,20 +29,20 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       // Only validate token if we have a token but no user data
       if (token && !user) {
         try {
-          console.log('AuthProvider: Attempting to fetch user...');
+          // AuthProvider: Attempting to fetch user
           await fetchUser();
-          console.log('AuthProvider: fetchUser successful');
+          // AuthProvider: fetchUser successful
         } catch (error) {
-          console.log('AuthProvider: fetchUser failed', error);
+          // AuthProvider: fetchUser failed
           // Token is invalid, clear auth state
           clearAuthData();
           // The store will be updated by the fetchUser error handler
         }
       } else if (!token) {
-        console.log('AuthProvider: No token - normal unauthenticated state');
+        // AuthProvider: No token - normal unauthenticated state
       }
     } catch (error) {
-      console.log('AuthProvider: initializeAuth error', error);
+      // AuthProvider: initializeAuth error
       // Clear potentially corrupted localStorage data
       clearAuthData();
     } finally {
@@ -56,7 +56,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     // If we're already authenticated, don't run initialization
     if (isAuthenticated && user) {
-      console.log('AuthProvider: Already authenticated, skipping initialization');
+      // AuthProvider: Already authenticated, skipping initialization
       setIsInitialized(true);
       return;
     }

@@ -166,10 +166,8 @@ export class InterviewsController {
     @Body() requestDto: RequestRescheduleDto,
     @CurrentUser('id') userId: string,
   ) {
-    console.log('Reschedule request - Interview ID:', id);
-    console.log('Reschedule request - User ID:', userId);
-    console.log('Reschedule request - Requested Date:', requestDto.requestedNewDate);
-    console.log('Reschedule request - Reason:', requestDto.rescheduleReason);
+    
+   
     
     const interview = await this.interviewsService.requestReschedule(
       id,

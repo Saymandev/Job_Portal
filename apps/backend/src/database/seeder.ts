@@ -17,11 +17,11 @@ async function seed() {
   const subscriptionModel = app.get<Model<Subscription>>('SubscriptionModel');
   const activityModel = app.get<Model<Activity>>('ActivityModel');
 
-  console.log('🌱 Starting database seeding...\n');
+  // Starting database seeding
 
   try {
     // Clear existing data
-    console.log('🧹 Clearing existing data...');
+    // Clearing existing data
     await Promise.all([
       userModel.deleteMany({}),
       companyModel.deleteMany({}),
@@ -29,10 +29,10 @@ async function seed() {
       subscriptionModel.deleteMany({}),
       activityModel.deleteMany({}),
     ]);
-    console.log('✅ Existing data cleared\n');
+    // Existing data cleared
 
     // Create Admin User
-    console.log('👤 Creating admin user...');
+    // Creating admin user
     const admin = await userModel.create({
       email: 'admin@jobportal.com',
       password: await bcrypt.hash('Admin@123', 10),
@@ -41,10 +41,10 @@ async function seed() {
       isEmailVerified: true,
       isActive: true,
     });
-    console.log('✅ Admin created: admin@jobportal.com / Admin@123\n');
+    // Admin created
 
     // Create Job Seekers
-    console.log('👥 Creating job seekers...');
+    // Creating job seekers
     const jobSeekers = await userModel.insertMany([
       {
         email: 'john.doe@example.com',
@@ -92,10 +92,10 @@ async function seed() {
         githubUrl: 'https://github.com/mikejohnson',
       },
     ]);
-    console.log(`✅ Created ${jobSeekers.length} job seekers\n`);
+    // Created job seekers
 
     // Create Employers
-    console.log('🏢 Creating employers...');
+    // Creating employers
     const employers = await userModel.insertMany([
       {
         email: 'hr@techcorp.com',
@@ -122,10 +122,10 @@ async function seed() {
         phone: '+1234567895',
       },
     ]);
-    console.log(`✅ Created ${employers.length} employers\n`);
+    // Created employers
 
     // Create Companies
-    console.log('🏪 Creating companies...');
+    // Creating companies
     const companies = await companyModel.insertMany([
       {
         name: 'TechCorp Solutions',
@@ -164,7 +164,7 @@ async function seed() {
         isVerified: true,
       },
     ]);
-    console.log(`✅ Created ${companies.length} companies\n`);
+    // Created companies
 
     // Update employers with company references
     await userModel.findByIdAndUpdate(employers[0]._id, { company: companies[0]._id });
@@ -172,7 +172,7 @@ async function seed() {
     await userModel.findByIdAndUpdate(employers[2]._id, { company: companies[2]._id });
 
     // Create Subscriptions for employers
-    console.log('💳 Creating subscriptions...');
+    // Creating subscriptions
     await subscriptionModel.insertMany([
       {
         user: employers[0]._id,
@@ -233,10 +233,10 @@ async function seed() {
         boostsUsed: 0,
       },
     ]);
-    console.log('✅ Created subscriptions\n');
+    // Created subscriptions
 
     // Create Jobs
-    console.log('💼 Creating job listings...');
+    // Creating job listings
     const jobs = await jobModel.insertMany([
       {
         title: 'Senior Full Stack Developer',
@@ -484,10 +484,10 @@ Role Overview:
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
     ]);
-    console.log(`✅ Created ${jobs.length} job listings\n`);
+    // Created job listings
 
     // Create Activity Logs
-    console.log('📝 Creating activity logs...');
+    // Creating activity logs
     const activities = await activityModel.insertMany([
       {
         type: ActivityType.USER_REGISTRATION,
@@ -534,34 +534,34 @@ Role Overview:
         userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
       },
     ]);
-    console.log(`✅ Created ${activities.length} activity logs\n`);
+    // Created activity logs
 
     // Summary
-    console.log('📊 Seeding Summary:');
-    console.log('═══════════════════════════════════');
-    console.log(`👤 Admin Users: 1`);
-    console.log(`👥 Job Seekers: ${jobSeekers.length}`);
-    console.log(`🏢 Employers: ${employers.length}`);
-    console.log(`🏪 Companies: ${companies.length}`);
-    console.log(`💼 Jobs: ${jobs.length}`);
-    console.log(`📝 Activities: ${activities.length}`);
-    console.log('═══════════════════════════════════\n');
+    // Seeding Summary
+    // Summary separator
+    // Admin Users: 1
+    // Job Seekers created
+    // Employers created
+    // Companies created
+    // Jobs created
+    // Activities created
+    // Final separator
 
-    console.log('📧 Test Account Credentials:');
-    console.log('═══════════════════════════════════');
-    console.log('🔐 Admin:');
-    console.log('   Email: admin@jobportal.com');
-    console.log('   Password: Admin@123\n');
-    console.log('👤 Job Seeker:');
-    console.log('   Email: john.doe@example.com');
-    console.log('   Password: Password@123\n');
-    console.log('🏢 Employer:');
-    console.log('   Email: hr@techcorp.com');
-    console.log('   Password: Password@123\n');
-    console.log('═══════════════════════════════════\n');
+    // Test Account Credentials
+    // Summary separator
+    // Admin credentials
+    // Admin email
+    // Admin password
+    // Job Seeker credentials
+    // Job Seeker email
+    // Password
+    // Employer credentials
+    // Employer email
+    // Password
+    // Final separator
 
-    console.log('✨ Database seeding completed successfully!');
-    console.log('🚀 You can now run: npm run dev');
+    // Database seeding completed successfully
+    // Ready to run: npm run dev
   } catch (error) {
     console.error('❌ Error seeding database:', error);
   } finally {

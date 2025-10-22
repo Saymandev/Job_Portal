@@ -83,7 +83,7 @@ export class SubscriptionsService {
       throw new Error(`Webhook signature verification failed: ${err.message}`);
     }
 
-    console.log(`📡 Received webhook event: ${event.type}`);
+    // Received webhook event
 
     switch (event.type) {
       case 'checkout.session.completed':
@@ -108,24 +108,17 @@ export class SubscriptionsService {
         await this.handlePaymentActionRequired(event.data.object as Stripe.Invoice);
         break;
       default:
-        console.log(`⚠️ Unhandled webhook event type: ${event.type}`);
+        // Unhandled webhook event type
     }
 
     return { received: true };
   }
 
   private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    console.log('🛒 Checkout session completed:', {
-      sessionId: session.id,
-      metadata: session.metadata,
-      customer: session.customer
-    });
-
     const { userId, plan } = session.metadata;
 
     // Skip notification if no userId (test events)
     if (!userId) {
-      console.log('⚠️ No userId in session metadata, skipping admin notifications (likely test event)');
       return;
     }
 
@@ -196,13 +189,13 @@ export class SubscriptionsService {
   }
 
   private async handleSubscriptionCreated(stripeSubscription: Stripe.Subscription) {
-    console.log('🆕 Subscription created:', stripeSubscription.id);
+    // Subscription created
     // This event is typically handled by checkout.session.completed
     // But we can add additional logic here if needed
   }
 
   private async handleSubscriptionDeleted(stripeSubscription: Stripe.Subscription) {
-    console.log('🗑️ Subscription deleted:', stripeSubscription.id);
+    // Subscription deleted
     
     const subscription = await this.subscriptionModel.findOne({
       stripeSubscriptionId: stripeSubscription.id,
@@ -225,7 +218,7 @@ export class SubscriptionsService {
   }
 
   private async handlePaymentSucceeded(invoice: Stripe.Invoice) {
-    console.log('💳 Payment succeeded:', invoice.id);
+    // Payment succeeded
     
     const subscription = await this.subscriptionModel.findOne({
       stripeCustomerId: invoice.customer as string,
@@ -247,7 +240,7 @@ export class SubscriptionsService {
   }
 
   private async handlePaymentFailed(invoice: Stripe.Invoice) {
-    console.log('❌ Payment failed:', invoice.id);
+    // Payment failed
     
     const subscription = await this.subscriptionModel.findOne({
       stripeCustomerId: invoice.customer as string,
@@ -269,7 +262,7 @@ export class SubscriptionsService {
   }
 
   private async handlePaymentActionRequired(invoice: Stripe.Invoice) {
-    console.log('⚠️ Payment action required:', invoice.id);
+    // Payment action required
     
     const subscription = await this.subscriptionModel.findOne({
       stripeCustomerId: invoice.customer as string,
@@ -278,7 +271,7 @@ export class SubscriptionsService {
     if (subscription) {
       // Payment requires additional authentication (e.g., 3D Secure)
       // Keep subscription active but log the event
-      console.log(`Payment authentication required for subscription ${subscription._id}`);
+      // Payment authentication required
       
       // Optionally notify admins about payment issues
       await this.notifyAdminsAboutPaymentIssue(
@@ -380,11 +373,11 @@ export class SubscriptionsService {
 
   async verifyCheckoutSession(userId: string, sessionId: string) {
     try {
-      console.log(`Verifying session ${sessionId} for user ${userId}`);
+      // Verifying session
       
       // Retrieve the session from Stripe
       const session = await this.stripe.checkout.sessions.retrieve(sessionId);
-      console.log('Session retrieved:', { id: session.id, payment_status: session.payment_status });
+      // Session retrieved
       
       if (!session || session.payment_status !== 'paid') {
         throw new Error(`Invalid or unpaid session. Status: ${session?.payment_status}`);
@@ -396,14 +389,14 @@ export class SubscriptionsService {
 
       // Get the subscription from Stripe
       const stripeSubscription = await this.stripe.subscriptions.retrieve(session.subscription as string);
-      console.log('Stripe subscription retrieved:', { id: stripeSubscription.id, status: stripeSubscription.status });
+      // Stripe subscription retrieved
       
       if (!stripeSubscription.items.data.length) {
         throw new Error('No items found in subscription');
       }
 
       const priceId = stripeSubscription.items.data[0].price.id;
-      console.log('Price ID:', priceId);
+      // Price ID retrieved
       
       const plan = this.mapStripePriceToPlan(priceId);
       
@@ -425,7 +418,7 @@ export class SubscriptionsService {
         { upsert: true, new: true }
       );
 
-      console.log('Subscription updated in database:', subscription._id);
+      // Subscription updated in database
 
       // Notify admins about the new subscription
       await this.notifyAdminsAboutNewSubscription(userId, plan);
@@ -476,25 +469,25 @@ export class SubscriptionsService {
    */
   private async notifyAdminsAboutNewSubscription(userId: string, plan: SubscriptionPlan): Promise<void> {
     try {
-      console.log(`🔔 Starting admin notification for subscription: userId=${userId}, plan=${plan}`);
+      // Starting admin notification for subscription
       
       // Get all admin users
       const admins = await this.userModel.find({ role: 'admin' }).select('_id fullName email');
-      console.log(`👥 Found ${admins.length} admin users:`, admins.map(a => ({ id: a._id, name: a.fullName })));
+      // Found admin users
       
       if (admins.length === 0) {
-        console.log('⚠️ No admin users found to notify about new subscription');
+        // No admin users found to notify
         return;
       }
 
       // Get user details for the notification
       const user = await this.userModel.findById(userId).select('fullName email');
       if (!user) {
-        console.log(`❌ User not found for subscription notification: ${userId}`);
+        // User not found for subscription notification
         return;
       }
       
-      console.log(`👤 User found: ${user.fullName} (${user.email})`);
+      // User found
 
       // Get actual price from Stripe based on plan
       let priceDisplay = 'Custom pricing';
@@ -509,7 +502,7 @@ export class SubscriptionsService {
           }
         }
       } catch (error) {
-        console.log('Could not fetch price from Stripe, using default');
+        // Could not fetch price from Stripe, using default
       }
 
       // Create notifications for all admins
@@ -530,17 +523,17 @@ export class SubscriptionsService {
       }));
 
       // Send notifications to all admins
-      console.log(`📤 Creating ${notifications.length} notifications for admins...`);
+      // Creating notifications for admins
       for (const notification of notifications) {
         try {
           const createdNotification = await this.notificationsService.createNotification(notification);
-          console.log(`✅ Notification created for admin ${notification.user}:`, createdNotification._id);
+          // Notification created for admin
         } catch (error) {
           console.error(`❌ Failed to create notification for admin ${notification.user}:`, error);
         }
       }
 
-      console.log(`✅ Notified ${admins.length} admin(s) about new subscription: ${user.fullName} - ${plan}`);
+      // Notified admins about new subscription
     } catch (error) {
       console.error('❌ Error notifying admins about new subscription:', error);
       // Don't fail the subscription creation if notification fails
@@ -557,12 +550,12 @@ export class SubscriptionsService {
     stripeSubscription: Stripe.Subscription
   ): Promise<void> {
     try {
-      console.log(`📧 Sending subscription receipt email to user ${userId}`);
+      // Sending subscription receipt email
       
       // Get user details
       const user = await this.userModel.findById(userId).select('fullName email');
       if (!user) {
-        console.log(`❌ User not found for receipt email: ${userId}`);
+        // User not found for receipt email
         return;
       }
 
@@ -587,7 +580,7 @@ export class SubscriptionsService {
           nextBillingDate = new Date(stripeSubscription.current_period_end * 1000);
         }
       } catch (error) {
-        console.log('Could not fetch price details from Stripe, using default');
+        // Could not fetch price details from Stripe, using default
       }
 
       // Send receipt email
@@ -600,7 +593,7 @@ export class SubscriptionsService {
         nextBillingDate
       );
 
-      console.log(`✅ Subscription receipt email sent to ${user.email} for ${plan} plan`);
+      // Subscription receipt email sent
     } catch (error) {
       console.error('❌ Error sending subscription receipt email:', error);
       // Don't throw error to prevent subscription creation from failing
@@ -616,14 +609,14 @@ export class SubscriptionsService {
       const admins = await this.userModel.find({ role: 'admin' }).select('_id');
       
       if (admins.length === 0) {
-        console.log('No admin users found to notify about subscription update');
+        // No admin users found to notify about subscription update
         return;
       }
 
       // Get user details for the notification
       const user = await this.userModel.findById(userId).select('fullName email');
       if (!user) {
-        console.log('User not found for subscription update notification');
+        // User not found for subscription update notification
         return;
       }
 
@@ -675,7 +668,7 @@ export class SubscriptionsService {
         await this.notificationsService.createNotification(notification);
       }
 
-      console.log(`✅ Notified ${admins.length} admin(s) about subscription update: ${user.fullName} - ${oldStatus} → ${newStatus}`);
+      // Notified admins about subscription update
     } catch (error) {
       console.error('❌ Error notifying admins about subscription update:', error);
       // Don't fail the subscription update if notification fails
@@ -713,7 +706,7 @@ export class SubscriptionsService {
         await this.notificationsService.createNotification(notification);
       }
 
-      console.log(`✅ Notified ${admins.length} admin(s) about payment issue: ${user.fullName} - ${issue}`);
+      // Notified admins about payment issue
     } catch (error) {
       console.error('❌ Error notifying admins about payment issue:', error);
     }

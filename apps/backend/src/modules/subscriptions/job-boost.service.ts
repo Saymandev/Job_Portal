@@ -122,9 +122,7 @@ export class JobBoostService {
       });
     }
 
-    if (expiredBoostedJobs.length > 0) {
-      console.log(`📊 Processed ${expiredBoostedJobs.length} expired job boosts`);
-    }
+    // Processed expired job boosts
   }
 
   async getBoostedJobs(userId: string): Promise<JobDocument[]> {

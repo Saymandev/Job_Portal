@@ -156,7 +156,7 @@ export default function EmployerDashboard() {
   const fetchDashboardData = useCallback(async () => {
     // Double check authentication before making any API calls
     if (!isAuthenticated || user?.role !== 'employer') {
-      console.log('User not authenticated, skipping API calls');
+      // User not authenticated, skipping API calls
       return;
     }
     
@@ -177,7 +177,7 @@ export default function EmployerDashboard() {
           }));
         }
       } catch (error) {
-        console.log('No pending reschedule requests or error:', error);
+        // No pending reschedule requests or error
       }
 
       // Fetch analytics
