@@ -37,7 +37,10 @@ export default function LoginPage() {
   useEffect(() => {
     if (!isHydrated) return;
 
+    console.log('Login page: useEffect', { isAuthenticated, user: !!user, isHydrated });
+    
     if (isAuthenticated && user) {
+      console.log('Login page: Redirecting user with role:', user.role);
       // Redirect to role-specific dashboard
       if (user.role === 'job_seeker') {
         router.push('/dashboard/job-seeker');

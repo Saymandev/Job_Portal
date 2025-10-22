@@ -33,8 +33,10 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         try {
+          console.log('Auth Store: login called');
           set({ isLoading: true });
           const { data }: any = await api.post('/auth/login', { email, password });
+          console.log('Auth Store: login response received');
 
           safeSetItem('accessToken', data.data.accessToken);
           if (data.data.refreshToken) {
@@ -47,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
             id: data.data.user.id || data.data.user._id
           };
 
+          console.log('Auth Store: Setting user data', normalizedUserData);
           set({
             user: normalizedUserData,
             isAuthenticated: true,
@@ -56,7 +59,6 @@ export const useAuthStore = create<AuthState>()(
           // Initialize socket connection only on client side
           if (typeof window !== 'undefined') {
             const userId = normalizedUserData.id;
-            console.log('Auth Store login: Initializing socket with userId:', userId);
             initSocket(userId);
             initNotificationsSocket(userId);
             
@@ -96,7 +98,6 @@ export const useAuthStore = create<AuthState>()(
           // Initialize socket connection only on client side
           if (typeof window !== 'undefined') {
             const userId = normalizedUserData.id;
-            console.log('Auth Store register: Initializing socket with userId:', userId);
             initSocket(userId);
             initNotificationsSocket(userId);
             
@@ -146,7 +147,6 @@ export const useAuthStore = create<AuthState>()(
           // Initialize socket connection only on client side
           if (typeof window !== 'undefined') {
             const userId = normalizedUserData.id;
-            console.log('Auth Store fetchUser: Initializing socket with userId:', userId);
             initSocket(userId);
             initNotificationsSocket(userId);
             

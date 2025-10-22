@@ -96,13 +96,9 @@ export default function EnhancedFeatures({ subscription }: EnhancedFeaturesProps
   const router = useRouter();
   const { toast } = useToast();
   
-  // Debug logging
-  console.log('Enhanced Features - Subscription data:', subscription);
-  
   const enabledFeatures = features.map(feature => {
     const fieldName = `${feature.id}Enabled` as keyof typeof subscription;
     const isEnabled = subscription?.[fieldName] || false;
-    console.log(`Feature ${feature.id}: ${fieldName} = ${isEnabled}`);
     return {
       ...feature,
       enabled: isEnabled,
@@ -111,8 +107,6 @@ export default function EnhancedFeatures({ subscription }: EnhancedFeaturesProps
 
   const enabledCount = enabledFeatures.filter(f => f.enabled).length;
   const totalCount = enabledFeatures.length;
-  
-  console.log(`Enhanced Features - Enabled: ${enabledCount}/${totalCount}`);
 
   const handleUpgradePlan = () => {
     router.push('/pricing');
@@ -134,14 +128,6 @@ export default function EnhancedFeatures({ subscription }: EnhancedFeaturesProps
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Debug info */}
-        <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-          <strong>Debug Info:</strong><br/>
-          Subscription: {subscription ? 'Present' : 'Missing'}<br/>
-          Plan: {subscription?.plan || 'Unknown'}<br/>
-          Enabled Count: {enabledCount}/{totalCount}
-        </div>
-        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {enabledFeatures.map((feature) => {
             const Icon = feature.icon;
