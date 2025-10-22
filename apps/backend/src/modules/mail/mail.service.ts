@@ -345,25 +345,33 @@ export class MailService {
   private getPlanFeatures(plan: string): string[] {
     const features = {
       'free': [
-        'Post up to 1 job listing',
+        'Post up to 5 job listings',
         'Basic job posting features',
         'View job applications',
         'Email support'
       ],
       'basic': [
-        'Post up to 10 job listings',
+        'Post up to 25 job listings',
         'Advanced job posting features',
         'Application management tools',
         'Priority email support',
-        'Job posting analytics'
+        'Job posting analytics',
+        'Priority application processing',
+        'Enhanced candidate matching',
+        'Application analytics dashboard',
+        'Unlimited resume downloads'
       ],
       'pro': [
-        'Post up to 50 job listings',
+        'Post up to 100 job listings',
         'Premium job posting features',
         'Advanced analytics dashboard',
         'Candidate screening tools',
         'Priority support',
-        'Featured job listings'
+        'Featured job listings',
+        'Direct candidate messaging',
+        'Featured company profile',
+        'Salary insights & market data',
+        'Interview preparation tools'
       ],
       'enterprise': [
         'Unlimited job listings',
@@ -372,7 +380,8 @@ export class MailService {
         'API access',
         'Dedicated account manager',
         'Custom integrations',
-        'Advanced reporting'
+        'Advanced reporting',
+        'All enhanced employer features'
       ]
     };
     

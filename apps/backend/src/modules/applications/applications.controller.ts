@@ -3,17 +3,19 @@ import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  UseGuards,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    Query,
+    Res,
+    UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
@@ -165,6 +167,26 @@ export class ApplicationsController {
       success: true,
       message: 'Application withdrawn successfully',
     };
+  }
+
+  @Get(':id/download-resume')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Download candidate resume' })
+  async downloadResume(
+    @Param('id') applicationId: string,
+    @CurrentUser('id') employerId: string,
+    @Res() res: Response,
+  ) {
+    const resumeBuffer = await this.applicationsService.downloadResume(applicationId, employerId);
+    
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="resume.pdf"',
+      'Content-Length': resumeBuffer.length.toString(),
+    });
+    
+    res.send(resumeBuffer);
   }
 }
 

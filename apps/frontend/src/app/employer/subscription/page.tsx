@@ -8,13 +8,13 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-  AlertCircle,
-  ArrowRight,
-  Calendar,
-  CheckCircle,
-  Crown,
-  TrendingUp,
-  Zap
+    AlertCircle,
+    ArrowRight,
+    Calendar,
+    CheckCircle,
+    Crown,
+    TrendingUp,
+    Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,15 @@ interface Subscription {
   featuredJobsEnabled: boolean;
   advancedAnalyticsEnabled: boolean;
   prioritySupportEnabled: boolean;
+  // Enhanced Employer Features
+  priorityApplicationsEnabled: boolean;
+  enhancedMatchingEnabled: boolean;
+  applicationAnalyticsEnabled: boolean;
+  directMessagingEnabled: boolean;
+  featuredProfileEnabled: boolean;
+  unlimitedResumeDownloads: boolean;
+  salaryInsightsEnabled: boolean;
+  interviewPrepEnabled: boolean;
 }
 
 interface BoostStats {
@@ -319,6 +328,87 @@ export default function SubscriptionPage() {
                   <p className="font-semibold">Priority Support</p>
                   <p className="text-sm text-muted-foreground">
                     Get help faster with priority customer support
+                  </p>
+                </div>
+              </div>
+
+              {/* Enhanced Employer Features */}
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.priorityApplicationsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">🎯 Priority Application Processing</p>
+                  <p className="text-sm text-muted-foreground">
+                    Applications appear at the top of your list
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.enhancedMatchingEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">🔍 Enhanced Candidate Matching</p>
+                  <p className="text-sm text-muted-foreground">
+                    Better algorithm to find perfect candidates
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.applicationAnalyticsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">📊 Application Analytics Dashboard</p>
+                  <p className="text-sm text-muted-foreground">
+                    Detailed insights into application trends
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.unlimitedResumeDownloads ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">📄 Unlimited Resume Downloads</p>
+                  <p className="text-sm text-muted-foreground">
+                    Download candidate resumes without limits
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.directMessagingEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">💬 Direct Candidate Messaging</p>
+                  <p className="text-sm text-muted-foreground">
+                    Message candidates directly before interviews
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.featuredProfileEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">⭐ Featured Company Profile</p>
+                  <p className="text-sm text-muted-foreground">
+                    Your company appears in featured employers section
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.salaryInsightsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">💰 Salary Insights & Market Data</p>
+                  <p className="text-sm text-muted-foreground">
+                    Access to salary benchmarks and market trends
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.interviewPrepEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="font-semibold">🎤 Interview Preparation Tools</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tools to help prepare for candidate interviews
                   </p>
                 </div>
               </div>

@@ -1,24 +1,27 @@
 'use client';
 
+import ApplicationAnalytics from '@/components/application-analytics';
+import EnhancedFeatures from '@/components/enhanced-features';
+import EnhancedMatching from '@/components/enhanced-matching';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-  BarChart3,
-  Briefcase,
-  Calendar,
-  CheckCircle,
-  Clock,
-  Eye,
-  FileText,
-  MessageSquare,
-  Plus,
-  TrendingUp,
-  UserPlus,
-  Users,
-  Zap
+    BarChart3,
+    Briefcase,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Eye,
+    FileText,
+    MessageSquare,
+    Plus,
+    TrendingUp,
+    UserPlus,
+    Users,
+    Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -96,6 +99,15 @@ interface Subscription {
   featuredJobsEnabled: boolean;
   advancedAnalyticsEnabled: boolean;
   prioritySupportEnabled: boolean;
+  // Enhanced Employer Features
+  priorityApplicationsEnabled?: boolean;
+  enhancedMatchingEnabled?: boolean;
+  applicationAnalyticsEnabled?: boolean;
+  unlimitedResumeDownloads?: boolean;
+  directMessagingEnabled?: boolean;
+  featuredProfileEnabled?: boolean;
+  salaryInsightsEnabled?: boolean;
+  interviewPrepEnabled?: boolean;
 }
 
 interface SubscriptionLimits {
@@ -638,10 +650,29 @@ export default function EmployerDashboard() {
                 })
               )}
             </div>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
 
-        {/* Recent Jobs */}
+      {/* Enhanced Features */}
+      <EnhancedFeatures subscription={subscription || undefined} />
+
+      {/* Enhanced Matching */}
+      {subscription?.enhancedMatchingEnabled && (
+        <EnhancedMatching 
+          jobId={recentJobs[0]?._id || ''} 
+          employerId={user?.id || ''} 
+          isEnabled={subscription?.enhancedMatchingEnabled || false}
+        />
+      )}
+
+      {/* Application Analytics */}
+      {subscription?.applicationAnalyticsEnabled && (
+        <ApplicationAnalytics 
+          isEnabled={subscription?.applicationAnalyticsEnabled || false}
+        />
+      )}
+
+      {/* Recent Jobs */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">

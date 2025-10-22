@@ -420,6 +420,7 @@ export class SubscriptionsService {
           currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
           autoRenew: !stripeSubscription.cancel_at_period_end,
           jobPostsLimit: this.getJobPostsLimit(plan),
+          ...this.setEmployerPlanFeatures(plan),
         },
         { upsert: true, new: true }
       );
@@ -716,6 +717,69 @@ export class SubscriptionsService {
     } catch (error) {
       console.error('❌ Error notifying admins about payment issue:', error);
     }
+  }
+
+  /**
+   * Set enhanced features for employers (job holders) based on subscription plan
+   */
+  private setEmployerPlanFeatures(plan: SubscriptionPlan): any {
+    const features: any = {};
+
+    switch (plan) {
+      case SubscriptionPlan.FREE:
+        features.priorityApplicationsEnabled = false;
+        features.enhancedMatchingEnabled = false;
+        features.applicationAnalyticsEnabled = false;
+        features.directMessagingEnabled = false;
+        features.featuredProfileEnabled = false;
+        features.unlimitedResumeDownloads = false;
+        features.salaryInsightsEnabled = false;
+        features.interviewPrepEnabled = false;
+        features.applicationsLimit = 0;
+        features.applicationsUsed = 0;
+        break;
+      
+      case SubscriptionPlan.BASIC:
+        features.priorityApplicationsEnabled = true;
+        features.enhancedMatchingEnabled = true;
+        features.applicationAnalyticsEnabled = true;
+        features.unlimitedResumeDownloads = true;
+        features.directMessagingEnabled = false;
+        features.featuredProfileEnabled = false;
+        features.salaryInsightsEnabled = false;
+        features.interviewPrepEnabled = false;
+        features.applicationsLimit = 0;
+        features.applicationsUsed = 0;
+        break;
+      
+      case SubscriptionPlan.PRO:
+        features.priorityApplicationsEnabled = true;
+        features.enhancedMatchingEnabled = true;
+        features.applicationAnalyticsEnabled = true;
+        features.directMessagingEnabled = true;
+        features.featuredProfileEnabled = true;
+        features.unlimitedResumeDownloads = true;
+        features.salaryInsightsEnabled = true;
+        features.interviewPrepEnabled = true;
+        features.applicationsLimit = 0;
+        features.applicationsUsed = 0;
+        break;
+      
+      case SubscriptionPlan.ENTERPRISE:
+        features.priorityApplicationsEnabled = true;
+        features.enhancedMatchingEnabled = true;
+        features.applicationAnalyticsEnabled = true;
+        features.directMessagingEnabled = true;
+        features.featuredProfileEnabled = true;
+        features.unlimitedResumeDownloads = true;
+        features.salaryInsightsEnabled = true;
+        features.interviewPrepEnabled = true;
+        features.applicationsLimit = 0;
+        features.applicationsUsed = 0;
+        break;
+    }
+
+    return features;
   }
 }
 

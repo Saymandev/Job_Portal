@@ -66,6 +66,37 @@ export class Subscription {
 
   @Prop({ default: false })
   advancedAnalyticsEnabled: boolean;
+
+  // Enhanced Employer (Job Holder) Features
+  @Prop({ default: false })
+  priorityApplicationsEnabled: boolean;
+
+  @Prop({ default: false })
+  enhancedMatchingEnabled: boolean;
+
+  @Prop({ default: false })
+  applicationAnalyticsEnabled: boolean;
+
+  @Prop({ default: false })
+  directMessagingEnabled: boolean;
+
+  @Prop({ default: false })
+  featuredProfileEnabled: boolean;
+
+  @Prop({ default: false })
+  unlimitedResumeDownloads: boolean;
+
+  @Prop({ default: false })
+  salaryInsightsEnabled: boolean;
+
+  @Prop({ default: false })
+  interviewPrepEnabled: boolean;
+
+  @Prop({ default: 0 })
+  applicationsLimit: number;
+
+  @Prop({ default: 0 })
+  applicationsUsed: number;
 }
 
 export const SubscriptionSchema = SchemaFactory.createForClass(Subscription);

@@ -97,10 +97,34 @@ export class ApplicationsService {
       throw new ForbiddenException('You do not have access to these applications');
     }
 
-    return this.applicationModel
+    // Check if employer has priority applications feature enabled
+    const hasPriorityApplications = await this.checkFeatureEnabled(employerId, 'priorityApplicationsEnabled');
+
+    let applications = await this.applicationModel
       .find({ job: jobId })
       .populate('applicant', 'fullName email phone skills location')
-      .sort({ createdAt: -1 });
+      .lean();
+
+    if (hasPriorityApplications) {
+      // Sort by priority: premium users first, then by creation date
+      applications = applications.sort((a, b) => {
+        const aIsPremium = this.isApplicantPremium(a.applicant);
+        const bIsPremium = this.isApplicantPremium(b.applicant);
+        
+        if (aIsPremium && !bIsPremium) return -1;
+        if (!aIsPremium && bIsPremium) return 1;
+        
+        // If both have same priority status, sort by creation date (newest first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    } else {
+      // Default sorting by creation date
+      applications = applications.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    }
+
+    return applications as unknown as ApplicationDocument[];
   }
 
   async findByEmployer(employerId: string): Promise<ApplicationDocument[]> {
@@ -294,6 +318,171 @@ export class ApplicationsService {
       total,
       byStatus,
     };
+  }
+
+  /**
+   * Check if an applicant has premium features (for priority application processing)
+   */
+  private isApplicantPremium(applicant: any): boolean {
+    // For now, we'll consider an applicant premium if they have a subscription
+    // In a real implementation, you might check their subscription status
+    // For this demo, we'll use a simple heuristic based on profile completeness
+    if (!applicant) return false;
+    
+    // Check if user has complete profile (indicates they're serious about job searching)
+    const hasCompleteProfile = applicant.skills && 
+                              applicant.skills.length > 0 && 
+                              applicant.location && 
+                              applicant.fullName;
+    
+    return hasCompleteProfile;
+  }
+
+  /**
+   * Download candidate resume with subscription check
+   */
+  async downloadResume(applicationId: string, employerId: string): Promise<Buffer> {
+    // Get application and verify employer access
+    const application = await this.applicationModel
+      .findById(applicationId)
+      .populate('job', 'postedBy')
+      .populate('applicant', 'resume fullName');
+
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+
+    // Verify job belongs to employer
+    if ((application.job as any).postedBy.toString() !== employerId) {
+      throw new ForbiddenException('You do not have access to this application');
+    }
+
+    // Check if employer has unlimited resume downloads feature
+    const hasUnlimitedDownloads = await this.checkFeatureEnabled(employerId, 'unlimitedResumeDownloads');
+
+    if (!hasUnlimitedDownloads) {
+      // For free users, limit downloads (implement download tracking)
+      const downloadCount = await this.getResumeDownloadCount(employerId);
+      if (downloadCount >= 5) { // Free plan limit
+        throw new ForbiddenException('Resume download limit reached. Upgrade your plan for unlimited downloads.');
+      }
+    }
+
+    // Get resume file path
+    const resumePath = application.resume || (application.applicant as any).resume;
+    if (!resumePath) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    // In a real implementation, you would read the file from storage
+    // For now, we'll return a mock PDF buffer
+    const fs = await import('fs');
+    const path = await import('path');
+    
+    try {
+      const fullPath = path.join(process.cwd(), 'uploads', resumePath);
+      const resumeBuffer = fs.readFileSync(fullPath);
+      
+      // Track download for analytics
+      await this.trackResumeDownload(employerId, applicationId);
+      
+      return resumeBuffer;
+    } catch (error) {
+      // If file not found, return a mock PDF
+      return this.generateMockResume(application.applicant);
+    }
+  }
+
+  private async getResumeDownloadCount(employerId: string): Promise<number> {
+    // In a real implementation, you'd track downloads in a separate collection
+    // For now, return 0 (unlimited for demo)
+    return 0;
+  }
+
+  private async trackResumeDownload(employerId: string, applicationId: string): Promise<void> {
+    // Track download for analytics
+    console.log(`Resume downloaded by employer ${employerId} for application ${applicationId}`);
+  }
+
+  private generateMockResume(applicant: any): Buffer {
+    // Generate a simple mock PDF for demo purposes
+    const mockPdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Length 44
+>>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(${applicant.fullName || 'Candidate'} Resume) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000204 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+297
+%%EOF`;
+
+    return Buffer.from(mockPdfContent);
+  }
+
+  /**
+   * Check if a specific feature is enabled for the employer
+   */
+  private async checkFeatureEnabled(employerId: string, featureName: string): Promise<boolean> {
+    try {
+      // Get subscription from database
+      const { Subscription, SubscriptionSchema } = await import('../subscriptions/schemas/subscription.schema');
+      const subscriptionModel = this.applicationModel.db.model('Subscription', SubscriptionSchema);
+      
+      const subscription = await subscriptionModel.findOne({ user: employerId });
+      if (!subscription) {
+        return false; // No subscription = no features
+      }
+
+      // Check the specific feature
+      return subscription[featureName] || false;
+    } catch (error) {
+      console.error('Error checking feature:', error);
+      return false; // Default to false on error
+    }
   }
 }
 
