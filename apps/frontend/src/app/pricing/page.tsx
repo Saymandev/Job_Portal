@@ -353,6 +353,9 @@ export default function PricingPage() {
                     {plan.id === 'pro' && (
                       <div>
                         <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
+                          + All Basic Plan
+                        </h4>
+                        <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
                           + Professional Features
                         </h4>
                         <ul className="space-y-2">
@@ -376,6 +379,9 @@ export default function PricingPage() {
 
                     {plan.id === 'enterprise' && (
                       <div>
+                        <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">
+                        + All Professional Plan
+                        </h4>
                         <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">
                           + Enterprise Features
                         </h4>
