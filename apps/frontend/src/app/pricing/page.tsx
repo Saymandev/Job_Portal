@@ -351,118 +351,51 @@ export default function PricingPage() {
                     )}
 
                     {plan.id === 'pro' && (
-                      <>
-                        <div>
-                          <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
-                            Basic Plan Features
-                          </h4>
-                          <ul className="space-y-2">
-                            {planFeatures.basic.map((feature, index) => {
-                              const FeatureIcon = feature.icon;
-                              return (
-                                <li key={index} className="flex items-start gap-3">
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                    {FeatureIcon && (
-                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
-                            + Professional Features
-                          </h4>
-                          <ul className="space-y-2">
-                            {planFeatures.pro.map((feature, index) => {
-                              const FeatureIcon = feature.icon;
-                              return (
-                                <li key={index} className="flex items-start gap-3">
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                    {FeatureIcon && (
-                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      </>
+                      <div>
+                        <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
+                          + Professional Features
+                        </h4>
+                        <ul className="space-y-2">
+                          {planFeatures.pro.map((feature, index) => {
+                            const FeatureIcon = feature.icon;
+                            return (
+                              <li key={index} className="flex items-start gap-3">
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                  {FeatureIcon && (
+                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <span className="text-sm text-muted-foreground">{feature.text}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
                     )}
 
                     {plan.id === 'enterprise' && (
-                      <>
-                        <div>
-                          <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
-                            Basic Plan Features
-                          </h4>
-                          <ul className="space-y-2">
-                            {planFeatures.basic.map((feature, index) => {
-                              const FeatureIcon = feature.icon;
-                              return (
-                                <li key={index} className="flex items-start gap-3">
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                    {FeatureIcon && (
-                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
-                            + Professional Features
-                          </h4>
-                          <ul className="space-y-2">
-                            {planFeatures.pro.map((feature, index) => {
-                              const FeatureIcon = feature.icon;
-                              return (
-                                <li key={index} className="flex items-start gap-3">
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                    {FeatureIcon && (
-                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">
-                            + Enterprise Features
-                          </h4>
-                          <ul className="space-y-2">
-                            {planFeatures.enterprise.map((feature, index) => {
-                              const FeatureIcon = feature.icon;
-                              return (
-                                <li key={index} className="flex items-start gap-3">
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                    {FeatureIcon && (
-                                      <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">{feature.text}</span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      </>
+                      <div>
+                        <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">
+                          + Enterprise Features
+                        </h4>
+                        <ul className="space-y-2">
+                          {planFeatures.enterprise.map((feature, index) => {
+                            const FeatureIcon = feature.icon;
+                            return (
+                              <li key={index} className="flex items-start gap-3">
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                  {FeatureIcon && (
+                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <span className="text-sm text-muted-foreground">{feature.text}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
                     )}
                   </div>
                   <Button
@@ -503,7 +436,7 @@ export default function PricingPage() {
                   <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                     <Code className="h-5 w-5 text-purple-600" />
                   </div>
-                  <CardTitle className="text-lg">API Access</CardTitle>
+                <CardTitle className="text-lg">API Access</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -519,7 +452,7 @@ export default function PricingPage() {
                   <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                     <Building className="h-5 w-5 text-blue-600" />
                   </div>
-                  <CardTitle className="text-lg">Company Branding</CardTitle>
+                <CardTitle className="text-lg">Company Branding</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -535,7 +468,7 @@ export default function PricingPage() {
                   <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                     <Download className="h-5 w-5 text-green-600" />
                   </div>
-                  <CardTitle className="text-lg">Bulk Job Import</CardTitle>
+                <CardTitle className="text-lg">Bulk Job Import</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -551,7 +484,7 @@ export default function PricingPage() {
                   <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
                     <MessageSquare className="h-5 w-5 text-orange-600" />
                   </div>
-                  <CardTitle className="text-lg">Priority Support</CardTitle>
+                <CardTitle className="text-lg">Priority Support</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -567,7 +500,7 @@ export default function PricingPage() {
                   <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
                     <BarChart3 className="h-5 w-5 text-indigo-600" />
                   </div>
-                  <CardTitle className="text-lg">Advanced Analytics</CardTitle>
+                <CardTitle className="text-lg">Advanced Analytics</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -583,7 +516,7 @@ export default function PricingPage() {
                   <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
                     <Sparkles className="h-5 w-5 text-amber-600" />
                   </div>
-                  <CardTitle className="text-lg">White-label Options</CardTitle>
+                <CardTitle className="text-lg">White-label Options</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
