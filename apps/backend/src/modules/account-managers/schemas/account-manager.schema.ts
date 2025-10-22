@@ -89,7 +89,6 @@ export class AccountManager {
 
 export const AccountManagerSchema = SchemaFactory.createForClass(AccountManager);
 
-AccountManagerSchema.index({ email: 1 });
 AccountManagerSchema.index({ status: 1 });
 AccountManagerSchema.index({ assignedClients: 1 });
 AccountManagerSchema.index({ isActive: 1 });

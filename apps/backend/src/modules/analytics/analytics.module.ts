@@ -6,6 +6,7 @@ import { Job, JobSchema } from '../jobs/schemas/job.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { AnalyticsController } from './analytics.controller';
 import { AnalyticsService } from './analytics.service';
+import { ApplicationAnalyticsService } from './application-analytics.service';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { AnalyticsService } from './analytics.service';
     ]),
   ],
   controllers: [AnalyticsController],
-  providers: [AnalyticsService],
-  exports: [AnalyticsService],
+  providers: [AnalyticsService, ApplicationAnalyticsService],
+  exports: [AnalyticsService, ApplicationAnalyticsService],
 })
 export class AnalyticsModule {}
