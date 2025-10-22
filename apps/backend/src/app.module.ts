@@ -6,10 +6,16 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 // Feature Modules
 import { HealthController } from './health.controller';
+import { AccountManagersModule } from './modules/account-managers/account-managers.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AdvancedAnalyticsModule } from './modules/advanced-analytics/advanced-analytics.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ApiKeysModule } from './modules/api-keys/api-keys.module';
+import { ApiModule } from './modules/api/api.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BrandingModule } from './modules/branding/branding.module';
+import { BulkImportModule } from './modules/bulk-import/bulk-import.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { CronModule } from './modules/cron/cron.module';
@@ -20,6 +26,7 @@ import { JobsModule } from './modules/jobs/jobs.module';
 import { MailModule } from './modules/mail/mail.module';
 import { MessagingPermissionsModule } from './modules/messaging-permissions/messaging-permissions.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PrioritySupportModule } from './modules/priority-support/priority-support.module';
 import { PublicModule } from './modules/public/public.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { UploadModule } from './modules/upload/upload.module';
@@ -99,6 +106,13 @@ import { User, UserSchema } from './modules/users/schemas/user.schema';
     UploadModule,
     PublicModule,
     CronModule,
+    ApiKeysModule,
+    ApiModule,
+    BrandingModule,
+    BulkImportModule,
+    AccountManagersModule,
+    PrioritySupportModule,
+    AdvancedAnalyticsModule,
     
     // Security Module
     MongooseModule.forFeature([

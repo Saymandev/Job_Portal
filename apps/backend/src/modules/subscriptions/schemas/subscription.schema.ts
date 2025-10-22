@@ -97,6 +97,30 @@ export class Subscription {
 
   @Prop({ default: 0 })
   applicationsUsed: number;
+
+  // API Access Features
+  @Prop({ default: false })
+  apiAccessEnabled: boolean;
+
+  @Prop({ default: 0 })
+  maxApiKeys: number;
+
+  @Prop({ default: 0 })
+  apiRateLimitPerHour: number;
+
+  // Custom Branding Features
+  @Prop({ default: false })
+  customBrandingEnabled: boolean;
+
+  @Prop({ default: false })
+  whiteLabelEnabled: boolean;
+
+  // Bulk Operations
+  @Prop({ default: false })
+  bulkJobImportEnabled: boolean;
+
+  @Prop({ default: 0 })
+  maxBulkJobsPerImport: number;
 }
 
 export const SubscriptionSchema = SchemaFactory.createForClass(Subscription);
