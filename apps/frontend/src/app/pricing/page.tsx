@@ -68,9 +68,9 @@ const planFeatures = {
     { text: 'Unlimited job boosts', icon: Star },
     { text: 'Always featured listings', icon: Star },
     { text: 'Custom job duration', icon: null },
-    { text: 'Custom branding', icon: Building },
-    { text: 'API access', icon: Code },
-    { text: 'Dedicated account manager', icon: User },
+    { text: 'Custom branding (Coming Soon)', icon: Building, comingSoon: true },
+    { text: 'API access (Coming Soon)', icon: Code, comingSoon: true },
+    { text: 'Dedicated account manager (Coming Soon)', icon: User, comingSoon: true },
   ],
 };
 
@@ -385,12 +385,20 @@ export default function PricingPage() {
                             return (
                               <li key={index} className="flex items-start gap-3">
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                  {feature.comingSoon ? (
+                                    <div className="h-4 w-4 rounded-full bg-orange-100 flex items-center justify-center">
+                                      <span className="text-xs text-orange-600 font-bold">!</span>
+                                    </div>
+                                  ) : (
+                                    <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                                  )}
                                   {FeatureIcon && (
-                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                                    <FeatureIcon className={`h-4 w-4 ${feature.comingSoon ? 'text-orange-500' : 'text-muted-foreground'}`} />
                                   )}
                                 </div>
-                                <span className="text-sm text-muted-foreground">{feature.text}</span>
+                                <span className={`text-sm ${feature.comingSoon ? 'text-orange-600 font-medium' : 'text-muted-foreground'}`}>
+                                  {feature.text}
+                                </span>
                               </li>
                             );
                           })}
