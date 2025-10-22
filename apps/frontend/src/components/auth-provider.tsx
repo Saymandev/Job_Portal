@@ -55,8 +55,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Only run auth initialization after hydration
     if (!isHydrated) return;
 
+    // If we're already authenticated, don't run initialization
+    if (isAuthenticated && user) {
+      console.log('AuthProvider: Already authenticated, skipping initialization');
+      setIsInitialized(true);
+      return;
+    }
+
     initializeAuth();
-  }, [isHydrated, initializeAuth]);
+  }, [isHydrated, initializeAuth, isAuthenticated, user]);
 
   // Prevent hydration mismatch by not rendering anything until client-side hydration is complete
   if (!isHydrated) {
