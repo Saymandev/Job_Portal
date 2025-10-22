@@ -176,28 +176,61 @@ async function seed() {
     await subscriptionModel.insertMany([
       {
         user: employers[0]._id,
+        plan: 'enterprise',
+        status: 'active',
+        jobPostsLimit: 1000,
+        jobPostsUsed: 3,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        boostsAvailable: 10,
+        boostsUsed: 0,
+        // Enhanced Employer Features - All enabled for Enterprise
+        priorityApplicationsEnabled: true,
+        enhancedMatchingEnabled: true,
+        applicationAnalyticsEnabled: true,
+        directMessagingEnabled: true,
+        featuredProfileEnabled: true,
+        unlimitedResumeDownloads: true,
+        salaryInsightsEnabled: true,
+        interviewPrepEnabled: true,
+        // Other features
+        featuredJobsEnabled: true,
+        advancedAnalyticsEnabled: true,
+        prioritySupportEnabled: true,
+        // API Access Features
+        apiAccessEnabled: true,
+        maxApiKeys: 10,
+        apiRateLimitPerHour: 1000,
+        // Custom Branding Features
+        customBrandingEnabled: true,
+        whiteLabelEnabled: true,
+        // Bulk Operations
+        bulkJobImportEnabled: true,
+        maxBulkJobsPerImport: 100,
+        // Dedicated Account Manager
+        dedicatedAccountManagerEnabled: true,
+      },
+      {
+        user: employers[1]._id,
         plan: 'pro',
         status: 'active',
         jobPostsLimit: 100,
         jobPostsUsed: 0,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        boostsAvailable: 5,
+        boostsUsed: 0,
       },
       {
-        user: employers[1]._id,
+        user: employers[2]._id,
         plan: 'basic',
         status: 'active',
         jobPostsLimit: 25,
         jobPostsUsed: 0,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
-      {
-        user: employers[2]._id,
-        plan: 'free',
-        status: 'active',
-        jobPostsLimit: 5,
-        jobPostsUsed: 0,
+        boostsAvailable: 2,
+        boostsUsed: 0,
       },
     ]);
     console.log('✅ Created subscriptions\n');
