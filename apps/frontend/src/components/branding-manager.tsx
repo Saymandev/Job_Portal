@@ -16,7 +16,8 @@ import {
   Sparkles,
   Upload
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 // Simple tabs implementation
 const Tabs = ({ children, defaultValue, className }: { children: React.ReactNode; defaultValue: string; className?: string }) => {
   const [activeTab, setActiveTab] = useState(defaultValue);
@@ -119,7 +120,7 @@ export default function BrandingManager() {
   const [domainCheck, setDomainCheck] = useState<{ available?: boolean; checking?: boolean }>({});
   const { toast } = useToast();
 
-  const defaultBranding: Branding = {
+  const defaultBranding: Branding = useMemo(() => ({
     primaryColor: '#3B82F6',
     primaryColorDark: '#1E40AF',
     secondaryColor: '#F3F4F6',
@@ -130,7 +131,7 @@ export default function BrandingManager() {
     textColorDark: '#F9FAFB',
     isActive: false,
     whiteLabelEnabled: false,
-  };
+  }), []);
 
   const fetchBranding = useCallback(async () => {
     try {
@@ -150,7 +151,7 @@ export default function BrandingManager() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, defaultBranding]);
 
   useEffect(() => {
     fetchBranding();
@@ -430,9 +431,11 @@ export default function BrandingManager() {
                   />
                   {currentBranding.logo && (
                     <div className="mt-2">
-                      <img
+                      <Image
                         src={currentBranding.logo}
                         alt="Logo preview"
+                        width={64}
+                        height={64}
                         className="h-16 w-auto object-contain border rounded"
                       />
                     </div>
@@ -449,9 +452,11 @@ export default function BrandingManager() {
                   />
                   {currentBranding.logoDark && (
                     <div className="mt-2">
-                      <img
+                      <Image
                         src={currentBranding.logoDark}
                         alt="Dark logo preview"
+                        width={64}
+                        height={64}
                         className="h-16 w-auto object-contain border rounded bg-gray-800"
                       />
                     </div>
@@ -787,9 +792,11 @@ export default function BrandingManager() {
             >
               <div className="flex items-center space-x-4 mb-4">
                 {currentBranding.logo && (
-                  <img
+                  <Image
                     src={currentBranding.logo}
                     alt="Company Logo"
+                    width={48}
+                    height={48}
                     className="h-12 w-auto object-contain"
                   />
                 )}
