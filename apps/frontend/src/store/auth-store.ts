@@ -178,10 +178,12 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.error('Auth store rehydration error:', error);
-          // Clear corrupted data only on client side
-          if (typeof window !== 'undefined') {
+          // Only clear data if there's a serious error, not just missing data
+          if (typeof window !== 'undefined' && (error as any)?.message?.includes('corrupted')) {
             clearAuthData();
           }
+        } else {
+          console.log('Auth store rehydration successful:', state);
         }
       },
       // Skip hydration on server side
