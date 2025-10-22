@@ -9,6 +9,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { Subscription, SubscriptionSchema } from '../subscriptions/schemas/subscription.schema';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
+import { EnhancedMatchingService } from './enhanced-matching.service';
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
 import { SavedJobsController } from './saved-jobs.controller';
@@ -31,7 +32,7 @@ import { SavedJob, SavedJobSchema } from './schemas/saved-job.schema';
     forwardRef(() => SubscriptionsModule),
   ],
   controllers: [JobsController, SavedJobsController],
-  providers: [JobsService, SavedJobsService, AuditService, SanitizationService],
+  providers: [JobsService, SavedJobsService, EnhancedMatchingService, AuditService, SanitizationService],
   exports: [JobsService, SavedJobsService],
 })
 export class JobsModule {}

@@ -6,16 +6,16 @@ import { CsrfGuard } from '@/common/guards/csrf.guard';
 import { CustomRateLimitGuard } from '@/common/guards/rate-limit.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Post,
-    Put,
-    Query,
-    Req,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -23,12 +23,16 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateJobDto } from './dto/create-job.dto';
 import { SearchJobsDto } from './dto/search-jobs.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
+import { EnhancedMatchingService } from './enhanced-matching.service';
 import { JobsService } from './jobs.service';
 
 @ApiTags('Jobs')
 @Controller('jobs')
 export class JobsController {
-  constructor(private readonly jobsService: JobsService) {}
+  constructor(
+    private readonly jobsService: JobsService,
+    private readonly enhancedMatchingService: EnhancedMatchingService
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, CsrfGuard, CustomRateLimitGuard)
@@ -170,6 +174,28 @@ export class JobsController {
     return {
       success: true,
       message: 'Job deleted successfully',
+    };
+  }
+
+  @Get(':id/enhanced-matches')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get enhanced candidate matches for job' })
+  async getEnhancedMatches(
+    @Param('id') jobId: string,
+    @CurrentUser('id') userId: string,
+    @Query('limit') limit?: string
+  ) {
+    const matches = await this.enhancedMatchingService.findBestCandidatesForJob(
+      jobId,
+      userId,
+      limit ? parseInt(limit) : 10
+    );
+
+    return {
+      success: true,
+      data: matches,
     };
   }
 }
