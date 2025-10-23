@@ -73,8 +73,8 @@ export default function InterviewsPage() {
     try {
       setIsLoading(true);
       const response = await api.get('/interviews');
-      if (response.data.success) {
-        setInterviews(response.data.data);
+      if ((response.data as any).success) {
+        setInterviews((response.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching interviews:', error);

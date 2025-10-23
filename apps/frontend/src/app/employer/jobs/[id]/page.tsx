@@ -55,7 +55,7 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
   const fetchJob = useCallback(async () => {
     try {
       const { data } = await api.get(`/jobs/${resolvedParams.id}`);
-      setJob(data.data);
+      setJob((data as any).data);
     } catch (error) {
       toast({
         title: 'Error',
@@ -79,7 +79,7 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
         boostDays: 7
       });
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: `"${job.title}" has been boosted and will appear at the top of search results for 7 days!`,
@@ -107,7 +107,7 @@ export default function EmployerJobViewPage({ params }: { params: Promise<{ id: 
       setBoostLoading(true);
       const response = await api.post(`/subscriptions/boost/${job._id}/remove`);
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: `Boost removed from "${job.title}"`,

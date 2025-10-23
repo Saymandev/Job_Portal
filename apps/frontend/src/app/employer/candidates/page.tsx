@@ -12,15 +12,15 @@ import api from '@/lib/api';
 import { constructFileUrl, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    Calendar,
-    FileText,
-    Mail,
-    MapPin,
-    MessageSquare,
-    MoreVertical,
-    Search,
-    User,
-    X
+  Calendar,
+  FileText,
+  Mail,
+  MapPin,
+  MessageSquare,
+  MoreVertical,
+  Search,
+  User,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -96,8 +96,8 @@ export default function CandidatePipelinePage() {
   const fetchJobs = useCallback(async () => {
     try {
       const response = await api.get('/jobs/my-jobs');
-      if (response.data.success) {
-        setJobs(response.data.data);
+      if ((response.data as any).success) {
+        setJobs((response.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -108,8 +108,8 @@ export default function CandidatePipelinePage() {
     try {
       setIsLoading(true);
       const response = await api.get('/applications/employer');
-      if (response.data.success) {
-        setApplications(response.data.data);
+      if ((response.data as any).success) {
+        setApplications((response.data as any).data);
       }
     } catch (error) {
       toast({
@@ -243,7 +243,7 @@ export default function CandidatePipelinePage() {
         notes: scheduleData.notes || undefined,
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: 'Interview scheduled successfully',

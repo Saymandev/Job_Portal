@@ -24,9 +24,9 @@ export default function ApplicantsPage() {
   const fetchApplicants = useCallback(async () => {
     try {
       const { data } = await api.get(`/applications/job/${params.jobId}`);
-      setApplicants(data.data);
-      if (data.data.length > 0) {
-        setJobTitle(data.data[0].job?.title || 'Job');
+      setApplicants((data as any).data);
+      if ((data as any).data.length > 0) {
+        setJobTitle((data as any).data[0].job?.title || 'Job');
       }
     } catch (error) {
       toast({

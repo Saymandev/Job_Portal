@@ -100,7 +100,7 @@ export default function CandidateProfilePage() {
       setError(null);
       
       const response = await api.get(`/users/${candidateId}`);
-      setCandidate(response.data.data);
+      setCandidate((response.data as any).data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch candidate profile');
     } finally {

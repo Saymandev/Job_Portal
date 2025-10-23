@@ -163,17 +163,17 @@ export default function EmployerDashboard() {
     try {
       // Fetch dashboard stats
       const statsResponse = await api.get('/dashboard/employer/stats');
-      if (statsResponse.data.success) {
-        setStats(statsResponse.data.data);
+      if ((statsResponse.data as any).success) {
+        setStats((statsResponse.data as any).data);
       }
 
       // Fetch pending reschedule requests
       try {
         const rescheduleResponse = await api.get('/interviews/pending-reschedule-requests');
-        if (rescheduleResponse.data.success) {
+        if ((rescheduleResponse.data as any).success) {
           setStats(prev => ({
             ...prev,
-            pendingRescheduleRequests: rescheduleResponse.data.data.length
+            pendingRescheduleRequests: (rescheduleResponse.data as any).data.length
           }));
         }
       } catch (error) {
@@ -182,27 +182,27 @@ export default function EmployerDashboard() {
 
       // Fetch analytics
       const analyticsResponse = await api.get('/dashboard/employer/analytics');
-      if (analyticsResponse.data.success) {
-        setAnalytics(analyticsResponse.data.data);
+      if ((analyticsResponse.data as any).success) {
+        setAnalytics((analyticsResponse.data as any).data);
       }
 
       // Fetch recent candidates
       const candidatesResponse = await api.get('/applications/employer/recent?limit=10');
-      if (candidatesResponse.data.success) {
-        setCandidates(candidatesResponse.data.data);
+      if ((candidatesResponse.data as any).success) {
+        setCandidates((candidatesResponse.data as any).data);
       }
 
       // Fetch recent jobs
       const jobsResponse = await api.get('/jobs/employer/recent?limit=5');
-      if (jobsResponse.data.success) {
-        setRecentJobs(jobsResponse.data.data);
+      if ((jobsResponse.data as any).success) {
+        setRecentJobs((jobsResponse.data as any).data);
       }
 
       // Fetch subscription data
       try {
         const subscriptionResponse = await api.get('/subscriptions/current');
-        if (subscriptionResponse.data.success) {
-          setSubscription(subscriptionResponse.data.data);
+        if ((subscriptionResponse.data as any).success) {
+          setSubscription((subscriptionResponse.data as any).data);
         }
       } catch (error: any) {
         // If no subscription found (404), user is on free plan
@@ -224,8 +224,8 @@ export default function EmployerDashboard() {
       // Fetch subscription limits
       try {
         const limitsResponse = await api.get('/subscriptions/limits');
-        if (limitsResponse.data.success) {
-          setSubscriptionLimits(limitsResponse.data.data);
+        if ((limitsResponse.data as any).success) {
+          setSubscriptionLimits((limitsResponse.data as any).data);
         }
       } catch (error) {
         console.error('Error fetching subscription limits:', error);

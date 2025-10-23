@@ -93,11 +93,11 @@ export default function SubscriptionPage() {
         api.get('/subscriptions/boost-stats'),
       ]);
 
-      if (subResp.data.success) {
-        setSubscription(subResp.data.data);
+      if ((subResp.data as any).success) {
+        setSubscription((subResp.data as any).data);
       }
-      if (boostResp.data.success) {
-        setBoostStats(boostResp.data.data);
+      if ((boostResp.data as any).success) {
+        setBoostStats((boostResp.data as any).data);
       }
     } catch (error: any) {
       console.error('Error fetching subscription:', error);

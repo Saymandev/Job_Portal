@@ -164,8 +164,8 @@ export default function CVBuilderPage() {
     try {
       // Attempting to fetch CV data from API
       const response = await api.get('/users/cv');
-      if (response.data.success) {
-        const data = response.data.data;
+      if ((response.data as any).success) {
+        const data = (response.data as any).data;
         
         setCvData(data);
         reset(data);
@@ -280,8 +280,8 @@ export default function CVBuilderPage() {
     try {
       setIsLoading(true);
       const response = await api.put('/users/cv', data);
-      setCvData(response.data.data);
-      updateUser(response.data.data);
+      setCvData((response.data as any).data);
+      updateUser((response.data as any).data);
       
       toast({
         title: 'Success!',
@@ -336,7 +336,7 @@ export default function CVBuilderPage() {
 
       
       // Update CV data with the new resume
-      const newResumeData = response.data.data;
+      const newResumeData = (response.data as any).data;
       setCvData(prev => prev ? { ...prev, resume: newResumeData } : { 
         personalInfo: { fullName: '', email: '', phone: '', location: '', bio: '', professionalTitle: '', website: '', linkedinUrl: '', githubUrl: '' },
         skills: [],

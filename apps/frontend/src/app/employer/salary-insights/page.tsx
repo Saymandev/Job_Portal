@@ -7,12 +7,12 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    AlertCircle,
-    BarChart3,
-    DollarSign,
-    RefreshCw,
-    TrendingDown,
-    TrendingUp
+  AlertCircle,
+  BarChart3,
+  DollarSign,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -71,7 +71,7 @@ export default function SalaryInsightsPage() {
       const response = await api.get('/analytics/salary-insights', {
         params: searchParams,
       });
-      setSalaryInsights(response.data.data);
+      setSalaryInsights((response.data as any).data);
     } catch (error: any) {
       console.error('Error fetching salary insights:', error);
       toast({
@@ -87,7 +87,7 @@ export default function SalaryInsightsPage() {
   const fetchMarketAnalysis = useCallback(async () => {
     try {
       const response = await api.get('/analytics/market-analysis');
-      setMarketAnalysis(response.data.data);
+      setMarketAnalysis((response.data as any).data);
     } catch (error: any) {
       console.error('Error fetching market analysis:', error);
     }

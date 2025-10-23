@@ -47,8 +47,8 @@ export default function SubscriptionSuccessPage() {
           sessionId,
         });
 
-        if (response.data.success) {
-          setSubscriptionData(response.data.data);
+        if ((response.data as any).success) {
+          setSubscriptionData((response.data as any).data);
           toast({
             title: 'Success!',
             description: 'Your subscription has been activated successfully',

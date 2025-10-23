@@ -85,11 +85,11 @@ export default function AdminSubscriptionManagementPage() {
         api.get('/admin/subscriptions/stats'),
       ]);
 
-      if (subscriptionsResponse.data.success) {
-        setSubscriptions(subscriptionsResponse.data.data);
+      if ((subscriptionsResponse.data as any).success) {
+        setSubscriptions((subscriptionsResponse.data as any).data);
       }
-      if (statsResponse.data.success) {
-        setStats(statsResponse.data.data);
+      if ((statsResponse.data as any).success) {
+        setStats((statsResponse.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching subscription data:', error);
@@ -115,7 +115,7 @@ export default function AdminSubscriptionManagementPage() {
   const updateSubscriptionStatus = async (subscriptionId: string, status: string) => {
     try {
       const response = await api.put(`/admin/subscriptions/${subscriptionId}/status`, { status });
-      if (response.data.success) {
+      if ((response.data as any).success) {
         await fetchSubscriptionData();
         toast({
           title: 'Success',
@@ -135,7 +135,7 @@ export default function AdminSubscriptionManagementPage() {
   const updateSubscriptionPlan = async (subscriptionId: string, plan: string) => {
     try {
       const response = await api.put(`/admin/subscriptions/${subscriptionId}/plan`, { plan });
-      if (response.data.success) {
+      if ((response.data as any).success) {
         await fetchSubscriptionData();
         toast({
           title: 'Success',
@@ -155,7 +155,7 @@ export default function AdminSubscriptionManagementPage() {
   const cancelSubscription = async (subscriptionId: string) => {
     try {
       const response = await api.post(`/admin/subscriptions/${subscriptionId}/cancel`);
-      if (response.data.success) {
+      if ((response.data as any).success) {
         await fetchSubscriptionData();
         toast({
           title: 'Success',

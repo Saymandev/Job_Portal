@@ -146,32 +146,32 @@ export default function AdminDashboard() {
     try {
       // Fetch dashboard stats
       const statsResponse = await api.get('/admin/dashboard/stats');
-      if (statsResponse.data.success) {
-        setStats(statsResponse.data.data);
+      if ((statsResponse.data as any).success) {
+        setStats((statsResponse.data as any).data);
       }
 
       // Fetch system health
       const healthResponse = await api.get('/admin/system/health');
-      if (healthResponse.data.success) {
-        setSystemHealth(healthResponse.data.data);
+      if ((healthResponse.data as any).success) {
+        setSystemHealth((healthResponse.data as any).data);
       }
 
       // Fetch recent users
       const usersResponse = await api.get('/admin/users/recent?limit=5');
-      if (usersResponse.data.success) {
-        setRecentUsers(usersResponse.data.data);
+      if ((usersResponse.data as any).success) {
+        setRecentUsers((usersResponse.data as any).data);
       }
 
       // Fetch pending jobs
       const jobsResponse = await api.get('/admin/jobs/pending?limit=5');
-      if (jobsResponse.data.success) {
-        setPendingJobs(jobsResponse.data.data);
+      if ((jobsResponse.data as any).success) {
+        setPendingJobs((jobsResponse.data as any).data);
       }
 
       // Fetch recent activity
       const activityResponse = await api.get('/admin/activity/recent?limit=10');
-      if (activityResponse.data.success) {
-        setRecentActivity(activityResponse.data.data);
+      if ((activityResponse.data as any).success) {
+        setRecentActivity((activityResponse.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

@@ -89,7 +89,7 @@ export default function InterviewToolsPage() {
       const response = await api.get('/interviews/prep/questions', {
         params: filters,
       });
-      setQuestions(response.data.data);
+      setQuestions((response.data as any).data);
     } catch (error: any) {
       console.error('Error fetching questions:', error);
       toast({
@@ -105,7 +105,7 @@ export default function InterviewToolsPage() {
   const fetchTemplates = useCallback(async () => {
     try {
       const response = await api.get('/interviews/prep/templates');
-      setTemplates(response.data.data);
+      setTemplates((response.data as any).data);
     } catch (error: any) {
       console.error('Error fetching templates:', error);
     }
@@ -114,7 +114,7 @@ export default function InterviewToolsPage() {
   const fetchSessions = useCallback(async () => {
     try {
       const response = await api.get('/interviews/prep/sessions');
-      setSessions(response.data.data);
+      setSessions((response.data as any).data);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);
     }
@@ -129,7 +129,7 @@ export default function InterviewToolsPage() {
           difficulty: filters.difficulty || 'medium',
         },
       });
-      setTips(response.data.data);
+      setTips((response.data as any).data);
     } catch (error: any) {
       console.error('Error fetching tips:', error);
     }

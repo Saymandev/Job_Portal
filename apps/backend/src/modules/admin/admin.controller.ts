@@ -50,6 +50,180 @@ export class AdminController {
     };
   }
 
+  // ========== ADVANCED ANALYTICS MANAGEMENT ==========
+
+  @Get('analytics/insights')
+  @ApiOperation({ summary: 'Get all analytics insights across all users' })
+  async getAllAnalyticsInsights(@Query('limit') limit?: number, @Query('page') page?: number) {
+    const insights = await this.adminService.getAllAnalyticsInsights(limit || 50, page || 1);
+    return {
+      success: true,
+      data: insights,
+    };
+  }
+
+  @Get('analytics/insights/:userId')
+  @ApiOperation({ summary: 'Get analytics insights for a specific user' })
+  async getUserAnalyticsInsights(@Param('userId') userId: string) {
+    const insights = await this.adminService.getUserAnalyticsInsights(userId);
+    return {
+      success: true,
+      data: insights,
+    };
+  }
+
+  @Post('analytics/insights/:insightId/archive')
+  @ApiOperation({ summary: 'Archive an analytics insight' })
+  async archiveAnalyticsInsight(@Param('insightId') insightId: string) {
+    await this.adminService.archiveAnalyticsInsight(insightId);
+    return {
+      success: true,
+      message: 'Analytics insight archived successfully',
+    };
+  }
+
+  // ========== API KEYS MANAGEMENT ==========
+
+  @Get('api-keys')
+  @ApiOperation({ summary: 'Get all API keys across all users' })
+  async getAllApiKeys(@Query('limit') limit?: number, @Query('page') page?: number) {
+    const apiKeys = await this.adminService.getAllApiKeys(limit || 50, page || 1);
+    return {
+      success: true,
+      data: apiKeys,
+    };
+  }
+
+  @Post('api-keys/:keyId/revoke')
+  @ApiOperation({ summary: 'Revoke an API key' })
+  async revokeApiKey(@Param('keyId') keyId: string) {
+    await this.adminService.revokeApiKey(keyId);
+    return {
+      success: true,
+      message: 'API key revoked successfully',
+    };
+  }
+
+  // ========== SALARY DATA MANAGEMENT ==========
+
+  @Get('salary-data/status')
+  @ApiOperation({ summary: 'Get salary data update status and statistics' })
+  async getSalaryDataStatus() {
+    const status = await this.adminService.getSalaryDataStatus();
+    return {
+      success: true,
+      data: status,
+    };
+  }
+
+  @Post('salary-data/update')
+  @ApiOperation({ summary: 'Manually trigger salary data update' })
+  async triggerSalaryDataUpdate() {
+    const result = await this.adminService.triggerSalaryDataUpdate();
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Post('salary-data/clear-cache')
+  @ApiOperation({ summary: 'Clear salary data cache' })
+  async clearSalaryDataCache() {
+    await this.adminService.clearSalaryDataCache();
+    return {
+      success: true,
+      message: 'Salary data cache cleared successfully',
+    };
+  }
+
+  // ========== INTERVIEW MANAGEMENT ==========
+
+  @Get('interviews/templates')
+  @ApiOperation({ summary: 'Get all interview templates across all users' })
+  async getAllInterviewTemplates(@Query('limit') limit?: number, @Query('page') page?: number) {
+    const templates = await this.adminService.getAllInterviewTemplates(limit || 50, page || 1);
+    return {
+      success: true,
+      data: templates,
+    };
+  }
+
+  @Get('interviews/sessions')
+  @ApiOperation({ summary: 'Get all interview sessions across all users' })
+  async getAllInterviewSessions(@Query('limit') limit?: number, @Query('page') page?: number) {
+    const sessions = await this.adminService.getAllInterviewSessions(limit || 50, page || 1);
+    return {
+      success: true,
+      data: sessions,
+    };
+  }
+
+  // ========== ACCOUNT MANAGER MANAGEMENT ==========
+
+  @Get('account-managers')
+  @ApiOperation({ summary: 'Get all account managers and their assignments' })
+  async getAllAccountManagers() {
+    const managers = await this.adminService.getAllAccountManagers();
+    return {
+      success: true,
+      data: managers,
+    };
+  }
+
+  @Post('account-managers/:managerId/assign')
+  @ApiOperation({ summary: 'Assign an account manager to a user' })
+  async assignAccountManager(@Param('managerId') managerId: string, @Body() body: { userId: string }) {
+    await this.adminService.assignAccountManager(managerId, body.userId);
+    return {
+      success: true,
+      message: 'Account manager assigned successfully',
+    };
+  }
+
+  // ========== SUPPORT MANAGEMENT ==========
+
+  @Get('support/tickets')
+  @ApiOperation({ summary: 'Get all support tickets' })
+  async getAllSupportTickets(@Query('status') status?: string, @Query('priority') priority?: string) {
+    const tickets = await this.adminService.getAllSupportTickets(status, priority);
+    return {
+      success: true,
+      data: tickets,
+    };
+  }
+
+  @Post('support/tickets/:ticketId/assign')
+  @ApiOperation({ summary: 'Assign a support ticket to an admin' })
+  async assignSupportTicket(@Param('ticketId') ticketId: string, @Body() body: { adminId: string }) {
+    await this.adminService.assignSupportTicket(ticketId, body.adminId);
+    return {
+      success: true,
+      message: 'Support ticket assigned successfully',
+    };
+  }
+
+  // ========== WHITE-LABEL MANAGEMENT ==========
+
+  @Get('white-label/configurations')
+  @ApiOperation({ summary: 'Get all white-label configurations' })
+  async getAllWhiteLabelConfigurations() {
+    const configurations = await this.adminService.getAllWhiteLabelConfigurations();
+    return {
+      success: true,
+      data: configurations,
+    };
+  }
+
+  @Post('white-label/configurations/:configId/approve')
+  @ApiOperation({ summary: 'Approve a white-label configuration' })
+  async approveWhiteLabelConfiguration(@Param('configId') configId: string) {
+    await this.adminService.approveWhiteLabelConfiguration(configId);
+    return {
+      success: true,
+      message: 'White-label configuration approved successfully',
+    };
+  }
+
   @Get('users/recent')
   @ApiOperation({ summary: 'Get recent users' })
   async getRecentUsers(@Query('limit') limit?: string) {

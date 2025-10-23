@@ -25,7 +25,7 @@ export default function ApplicationsPage() {
     
     try {
       const { data } = await api.get('/applications/my-applications');
-      setApplications(data.data);
+      setApplications((data as any).data);
     } catch (error) {
       console.error('Error fetching applications:', error);
     } finally {

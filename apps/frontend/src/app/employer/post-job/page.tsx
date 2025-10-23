@@ -130,8 +130,8 @@ export default function PostJobPage() {
     try {
       setLoadingSubscription(true);
       const response = await api.get('/subscriptions/limits');
-      if (response.data.success) {
-        setSubscriptionInfo(response.data.data);
+      if ((response.data as any).success) {
+        setSubscriptionInfo((response.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching subscription info:', error);
@@ -143,10 +143,10 @@ export default function PostJobPage() {
   const fetchCompanies = async () => {
     try {
       const response = await api.get('/companies/my-company');
-      if (response.data.success && response.data.data) {
+      if ((response.data as any).success && (response.data as any).data) {
         // Backend returns a single company, wrap it in an array for frontend compatibility
-        setCompanies([response.data.data]);
-        setSelectedCompany(response.data.data._id);
+        setCompanies([(response.data as any).data]);
+        setSelectedCompany((response.data as any).data._id || '');
       }
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -325,8 +325,8 @@ export default function PostJobPage() {
 
       const response = await api.post('/jobs', jobData);
 
-      if (response.data.success) {
-        const { autoPosted, subscriptionInfo: newSubscriptionInfo } = response.data;
+      if ((response.data as any).success) {
+        const { autoPosted, subscriptionInfo: newSubscriptionInfo } = (response.data as any).data;
         
         // Update subscription info
         if (newSubscriptionInfo) {

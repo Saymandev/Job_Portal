@@ -41,8 +41,8 @@ export default function CoverLetterTemplatesPage() {
     try {
       setIsLoading(true);
       const response = await api.get('/cover-letter-templates');
-      if (response.data.success) {
-        setTemplates(response.data.data);
+      if ((response.data as any).success) {
+        setTemplates((response.data as any).data);
       }
     } catch (error) {
       toast({
@@ -75,7 +75,7 @@ export default function CoverLetterTemplatesPage() {
 
     try {
       const response = await api.post('/cover-letter-templates', formData);
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: 'Template created successfully',
@@ -96,7 +96,7 @@ export default function CoverLetterTemplatesPage() {
   const handleUpdate = async (templateId: string) => {
     try {
       const response = await api.put(`/cover-letter-templates/${templateId}`, formData);
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: 'Template updated successfully',

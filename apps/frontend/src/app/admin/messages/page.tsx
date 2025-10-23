@@ -128,15 +128,15 @@ export default function AdminMessagesPage() {
         api.get('/chat/admin/conversations'),
       ]);
 
-      if (usersResponse.data.success) {
-        setUsers(usersResponse.data.data);
+      if ((usersResponse.data as any).success) {
+        setUsers((usersResponse.data as any).data);
       }
-      if (conversationsResponse.data.success) {
+      if ((conversationsResponse.data as any).success) {
         
-        conversationsResponse.data.data.forEach((conv: any) => {
+        (conversationsResponse.data as any).data.forEach((conv: any) => {
          
         });
-        const fetchedConversations = conversationsResponse.data.data;
+        const fetchedConversations = (conversationsResponse.data as any).data;
         setConversations(fetchedConversations);
         
         // Auto-select the first conversation if none is selected and there are conversations
@@ -286,10 +286,10 @@ export default function AdminMessagesPage() {
   const cleanupOldConversations = async () => {
     try {
       const response = await api.post('/chat/admin/conversations/cleanup');
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
-          description: response.data.message,
+          description: (response.data as any).message,
         });
         await fetchData(); // Refresh conversations
       }
@@ -319,14 +319,14 @@ export default function AdminMessagesPage() {
       // For pagination, we'll fetch in reverse order and then reverse on frontend
       const response = await api.get(`/chat/admin/conversations/${conversationId}/messages?page=${page}&limit=50`);
       console.log('📥 fetchMessages API response:', {
-        success: response.data.success,
-        messageCount: response.data.data?.length,
+        success: (response.data as any).success,
+        messageCount: (response.data as any).data?.length,
         conversationId: conversationId,
         page: page
       });
       
-      if (response.data.success) {
-        const fetchedMessages = response.data.data;
+      if ((response.data as any).success) {
+        const fetchedMessages = (response.data as any).data;
         console.log('📥 Admin messages fetched successfully:', {
           messageCount: fetchedMessages.length,
           conversationId: conversationId,
@@ -479,18 +479,18 @@ export default function AdminMessagesPage() {
       });
 
       console.log('✅ Admin message API response:', {
-        success: response.data.success,
-        messageId: response.data.data?._id,
-        messageContent: response.data.data?.content,
-        senderId: response.data.data?.sender?._id,
-        conversationId: response.data.data?.conversation,
+        success: (response.data as any).success,
+        messageId: (response.data as any).data?._id,
+        messageContent: (response.data as any).data?.content,
+        senderId: (response.data as any).data?.sender?._id,
+        conversationId: (response.data as any).data?.conversation,
         fullResponse: response.data,
         status: response.status,
         statusText: response.statusText
       });
 
-      if (response.data.success) {
-        const newMessage = response.data.data;
+      if ((response.data as any).success) {
+        const newMessage = (response.data as any).data;
         console.log('🎉 Admin message sent successfully via API');
         
         // Real-time delivery is handled by the backend API endpoint
@@ -561,15 +561,15 @@ export default function AdminMessagesPage() {
         initialMessage: newMessage || undefined,
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         await fetchData(); // Refresh conversations
-        setSelectedConversation(response.data.data);
+        setSelectedConversation((response.data as any).data);
         setShowUserList(false);
         setSelectedUser(null);
         setNewMessage('');
         
         if (newMessage) {
-          await fetchMessages(response.data.data._id, 1, true);
+          await fetchMessages((response.data as any).data._id, 1, true);
         }
       }
     } catch (error) {

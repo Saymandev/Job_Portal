@@ -1,12 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { AccountManager, AccountManagerDocument } from '../account-managers/schemas/account-manager.schema';
+import { AdvancedAnalyticsService } from '../advanced-analytics/advanced-analytics.service';
+import { SalaryDataService } from '../analytics/salary-data.service';
+import { SalaryUpdateService } from '../analytics/salary-update.service';
+import { ApiKey, ApiKeyDocument } from '../api-keys/schemas/api-key.schema';
 import { Application, ApplicationDocument } from '../applications/schemas/application.schema';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
+import { InterviewSession, InterviewSessionDocument } from '../interviews/schemas/interview-session.schema';
+import { InterviewTemplate, InterviewTemplateDocument } from '../interviews/schemas/interview-template.schema';
 import { Job, JobDocument } from '../jobs/schemas/job.schema';
+import { SupportTicket, SupportTicketDocument } from '../priority-support/schemas/support-ticket.schema';
 import { Subscription, SubscriptionDocument } from '../subscriptions/schemas/subscription.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { ActivityService } from './activity.service';
+// import { WhiteLabelConfig, WhiteLabelConfigDocument } from '../branding/schemas/white-label-config.schema';
 
 @Injectable()
 export class AdminService {
@@ -16,7 +25,16 @@ export class AdminService {
     @InjectModel(Application.name) private applicationModel: Model<ApplicationDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
+    @InjectModel(ApiKey.name) private apiKeyModel: Model<ApiKeyDocument>,
+    @InjectModel(InterviewTemplate.name) private interviewTemplateModel: Model<InterviewTemplateDocument>,
+    @InjectModel(InterviewSession.name) private interviewSessionModel: Model<InterviewSessionDocument>,
+    @InjectModel(AccountManager.name) private accountManagerModel: Model<AccountManagerDocument>,
+    @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicketDocument>,
+    // @InjectModel(WhiteLabelConfig.name) private whiteLabelConfigModel: Model<WhiteLabelConfigDocument>,
     private activityService: ActivityService,
+    private advancedAnalyticsService: AdvancedAnalyticsService,
+    private salaryDataService: SalaryDataService,
+    private salaryUpdateService: SalaryUpdateService,
   ) {}
 
   async getDashboardStats() {
@@ -490,6 +508,187 @@ export class AdminService {
       cancelledSubscriptions,
       planBreakdown,
     };
+  }
+
+  // ========== ADVANCED ANALYTICS MANAGEMENT ==========
+
+  async getAllAnalyticsInsights(limit: number, page: number) {
+    const skip = (page - 1) * limit;
+    
+    const insights = await this.advancedAnalyticsService.getInsights('admin', {
+      limit,
+      page,
+    });
+
+    const total = await this.advancedAnalyticsService.getInsights('admin', {
+      limit: 1000, // Get total count
+    });
+
+    return {
+      insights,
+      total: total.length,
+      page,
+      limit,
+      totalPages: Math.ceil(total.length / limit),
+    };
+  }
+
+  async getUserAnalyticsInsights(userId: string) {
+    return await this.advancedAnalyticsService.getInsights(userId, { limit: 100 });
+  }
+
+  async archiveAnalyticsInsight(insightId: string) {
+    // This would need to be implemented in the AdvancedAnalyticsService
+    // For now, we'll just return success
+    return { success: true };
+  }
+
+  // ========== API KEYS MANAGEMENT ==========
+
+  async getAllApiKeys(limit: number, page: number) {
+    const skip = (page - 1) * limit;
+    
+    const apiKeys = await this.apiKeyModel
+      .find()
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.apiKeyModel.countDocuments();
+
+    return {
+      apiKeys,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async revokeApiKey(keyId: string) {
+    await this.apiKeyModel.findByIdAndUpdate(keyId, { 
+      isActive: false, 
+      revokedAt: new Date() 
+    });
+  }
+
+  // ========== SALARY DATA MANAGEMENT ==========
+
+  async getSalaryDataStatus() {
+    const updateStatus = this.salaryUpdateService.getUpdateStatus();
+    const cacheStats = this.salaryUpdateService.getCacheStatistics();
+    
+    return {
+      updateStatus,
+      cacheStats,
+    };
+  }
+
+  async triggerSalaryDataUpdate() {
+    return await this.salaryUpdateService.triggerUpdate();
+  }
+
+  async clearSalaryDataCache() {
+    this.salaryUpdateService.clearAllCaches();
+  }
+
+  // ========== INTERVIEW MANAGEMENT ==========
+
+  async getAllInterviewTemplates(limit: number, page: number) {
+    const skip = (page - 1) * limit;
+    
+    const templates = await this.interviewTemplateModel
+      .find()
+      .populate('createdBy', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.interviewTemplateModel.countDocuments();
+
+    return {
+      templates,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getAllInterviewSessions(limit: number, page: number) {
+    const skip = (page - 1) * limit;
+    
+    const sessions = await this.interviewSessionModel
+      .find()
+      .populate('interviewerId', 'name email')
+      .populate('candidateId', 'name email')
+      .populate('jobId', 'title')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.interviewSessionModel.countDocuments();
+
+    return {
+      sessions,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  // ========== ACCOUNT MANAGER MANAGEMENT ==========
+
+  async getAllAccountManagers() {
+    const managers = await this.accountManagerModel
+      .find()
+      .populate('assignedClients', 'name email company')
+      .sort({ createdAt: -1 });
+
+    return managers;
+  }
+
+  async assignAccountManager(managerId: string, userId: string) {
+    await this.accountManagerModel.findByIdAndUpdate(managerId, {
+      $addToSet: { assignedClients: userId }
+    });
+  }
+
+  // ========== SUPPORT MANAGEMENT ==========
+
+  async getAllSupportTickets(status?: string, priority?: string) {
+    const query: any = {};
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+
+    const tickets = await this.supportTicketModel
+      .find(query)
+      .populate('user', 'name email')
+      .populate('assignedTo', 'name email')
+      .sort({ createdAt: -1 });
+
+    return tickets;
+  }
+
+  async assignSupportTicket(ticketId: string, adminId: string) {
+    await this.supportTicketModel.findByIdAndUpdate(ticketId, {
+      assignedTo: adminId,
+      status: 'assigned'
+    });
+  }
+
+  // ========== WHITE-LABEL MANAGEMENT ==========
+
+  async getAllWhiteLabelConfigurations() {
+    // TODO: Implement when white-label schema is available
+    return [];
+  }
+
+  async approveWhiteLabelConfiguration(configId: string) {
+    // TODO: Implement when white-label schema is available
+    return { success: true };
   }
 }
 

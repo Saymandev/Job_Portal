@@ -82,7 +82,7 @@ export default function InterviewDetailPage() {
       setError(null);
       
       const response = await api.get(`/interviews/${interviewId}`);
-      setInterview(response.data.data);
+      setInterview((response.data as any).data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch interview details');
     } finally {
@@ -104,7 +104,7 @@ export default function InterviewDetailPage() {
         rescheduleReason: rescheduleData.rescheduleReason,
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         alert('Reschedule request submitted successfully');
         setShowRescheduleModal(false);
         setRescheduleData({ requestedNewDate: '', rescheduleReason: '' });
@@ -124,7 +124,7 @@ export default function InterviewDetailPage() {
         notes: approved ? 'Reschedule approved' : 'Reschedule rejected',
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         alert(approved ? 'Reschedule request approved' : 'Reschedule request rejected');
         fetchInterview(); // Refresh interview data
       }

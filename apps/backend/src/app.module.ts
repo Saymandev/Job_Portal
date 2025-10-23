@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { PerformanceInterceptor } from './common/interceptors/performance.interceptor';
+import { MonitoringService } from './common/services/monitoring.service';
 
 // Feature Modules
 import { HealthController } from './health.controller';
@@ -123,8 +126,19 @@ import { User, UserSchema } from './modules/users/schemas/user.schema';
     ]),
   ],
   controllers: [HealthController],
-  providers: [AuditService, SanitizationService, IpBlockService, FraudDetectionService, IpBlockGuard],
-  exports: [AuditService, SanitizationService, IpBlockService, FraudDetectionService, IpBlockGuard],
+  providers: [
+    AuditService, 
+    SanitizationService, 
+    IpBlockService, 
+    FraudDetectionService, 
+    IpBlockGuard,
+    MonitoringService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PerformanceInterceptor,
+    },
+  ],
+  exports: [AuditService, SanitizationService, IpBlockService, FraudDetectionService, IpBlockGuard, MonitoringService],
 })
 export class AppModule {}
 

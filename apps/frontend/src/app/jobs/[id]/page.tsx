@@ -28,7 +28,7 @@ export default function JobDetailPage() {
   const fetchJob = useCallback(async () => {
     try {
       const { data } = await api.get(`/jobs/${params.id}`);
-      setJob(data.data);
+      setJob((data as any).data);
     } catch (error) {
       toast({
         title: 'Error',
@@ -50,8 +50,8 @@ export default function JobDetailPage() {
       const { data } = await api.get(`/applications/my-applications`);
       
       
-      if (data.success) {
-        const userApplications = data.data;
+      if ((data as any).success) {
+        const userApplications = (data as any).data;
         
         
         

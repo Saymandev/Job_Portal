@@ -64,10 +64,10 @@ export default function AdminJobsPage() {
 
       const response = await api.get(`/admin/jobs?${params}`);
       
-      if (response.data.success) {
-        setJobs(response.data.data.jobs);
-        setTotalJobs(response.data.data.total);
-        setTotalPages(Math.ceil(response.data.data.total / limit));
+      if ((response.data as any).success) {
+        setJobs((response.data as any).data.jobs);
+        setTotalJobs((response.data as any).data.total);
+        setTotalPages(Math.ceil((response.data as any).data.total / limit));
       }
     } catch (error: any) {
       console.error('Error fetching jobs:', error);
@@ -110,7 +110,7 @@ export default function AdminJobsPage() {
       
       const response = await api.put(`/admin/jobs/${jobId}`, { status: newStatus });
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         setJobs(prev => 
           prev.map(j => j._id === jobId ? { ...j, status: newStatus } : j)
         );

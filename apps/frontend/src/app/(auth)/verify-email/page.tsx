@@ -27,7 +27,7 @@ export default function VerifyEmailPage() {
     try {
       const { data } = await api.get(`/auth/verify-email?token=${token}`);
       setStatus('success');
-      setMessage(data.message);
+      setMessage((data as any).message);
     } catch (error: any) {
       setStatus('error');
       setMessage(error.response?.data?.message || 'Verification failed');

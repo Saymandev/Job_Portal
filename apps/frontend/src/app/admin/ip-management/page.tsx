@@ -197,9 +197,9 @@ export default function IpManagementPage() {
       }
 
       const response = await api.get(`/admin/ip-management/blocked-ips?${params}`);
-      if (response.data.success) {
-        setBlockedIps(response.data.data.data);
-        setTotal(response.data.data.total);
+      if ((response.data as any).success) {
+        setBlockedIps((response.data as any).data.data);
+        setTotal((response.data as any).data.total);
       }
     } catch (error) {
       console.error('Error fetching blocked IPs:', error);
@@ -216,8 +216,8 @@ export default function IpManagementPage() {
   const fetchStatistics = async () => {
     try {
       const response = await api.get('/admin/ip-management/statistics');
-      if (response.data.success) {
-        setStatistics(response.data.data);
+      if ((response.data as any).success) {
+        setStatistics((response.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching statistics:', error);
@@ -231,15 +231,15 @@ export default function IpManagementPage() {
       const response = await api.get(`/admin/ip-management/recent-activity?page=1&limit=50`);
         
       
-      if (response.data.success) {
-        setRecentActivity(response.data.data.activities || []);
-        setIpGroups(response.data.data.ipGroups || []);
+      if ((response.data as any).success) {
+        setRecentActivity((response.data as any).data.activities || []);
+        setIpGroups((response.data as any).data.ipGroups || []);
         
       } else {
         console.error('API returned unsuccessful response:', response.data);
         toast({
           title: 'Error',
-          description: response.data.message || 'Failed to fetch recent activity',
+          description: (response.data as any).message || 'Failed to fetch recent activity',
           variant: 'destructive',
         });
       }
@@ -264,7 +264,7 @@ export default function IpManagementPage() {
       const usersResponse = await api.get(`/admin/ip-management/search-users?q=${encodeURIComponent(searchTerm)}`);
         
       
-      if (!usersResponse.data.success || !usersResponse.data.data?.users?.length) {
+      if (!(usersResponse.data as any).success || !(usersResponse.data as any).data?.users?.length) {
         toast({
           title: 'No users found',
           description: 'No users found matching your search term',
@@ -275,15 +275,15 @@ export default function IpManagementPage() {
       }
       
       // Use the first matching user
-      const user = usersResponse.data.data.users[0];
+      const user = (usersResponse.data as any).data.users[0];
         
       
       // Now get IPs for this user
       const response = await api.get(`/admin/ip-management/user-ips/${user._id}`);
         
       
-      if (response.data.success) {
-        setUserIps(response.data.data || []);
+      if ((response.data as any).success) {
+        setUserIps((response.data as any).data || []);
         
         
         // Update the search input to show the selected user
@@ -292,7 +292,7 @@ export default function IpManagementPage() {
         console.error('API returned unsuccessful response:', response.data);
         toast({
           title: 'Error',
-          description: response.data.message || 'Failed to fetch user IP addresses',
+          description: (response.data as any).message || 'Failed to fetch user IP addresses',
           variant: 'destructive',
         });
       }
@@ -314,10 +314,10 @@ export default function IpManagementPage() {
         expiresAt: blockForm.expiresAt ? new Date(blockForm.expiresAt).toISOString() : undefined,
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
-          description: response.data.message,
+          description: (response.data as any).message,
         });
         setBlockDialogOpen(false);
         setBlockForm({
@@ -348,10 +348,10 @@ export default function IpManagementPage() {
         reason: unblockForm.reason,
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
-          description: response.data.message,
+          description: (response.data as any).message,
         });
         setUnblockDialogOpen(false);
         setUnblockForm({ reason: '' });
@@ -371,10 +371,10 @@ export default function IpManagementPage() {
   const handleCleanupExpired = async () => {
     try {
       const response = await api.post('/admin/ip-management/cleanup-expired');
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
-          description: response.data.message,
+          description: (response.data as any).message,
         });
         fetchBlockedIps();
         fetchStatistics();

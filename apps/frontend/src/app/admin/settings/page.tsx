@@ -12,16 +12,16 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    AlertTriangle,
-    Bell,
-    Database,
-    Globe,
-    Mail,
-    Save,
-    Server,
-    Shield,
-    Users,
-    Zap
+  AlertTriangle,
+  Bell,
+  Database,
+  Globe,
+  Mail,
+  Save,
+  Server,
+  Shield,
+  Users,
+  Zap
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -104,8 +104,8 @@ export default function AdminSettingsPage() {
     try {
       setIsLoading(true);
       const response = await api.get('/admin/settings');
-      if (response.data.success) {
-        setSettings(response.data.data);
+      if ((response.data as any).success) {
+        setSettings((response.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -122,8 +122,8 @@ export default function AdminSettingsPage() {
   const fetchSystemStats = useCallback(async () => {
     try {
       const response = await api.get('/admin/settings/stats');
-      if (response.data.success) {
-        setSystemStats(response.data.data);
+      if ((response.data as any).success) {
+        setSystemStats((response.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching system stats:', error);
@@ -144,7 +144,7 @@ export default function AdminSettingsPage() {
     try {
       setIsSaving(true);
       const response = await api.post('/admin/settings', settings);
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: 'Settings saved successfully',
@@ -166,7 +166,7 @@ export default function AdminSettingsPage() {
     try {
       setIsSaving(true);
       const response = await api.post('/admin/settings/reset');
-      if (response.data.success) {
+      if ((response.data as any).success) {
         await fetchSettings();
         toast({
           title: 'Success',

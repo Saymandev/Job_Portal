@@ -146,8 +146,8 @@ export default function JobSeekerDashboard() {
       try {
         const statsResponse = await api.get('/analytics/job-seeker');
         // Stats response received
-        if (statsResponse.data.success) {
-          const analyticsData = statsResponse.data.data;
+        if ((statsResponse.data as any).success) {
+          const analyticsData = (statsResponse.data as any).data;
           setStats({
             totalApplications: analyticsData.overview?.totalApplications || 0,
             pendingApplications: analyticsData.overview?.applicationsByStatus?.pending || 0,
@@ -179,16 +179,16 @@ export default function JobSeekerDashboard() {
       try {
         const recommendationsResponse = await api.get('/saved-jobs/recommendations');
         // Recommendations response received
-        if (recommendationsResponse.data.success) {
-          setRecommendations(recommendationsResponse.data.data);
+        if ((recommendationsResponse.data as any).success) {
+          setRecommendations((recommendationsResponse.data as any).data);
         }
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         // Try to get some featured jobs as fallback
         try {
           const featuredResponse = await api.get('/jobs?featured=true&limit=3');
-          if (featuredResponse.data.success) {
-            const featuredJobs = featuredResponse.data.data.map((job: any) => ({
+          if ((featuredResponse.data as any).success) {
+            const featuredJobs = (featuredResponse.data as any).data.map((job: any) => ({
               _id: job._id,
               title: job.title,
               company: job.company,
@@ -205,8 +205,8 @@ export default function JobSeekerDashboard() {
           // Final fallback: get any recent jobs
           try {
             const recentResponse = await api.get('/jobs?limit=3');
-            if (recentResponse.data.success) {
-              const recentJobs = recentResponse.data.data.map((job: any) => ({
+            if ((recentResponse.data as any).success) {
+              const recentJobs = (recentResponse.data as any).data.map((job: any) => ({
                 _id: job._id,
                 title: job.title,
                 company: job.company,
@@ -228,12 +228,12 @@ export default function JobSeekerDashboard() {
       try {
         const savedJobsResponse = await api.get('/saved-jobs?limit=4');
         // Saved jobs response received
-        if (savedJobsResponse.data.success) {
-          setSavedJobs(savedJobsResponse.data.data);
+        if ((savedJobsResponse.data as any).success) {
+          setSavedJobs((savedJobsResponse.data as any).data);
           // Update saved jobs count in stats
           setStats(prevStats => ({
             ...prevStats,
-            savedJobs: savedJobsResponse.data.meta?.total || savedJobsResponse.data.data.length
+            savedJobs: (savedJobsResponse.data as any).data.meta?.total || (savedJobsResponse.data as any).data.length
           }));
         }
       } catch (error) {
@@ -244,9 +244,9 @@ export default function JobSeekerDashboard() {
       try {
         const applicationsResponse = await api.get('/applications/my-applications');
         // Applications response received
-        if (applicationsResponse.data.success) {
+        if ((applicationsResponse.data as any).success) {
           // Limit to 5 applications on the frontend
-          setRecentApplications(applicationsResponse.data.data.slice(0, 5));
+          setRecentApplications((applicationsResponse.data as any).data.slice(0, 5));
         }
       } catch (error) {
         console.error('Error fetching applications:', error);
@@ -256,8 +256,8 @@ export default function JobSeekerDashboard() {
       try {
         const interviewsResponse = await api.get('/interviews');
         // Interviews response received
-        if (interviewsResponse.data.success) {
-          const interviews = interviewsResponse.data.data;
+        if ((interviewsResponse.data as any).success) {
+          const interviews = (interviewsResponse.data as any).data;
           // Count scheduled interviews for this week
           const now = new Date();
           const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
@@ -285,8 +285,8 @@ export default function JobSeekerDashboard() {
           // Fetching profile data for user
           const profileResponse = await api.get(`/users/${user.id}`);
           // Profile response received
-          if (profileResponse.data.success) {
-            const profileData = profileResponse.data.data;
+          if ((profileResponse.data as any).success) {
+            const profileData = (profileResponse.data as any).data;
             // Profile views from API
             setStats(prevStats => ({
               ...prevStats,

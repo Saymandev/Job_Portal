@@ -31,6 +31,8 @@
     "@nestjs/swagger": "^7.3.0",
     "@nestjs/throttler": "^5.1.2",
     "@nestjs/websockets": "^10.3.3",
+    "@sentry/nextjs": "^10.21.0",
+    "@sentry/node": "^10.21.0",
     "@types/axios": "^0.9.36",
     "axios": "^1.12.2",
     "bcrypt": "^5.1.1",

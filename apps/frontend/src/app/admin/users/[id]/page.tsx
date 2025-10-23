@@ -11,24 +11,24 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    ArrowLeft,
-    Ban,
-    CheckCircle,
-    Copy,
-    Edit,
-    ExternalLink,
-    Mail,
-    MapPin,
-    Phone,
-    Save,
-    Shield,
-    ShieldCheck,
-    ShieldX,
-    Trash2,
-    User,
-    UserCheck,
-    UserX,
-    X
+  ArrowLeft,
+  Ban,
+  CheckCircle,
+  Copy,
+  Edit,
+  ExternalLink,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  Shield,
+  ShieldCheck,
+  ShieldX,
+  Trash2,
+  User,
+  UserCheck,
+  UserX,
+  X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { use, useCallback, useEffect, useState } from 'react';
@@ -82,8 +82,8 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
     try {
       setIsLoading(true);
       const { data } = await api.get(`/users/${resolvedParams.id}`);
-      setUser(data.data);
-      setEditedUser(data.data);
+      setUser((data as any).data);
+      setEditedUser((data as any).data);
     } catch (error) {
       console.error('Error fetching user details:', error);
       toast({
@@ -99,7 +99,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
   const fetchUserActivities = useCallback(async () => {
     try {
       const { data } = await api.get(`/admin/users/${resolvedParams.id}/activities`);
-      setUserActivities(data.data || []);
+      setUserActivities((data as any).data || []);
     } catch (error) {
       console.error('Error fetching user activities:', error);
       // Don't show error toast for activities as it's not critical
@@ -109,7 +109,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
   const updateUser = async () => {
     try {
       const { data } = await api.put(`/users/${resolvedParams.id}`, editedUser);
-      setUser(data.data);
+      setUser((data as any).data);
       setIsEditing(false);
       toast({
         title: 'Success',
@@ -132,7 +132,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
       const { data } = await api.put(`/users/${user._id}`, {
         isActive: !user.isActive
       });
-      setUser(data.data);
+      setUser((data as any).data);
       toast({
         title: 'Success',
         description: `User ${user.isActive ? 'deactivated' : 'activated'} successfully`,
@@ -195,7 +195,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
       const { data } = await api.put(`/users/${user._id}`, {
         isEmailVerified: !user.isEmailVerified
       });
-      setUser(data.data);
+      setUser((data as any).data);
       toast({
         title: 'Success',
         description: `Email verification ${user.isEmailVerified ? 'removed' : 'added'} successfully`,

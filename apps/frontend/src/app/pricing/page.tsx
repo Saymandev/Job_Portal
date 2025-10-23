@@ -172,8 +172,8 @@ export default function PricingPage() {
         setIsLoadingSubscription(true);
         const response = await api.get('/subscriptions/current');
         
-        if (response.data.success) {
-          setCurrentSubscription(response.data.data);
+        if ((response.data as any).success) {
+          setCurrentSubscription((response.data as any).data);
         }
       } catch (error: any) {
         // If no subscription found (404), user is on free plan
@@ -218,8 +218,8 @@ export default function PricingPage() {
       setLoadingPlan(planId);
       const response = await api.post('/subscriptions/checkout', { plan: planId });
       
-      if (response.data.success && response.data.data.url) {
-        window.location.href = response.data.data.url;
+      if ((response.data as any).success && (response.data as any).data.url) {
+        window.location.href = (response.data as any).data.url;
       }
     } catch (error: any) {
       toast({

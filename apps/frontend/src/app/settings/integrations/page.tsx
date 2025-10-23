@@ -63,11 +63,11 @@ export default function IntegrationsPage() {
         api.get('/integrations/available'),
       ]);
 
-      if (userResp.data.success) {
-        setUserIntegrations(userResp.data.data);
+      if ((userResp.data as any).success) {
+        setUserIntegrations((userResp.data as any).data);
       }
-      if (availableResp.data.success) {
-        setAvailableIntegrations(availableResp.data.data);
+      if ((availableResp.data as any).success) {
+        setAvailableIntegrations((availableResp.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching integrations:', error);
@@ -115,7 +115,7 @@ export default function IntegrationsPage() {
         },
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Connected',
           description: `${type.replace('_', ' ')} integration connected successfully`,
@@ -157,7 +157,7 @@ export default function IntegrationsPage() {
   const handleSync = async (integrationId: string, name: string) => {
     try {
       const response = await api.post(`/integrations/${integrationId}/sync`);
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Synced',
           description: `${name} synced successfully`,

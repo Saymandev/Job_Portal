@@ -63,7 +63,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
     try {
       const { data } = await api.get(`/jobs/${resolvedParams.id}`);
-      const jobData = data.data;
+      const jobData = (data as any).data;
       setJob(jobData);
       setFormData({
         title: jobData.title,

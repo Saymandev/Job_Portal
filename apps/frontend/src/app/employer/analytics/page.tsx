@@ -42,8 +42,8 @@ export default function EmployerAnalyticsPage() {
     try {
       setIsLoading(true);
       const response = await api.get('/analytics/employer');
-      if (response.data.success) {
-        setAnalytics(response.data.data);
+      if ((response.data as any).success) {
+        setAnalytics((response.data as any).data);
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
