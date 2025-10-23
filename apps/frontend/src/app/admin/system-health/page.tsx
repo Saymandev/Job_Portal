@@ -320,7 +320,7 @@ export default function SystemHealthPage() {
                     {Math.round((health?.memory?.used || 0) / 1024 / 1024)} MB / {Math.round((health?.memory?.total || 0) / 1024 / 1024)} MB
                   </span>
                 </div>
-                <Progress value={health?.memory.percentage || 0} className="h-2" />
+                <Progress value={health?.memory?.percentage || 0} className="h-2" />
               </div>
               <div className="text-sm text-muted-foreground">
                 {health?.memory?.percentage || 0}% of total memory in use
@@ -342,9 +342,9 @@ export default function SystemHealthPage() {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>Current Usage</span>
-                  <span>{health?.cpu.usage || 0}%</span>
+                  <span>{health?.cpu?.usage || 0}%</span>
                 </div>
-                <Progress value={health?.cpu.usage || 0} className="h-2" />
+                <Progress value={health?.cpu?.usage || 0} className="h-2" />
               </div>
               <div className="text-sm text-muted-foreground">
                 Load Average: {health?.cpu.load?.map(l => l.toFixed(2)).join(', ') || 'N/A'}
@@ -365,24 +365,24 @@ export default function SystemHealthPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-2">
-              {getStatusIcon(health?.database.status || 'unknown')}
+              {getStatusIcon(health?.database?.status || 'unknown')}
               <div>
                 <div className="font-medium">Connection Status</div>
                 <div className="text-sm text-muted-foreground">
-                  {health?.database.status || 'Unknown'}
+                  {health?.database?.status || 'Unknown'}
                 </div>
               </div>
             </div>
             <div>
               <div className="font-medium">Response Time</div>
               <div className="text-sm text-muted-foreground">
-                {health?.database.responseTime || 0}ms
+                {health?.database?.responseTime || 0}ms
               </div>
             </div>
             <div>
               <div className="font-medium">Active Connections</div>
               <div className="text-sm text-muted-foreground">
-                {health?.database.connections || 0}
+                {health?.database?.connections || 0}
               </div>
             </div>
           </div>
@@ -399,7 +399,7 @@ export default function SystemHealthPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {health?.services.map((service, index) => (
+            {health?.services?.map((service, index) => (
               <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center space-x-3">
                   {getStatusIcon(service.status)}

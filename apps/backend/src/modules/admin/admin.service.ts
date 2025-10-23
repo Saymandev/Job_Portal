@@ -358,15 +358,73 @@ export class AdminService {
     // Simulate API response time
     const apiResponseTime = Date.now() - startTime;
     
-    // Simulate storage usage (in a real app, you'd check actual disk usage)
+    // Simulate memory usage
+    const memoryUsed = Math.floor(Math.random() * 4) + 2; // 2-6 GB
+    const memoryTotal = 8; // 8 GB total
+    const memoryPercentage = Math.round((memoryUsed / memoryTotal) * 100);
+    
+    // Simulate CPU usage
+    const cpuUsage = Math.floor(Math.random() * 40) + 10; // 10-50%
+    const cpuLoad = [
+      Math.random() * 2,
+      Math.random() * 2,
+      Math.random() * 2
+    ];
+    
+    // Simulate storage usage
     const storageUsage = Math.floor(Math.random() * 30) + 20; // 20-50%
     
     return {
-      databaseStatus: dbCheck ? 'healthy' : 'error',
-      serverStatus: 'healthy',
-      emailStatus: 'healthy',
+      status: dbCheck ? 'healthy' : 'critical',
+      uptime: process.uptime(),
+      memory: {
+        used: memoryUsed * 1024 * 1024 * 1024, // Convert to bytes
+        total: memoryTotal * 1024 * 1024 * 1024, // Convert to bytes
+        percentage: memoryPercentage
+      },
+      cpu: {
+        usage: cpuUsage,
+        load: cpuLoad
+      },
+      database: {
+        status: dbCheck ? 'connected' : 'disconnected',
+        responseTime: apiResponseTime,
+        connections: Math.floor(Math.random() * 20) + 5
+      },
+      services: [
+        {
+          name: 'Database',
+          status: dbCheck ? 'running' : 'error',
+          uptime: process.uptime(),
+          lastCheck: new Date().toISOString()
+        },
+        {
+          name: 'API Server',
+          status: 'running',
+          uptime: process.uptime(),
+          lastCheck: new Date().toISOString()
+        },
+        {
+          name: 'Email Service',
+          status: 'running',
+          uptime: process.uptime(),
+          lastCheck: new Date().toISOString()
+        },
+        {
+          name: 'File Storage',
+          status: 'running',
+          uptime: process.uptime(),
+          lastCheck: new Date().toISOString()
+        },
+        {
+          name: 'Background Jobs',
+          status: 'running',
+          uptime: process.uptime(),
+          lastCheck: new Date().toISOString()
+        }
+      ],
       storageUsage,
-      apiResponseTime,
+      apiResponseTime
     };
   }
 

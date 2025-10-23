@@ -40,7 +40,7 @@ interface Subscription {
   updatedAt: string;
   user?: {
     _id: string;
-    name: string;
+    fullName: string;
     email: string;
   };
 }
@@ -173,7 +173,7 @@ export default function RevenueAnalyticsPage() {
     // Create a modal or navigate to subscription details
     toast({
       title: 'Subscription Details',
-      description: `Viewing details for ${subscription.user?.name || 'Unknown User'}'s ${subscription.plan} subscription`,
+      description: `Viewing details for ${subscription.user?.fullName || 'Unknown User'}'s ${subscription.plan} subscription`,
     });
     
     // You can implement a modal here or navigate to a details page
@@ -329,6 +329,11 @@ export default function RevenueAnalyticsPage() {
   }
 
   const currentData = timeRange === 'monthly' ? revenueData?.monthly : revenueData?.yearly;
+  
+  // Debug logging
+  console.log('Revenue data:', revenueData);
+  console.log('Current data:', currentData);
+  console.log('Time range:', timeRange);
   const previousPeriod = currentData && currentData.length > 1 ? currentData[currentData.length - 2] : null;
   const currentPeriod = currentData && currentData.length > 0 ? currentData[currentData.length - 1] : null;
   const revenueGrowth = previousPeriod && currentPeriod 
@@ -489,7 +494,7 @@ export default function RevenueAnalyticsPage() {
             <div className="h-64 flex items-end justify-between space-x-2">
               {currentData.length > 0 ? currentData.map((item, index) => {
                 const maxRevenue = Math.max(...currentData.map(d => d.revenue));
-                const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
+                const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : (item.revenue > 0 ? 10 : 0);
                 
                 return (
                   <div key={index} className="flex flex-col items-center flex-1">
@@ -595,7 +600,7 @@ export default function RevenueAnalyticsPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold">
-                          {subscription.user?.name || 'Unknown User'}
+                          {subscription.user?.fullName || 'Unknown User'}
                         </h3>
                         <p className="text-sm text-gray-600">
                           {subscription.user?.email || 'No email'}

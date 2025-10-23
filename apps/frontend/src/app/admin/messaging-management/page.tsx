@@ -159,7 +159,7 @@ export default function MessagingManagementPage() {
     }
   }, [toast, conversations, currentMessagePage, limit]);
 
-  const fetchStats = useCallback(async () => {
+  const calculateStats = useCallback(() => {
     try {
       // Calculate stats from conversations and messages data
       const totalConversations = conversations.length;
@@ -186,10 +186,12 @@ export default function MessagingManagementPage() {
     try {
       setLoading(true);
       await Promise.all([fetchConversations(), fetchMessages()]);
+      // Calculate stats after data is fetched
+      calculateStats();
     } finally {
       setLoading(false);
     }
-  }, [fetchConversations, fetchMessages]);
+  }, [fetchConversations, fetchMessages, calculateStats]);
 
   // Pagination handlers
   const handleConversationPageChange = (page: number) => {
@@ -296,10 +298,6 @@ export default function MessagingManagementPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
 
   if (loading) {
     return (
