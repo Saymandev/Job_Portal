@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MessagingPermissionsModule } from '../messaging-permissions/messaging-permissions.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { UploadModule } from '../upload/upload.module';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
@@ -15,6 +16,7 @@ import { Message, MessageSchema } from './schemas/message.schema';
       { name: Conversation.name, schema: ConversationSchema },
     ]),
     MessagingPermissionsModule,
+    SubscriptionsModule,
     UploadModule,
   ],
   controllers: [ChatController],

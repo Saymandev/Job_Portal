@@ -227,7 +227,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     } catch (error: any) {
       console.error('ChatStore: Error creating conversation:', error);
-      set({ error: error.response?.data?.message || 'Failed to create conversation' });
+      const errorMessage = error.response?.data?.message || 'Failed to create conversation';
+      
+      // Check if it's a subscription-related error
+      if (error.response?.status === 403 && errorMessage.includes('Direct messaging requires')) {
+        set({ error: 'UPGRADE_REQUIRED' });
+      } else {
+        set({ error: errorMessage });
+      }
       throw error;
     }
   },
@@ -407,10 +414,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ error: 'Failed to send message', isSending: false });
       }
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.message || 'Failed to send message',
-        isSending: false 
-      });
+      const errorMessage = error.response?.data?.message || 'Failed to send message';
+      
+      // Check if it's a subscription-related error
+      if (error.response?.status === 403 && errorMessage.includes('Direct messaging requires')) {
+        set({ 
+          isSending: false, 
+          error: 'UPGRADE_REQUIRED' // Special error type for upgrade prompts
+        });
+      } else {
+        set({ 
+          isSending: false, 
+          error: errorMessage 
+        });
+      }
     }
   },
 

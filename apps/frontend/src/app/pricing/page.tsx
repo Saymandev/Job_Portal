@@ -35,7 +35,7 @@ const baseFeatures = [
   { text: 'Job board listing', icon: null },
 ];
 
-// Additional features for each plan tier
+// Features for each plan tier (only unique features per plan)
 const planFeatures = {
   free: [
     { text: '5 job postings per month', icon: null },
@@ -52,9 +52,7 @@ const planFeatures = {
   pro: [
     { text: '100 job postings per month', icon: null },
     { text: '5 job boosts per month', icon: Star },
-    { text: 'Featured job listings', icon: Star },
     { text: '90-day job duration', icon: null },
-    { text: 'Priority job visibility', icon: Star },
     { text: 'API access', icon: Code },
     { text: 'Custom branding', icon: Building },
     { text: 'Bulk job import', icon: Download },
@@ -64,22 +62,15 @@ const planFeatures = {
   enterprise: [
     { text: 'Unlimited job postings', icon: null },
     { text: '10 job boosts per month', icon: Star },
-    { text: 'Always featured listings', icon: Star },
     { text: 'Custom job duration', icon: null },
     { text: 'Priority application processing', icon: Target },
     { text: 'Enhanced candidate matching', icon: Search },
     { text: 'Application analytics dashboard', icon: BarChart3 },
     { text: 'Unlimited resume downloads', icon: Download },
-    { text: 'Direct candidate messaging', icon: MessageSquare },
     { text: 'Featured company profile', icon: Building },
     { text: 'Salary insights & market data', icon: DollarSign },
     { text: 'Interview preparation tools', icon: Mic },
-    { text: 'API access', icon: Code },
-    { text: 'Custom branding', icon: Building },
-    { text: 'Bulk job import', icon: Download },
     { text: 'Dedicated account manager', icon: User },
-    { text: 'Priority support', icon: Headphones },
-    { text: 'Advanced analytics', icon: BarChart3 },
     { text: 'White-label options', icon: Sparkles },
   ],
 };
@@ -133,7 +124,7 @@ const plans = [
     borderColor: 'border-purple-300',
     buttonStyle: 'default',
     popular: true,
-    features: [...baseFeatures, ...planFeatures.basic, ...planFeatures.pro],
+    features: [...baseFeatures, ...planFeatures.pro],
     limits: {
       jobPosts: 100,
       boosts: 10,
@@ -152,7 +143,7 @@ const plans = [
     borderColor: 'border-amber-300',
     buttonStyle: 'default',
     popular: false,
-    features: [...baseFeatures, ...planFeatures.basic, ...planFeatures.pro, ...planFeatures.enterprise],
+    features: [...baseFeatures, ...planFeatures.enterprise],
     limits: {
       jobPosts: 1000,
       boosts: 50,
@@ -253,171 +244,79 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {plans.map((plan) => {
             const Icon = plan.icon;
             return (
               <Card
                 key={plan.id}
-                className={`relative transition-all duration-300 hover:shadow-lg ${
-                  plan.popular ? `border-2 ${plan.borderColor} shadow-xl ${plan.bgColor}` : 
-                  currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 dark:border-green-400 shadow-lg bg-green-50 dark:bg-green-900/20' : 
-                  `border ${plan.borderColor} ${plan.bgColor}`
+                className={`relative transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+                  plan.popular ? `border-2 ${plan.borderColor} shadow-2xl ${plan.bgColor} ring-2 ring-purple-200` : 
+                  currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 dark:border-green-400 shadow-xl bg-green-50 dark:bg-green-900/20 ring-2 ring-green-200' : 
+                  `border ${plan.borderColor} ${plan.bgColor} hover:shadow-lg`
                 }`}
               >
                 {/* Badge Container */}
-                <div className="absolute -top-4 left-0 right-0 flex justify-center items-center gap-2">
+                <div className="absolute -top-3 left-0 right-0 flex justify-center items-center gap-2 z-10">
                   {plan.popular && (
-                    <Badge className="px-4 py-1 text-sm bg-purple-500 dark:bg-purple-600 text-white">Most Popular</Badge>
+                    <Badge className="px-4 py-1 text-sm bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
+                      Most Popular
+                    </Badge>
                   )}
                   {currentSubscription && currentSubscription.plan === plan.id && (
-                    <Badge className="px-4 py-1 text-sm bg-green-50 dark:bg-green-900/200 text-white">Current Plan</Badge>
+                    <Badge className="px-4 py-1 text-sm bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg">
+                      Current Plan
+                    </Badge>
                   )}
                 </div>
-                <CardHeader className="pt-8">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className={`p-2 rounded-lg ${plan.bgColor}`}>
-                      <Icon className={`h-6 w-6 ${plan.color}`} />
+                <CardHeader className="pt-10 pb-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className={`p-3 rounded-xl ${plan.bgColor} shadow-sm`}>
+                      <Icon className={`h-7 w-7 ${plan.color}`} />
                     </div>
-                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
                   </div>
-                  <div className="mb-4">
-                    <span className="text-4xl font-bold">${plan.price}</span>
-                    <span className="text-muted-foreground">/{plan.interval}</span>
+                  <div className="text-center">
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-5xl font-bold">${plan.price}</span>
+                      <span className="text-lg text-muted-foreground">/{plan.interval}</span>
+                    </div>
+                    {plan.price > 0 && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Billed {plan.interval === 'month' ? 'monthly' : 'annually'}
+                      </p>
+                    )}
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4 mb-6">
-                    {/* Base Features */}
-                    <div>
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                        Core Features
-                      </h4>
-                      <ul className="space-y-2">
-                        {baseFeatures.map((feature, index) => {
-                          const FeatureIcon = feature.icon;
-                          return (
-                            <li key={index} className="flex items-start gap-3">
-                              <div className="flex items-center gap-2 shrink-0">
-                                <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                {FeatureIcon && (
-                                  <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </div>
-                              <span className="text-sm text-muted-foreground">{feature.text}</span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-
-                    {/* Plan-specific features */}
-                    {plan.id === 'free' && (
-                      <div>
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                          Free Plan
-                        </h4>
-                        <ul className="space-y-2">
-                          {planFeatures.free.map((feature, index) => {
-                            const FeatureIcon = feature.icon;
-                            return (
-                              <li key={index} className="flex items-start gap-3">
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                  {FeatureIcon && (
-                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <span className="text-sm text-muted-foreground">{feature.text}</span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
-
-                    {plan.id === 'basic' && (
-                      <div>
-                        <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
-                          Basic Plan
-                        </h4>
-                        <ul className="space-y-2">
-                          {planFeatures.basic.map((feature, index) => {
-                            const FeatureIcon = feature.icon;
-                            return (
-                              <li key={index} className="flex items-start gap-3">
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                  {FeatureIcon && (
-                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <span className="text-sm text-muted-foreground">{feature.text}</span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
-
-                    {plan.id === 'pro' && (
-                      <div>
-                        <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
-                          + All Basic Plan
-                        </h4>
-                        <h4 className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-2">
-                          + Professional Features
-                        </h4>
-                        <ul className="space-y-2">
-                          {planFeatures.pro.map((feature, index) => {
-                            const FeatureIcon = feature.icon;
-                            return (
-                              <li key={index} className="flex items-start gap-3">
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                  {FeatureIcon && (
-                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <span className="text-sm text-muted-foreground">{feature.text}</span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
-
-                    {plan.id === 'enterprise' && (
-                      <div>
-                        <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">
-                        + All Professional Plan
-                        </h4>
-                        <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">
-                          + Enterprise Features
-                        </h4>
-                        <ul className="space-y-2">
-                          {planFeatures.enterprise.map((feature, index) => {
-                            const FeatureIcon = feature.icon;
-                            return (
-                              <li key={index} className="flex items-start gap-3">
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
-                                  {FeatureIcon && (
-                                    <FeatureIcon className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <span className="text-sm text-muted-foreground">
-                                  {feature.text}
-                                </span>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
+                <CardContent className="pt-0">
+                  <div className="space-y-3 mb-8">
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, index) => {
+                        const FeatureIcon = feature.icon;
+                        return (
+                          <li key={index} className="flex items-start gap-3">
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Check className="h-4 w-4 text-green-500 dark:text-green-400 mt-0.5" />
+                              {FeatureIcon && (
+                                <FeatureIcon className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <span className="text-sm text-muted-foreground leading-relaxed">
+                              {feature.text}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                   <Button
-                    className={`w-full ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white' : ''}`}
+                    className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
+                      plan.popular 
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl' 
+                        : plan.buttonStyle === 'outline'
+                          ? 'border-2 hover:bg-slate-50'
+                          : 'bg-slate-900 hover:bg-slate-800 text-white shadow-md hover:shadow-lg'
+                    }`}
                     variant={plan.buttonStyle === 'outline' ? 'outline' : 'default'}
                     onClick={() => handleSelectPlan(plan.id)}
                     disabled={loadingPlan === plan.id || isLoadingSubscription}
@@ -426,7 +325,9 @@ export default function PricingPage() {
                       ? 'Loading...' 
                       : currentSubscription && currentSubscription.plan === plan.id 
                         ? 'Current Plan' 
-                        : 'Get Started'
+                        : plan.price === 0
+                          ? 'Get Started Free'
+                          : `Get Started - $${plan.price}/${plan.interval}`
                     }
                   </Button>
                 </CardContent>

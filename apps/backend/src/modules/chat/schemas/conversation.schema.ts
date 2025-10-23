@@ -11,6 +11,9 @@ export class Conversation {
   @Prop({ type: 'ObjectId', ref: 'Job' })
   job?: string;
 
+  @Prop({ type: 'ObjectId', ref: 'Application' })
+  application?: string;
+
   @Prop({ type: 'ObjectId', ref: 'Message' })
   lastMessage?: string;
 

@@ -22,11 +22,12 @@ export class ChatController {
   @ApiOperation({ summary: 'Create or get conversation' })
   async createConversation(
     @CurrentUser('id') userId: string,
-    @Body() body: { participants: string[]; jobId?: string },
+    @Body() body: { participants: string[]; jobId?: string; applicationId?: string },
   ) {
     const conversation = await this.chatService.createConversation(
       body.participants, 
       body.jobId,
+      body.applicationId,
       userId
     );
 

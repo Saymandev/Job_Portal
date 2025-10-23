@@ -8,17 +8,17 @@ import { getSocket, initSocket } from '@/lib/socket';
 import { useAuthStore } from '@/store/auth-store';
 import { useChatStore } from '@/store/chat-store';
 import {
-  Download,
-  ExternalLink,
-  MessageSquare,
-  MoreVertical,
-  Paperclip,
-  Search,
-  Send,
-  X
+    Download,
+    ExternalLink,
+    MessageSquare,
+    MoreVertical,
+    Paperclip,
+    Search,
+    Send,
+    X
 } from 'lucide-react';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // Avatar components
@@ -43,6 +43,7 @@ const AvatarFallback = ({ className = "", children, ...props }: any) => (
 
 export default function MessagesPage() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get('user');
   const jobId = searchParams.get('job');
@@ -365,10 +366,25 @@ export default function MessagesPage() {
 
       {/* Error Display */}
       {error && (
-        <Card className="mb-6 border-destructive/20 bg-destructive/10">
+        <Card className={`mb-6 ${error === 'UPGRADE_REQUIRED' ? 'border-amber-200 bg-amber-50' : 'border-destructive/20 bg-destructive/10'}`}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <p className="text-destructive">{error}</p>
+              {error === 'UPGRADE_REQUIRED' ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-amber-800 font-medium">Direct Messaging Requires Upgrade</p>
+                    <p className="text-amber-700 text-sm">Upgrade to Pro or Enterprise plan to message candidates directly.</p>
+                  </div>
+                  <Button
+                    onClick={() => router.push('/pricing')}
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    Upgrade Now
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-destructive">{error}</p>
+              )}
               <Button variant="ghost" size="sm" onClick={clearError}>
                 <X className="h-4 w-4" />
               </Button>

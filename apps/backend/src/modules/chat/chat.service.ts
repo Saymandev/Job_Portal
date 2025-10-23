@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { MessagingPermissionsService } from '../messaging-permissions/messaging-permissions.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { Conversation, ConversationDocument } from './schemas/conversation.schema';
 import { Message, MessageDocument } from './schemas/message.schema';
 
@@ -11,11 +12,13 @@ export class ChatService {
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
     @InjectModel(Conversation.name) private conversationModel: Model<ConversationDocument>,
     private messagingPermissionsService: MessagingPermissionsService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async createConversation(
     participants: string[], 
     jobId?: string,
+    applicationId?: string,
     requestingUserId?: string
   ): Promise<ConversationDocument> {
     // Validate participants
@@ -32,11 +35,20 @@ export class ChatService {
       const validParticipants = participants.filter(p => p && p.toString());
       const otherUser = validParticipants.find(p => p.toString() !== requestingUserIdStr);
       
-      
-      
       if (!otherUser) {
-        
         throw new ForbiddenException('Invalid participants for conversation');
+      }
+      
+      // Check if requesting user has direct messaging feature enabled (admins bypass this check)
+      const { User } = await import('../users/schemas/user.schema');
+      const UserModel = this.conversationModel.db.model('User');
+      const requestingUser = await UserModel.findById(requestingUserIdStr);
+      
+      if (requestingUser?.role !== 'admin') {
+        const subscription = await this.subscriptionsService.getUserSubscription(requestingUserIdStr);
+        if (subscription && !subscription.directMessagingEnabled) {
+          throw new ForbiddenException('Direct messaging requires a Pro or Enterprise subscription');
+        }
       }
       
       const permissionCheck = await this.messagingPermissionsService.checkMessagingPermission(
@@ -44,14 +56,9 @@ export class ChatService {
         otherUser,
       );
 
-      
-
       if (!permissionCheck.canMessage) {
-      
         throw new ForbiddenException(permissionCheck.reason || 'Messaging permission required');
       }
-      
-      
     }
 
     // Check if conversation already exists
@@ -70,6 +77,7 @@ export class ChatService {
     const newConversation = await this.conversationModel.create({
       participants,
       job: jobId,
+      application: applicationId,
     });
     
     // Populate the participants with user details before returning
@@ -128,6 +136,18 @@ export class ChatService {
     // Verify sender is a participant
     if (!conversation.participants.includes(senderId)) {
       throw new ForbiddenException('You are not a participant in this conversation');
+    }
+
+    // Check if sender has direct messaging feature enabled (admins bypass this check)
+    const { User } = await import('../users/schemas/user.schema');
+    const UserModel = this.messageModel.db.model('User');
+    const sender = await UserModel.findById(senderId);
+    
+    if (sender?.role !== 'admin') {
+      const subscription = await this.subscriptionsService.getUserSubscription(senderId);
+      if (subscription && !subscription.directMessagingEnabled) {
+        throw new ForbiddenException('Direct messaging requires a Pro or Enterprise subscription');
+      }
     }
 
     // Check messaging permissions between participants
