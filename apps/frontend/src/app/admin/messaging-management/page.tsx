@@ -29,7 +29,7 @@ interface Conversation {
   _id: string;
   participants: Array<{
     _id: string;
-    fullName: string;
+    name: string;
     email: string;
     role: string;
     avatar?: string;
@@ -56,7 +56,7 @@ interface Message {
   conversation: string;
   sender: {
     _id: string;
-    fullName: string;
+    name: string;
     email: string;
     role: string;
   };
@@ -261,7 +261,7 @@ export default function MessagingManagementPage() {
   const filteredConversations = conversations.filter(conversation => {
     const matchesSearch = !conversationSearch || 
       conversation.participants.some(p => 
-        p?.fullName?.toLowerCase().includes(conversationSearch.toLowerCase()) ||
+        p?.name?.toLowerCase().includes(conversationSearch.toLowerCase()) ||
         p?.email?.toLowerCase().includes(conversationSearch.toLowerCase())
       );
     
@@ -280,7 +280,7 @@ export default function MessagingManagementPage() {
   const filteredMessages = messages.filter(message => {
     const matchesSearch = !messageSearch || 
       message.content.toLowerCase().includes(messageSearch.toLowerCase()) ||
-      message.sender?.fullName?.toLowerCase().includes(messageSearch.toLowerCase());
+      message.sender?.name?.toLowerCase().includes(messageSearch.toLowerCase());
     
     const matchesType = messageType === 'all' ||
       (messageType === 'admin' && message.isAdminMessage) ||
@@ -552,7 +552,7 @@ export default function MessagingManagementPage() {
                           </div>
                           <div>
                             <h3 className="font-semibold">
-                              {conversation.participants.map(p => p?.fullName || 'Unknown').join(' & ')}
+                              {conversation.participants.map(p => p?.name || 'Unknown').join(' & ')}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {conversation.participants.map(p => p?.email || 'No email').join(', ')}
@@ -690,15 +690,15 @@ export default function MessagingManagementPage() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-sm">
-                              {message.sender?.fullName || 'Unknown'}
+                              {message.sender?.name || 'Unknown'}
                             </h3>
                             <p className="text-xs text-gray-600">
                               {message.sender?.email || 'No email'} • {message.sender?.role || 'Unknown'}
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <Badge className={getRoleColor(message.sender.role)}>
-                              {message.sender.role}
+                            <Badge className={getRoleColor(message.sender?.role || 'user')}>
+                              {message.sender?.role || 'Unknown'}
                             </Badge>
                             {message.isAdminMessage && (
                               <Badge className="bg-red-100 text-red-800 border-red-200">

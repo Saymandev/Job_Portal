@@ -317,7 +317,7 @@ export default function SystemHealthPage() {
                 <div className="flex justify-between text-sm mb-2">
                   <span>Used Memory</span>
                   <span>
-                    {Math.round((health?.memory.used || 0) / 1024 / 1024)} MB / {Math.round((health?.memory.total || 0) / 1024 / 1024)} MB
+                    {Math.round((health?.memory?.used || 0) / 1024 / 1024)} MB / {Math.round((health?.memory?.total || 0) / 1024 / 1024)} MB
                   </span>
                 </div>
                 <Progress value={health?.memory.percentage || 0} className="h-2" />

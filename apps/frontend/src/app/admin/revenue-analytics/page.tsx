@@ -32,13 +32,10 @@ interface RevenueStats {
 
 interface Subscription {
   _id: string;
-  userId: string;
   plan: 'basic' | 'pro' | 'enterprise';
   status: 'active' | 'cancelled' | 'expired' | 'pending';
-  startDate: string;
-  endDate: string;
-  amount: number;
-  billingCycle: 'monthly' | 'yearly';
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -127,6 +124,7 @@ export default function RevenueAnalyticsPage() {
   const fetchRevenueData = useCallback(async () => {
     try {
       const response = await api.get('/admin/revenue/charts');
+      console.log('Revenue data response:', response.data);
       if ((response.data as any).success) {
         setRevenueData((response.data as any).data);
       }
@@ -169,6 +167,17 @@ export default function RevenueAnalyticsPage() {
       setTimeRange(value);
     }
     setCurrentPage(1);
+  };
+
+  const handleViewDetails = (subscription: any) => {
+    // Create a modal or navigate to subscription details
+    toast({
+      title: 'Subscription Details',
+      description: `Viewing details for ${subscription.user?.name || 'Unknown User'}'s ${subscription.plan} subscription`,
+    });
+    
+    // You can implement a modal here or navigate to a details page
+    console.log('Subscription details:', subscription);
   };
 
   const getPlanColor = (plan: string) => {
@@ -478,9 +487,9 @@ export default function RevenueAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="h-64 flex items-end justify-between space-x-2">
-              {currentData.map((item, index) => {
+              {currentData.length > 0 ? currentData.map((item, index) => {
                 const maxRevenue = Math.max(...currentData.map(d => d.revenue));
-                const height = (item.revenue / maxRevenue) * 100;
+                const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
                 
                 return (
                   <div key={index} className="flex flex-col items-center flex-1">
@@ -496,7 +505,14 @@ export default function RevenueAnalyticsPage() {
                     </div>
                   </div>
                 );
-              })}
+              }) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <div className="text-center">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No revenue data available</p>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -598,25 +614,47 @@ export default function RevenueAnalyticsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <p className="text-sm text-gray-600">Amount</p>
-                        <p className="font-medium">{formatCurrency(subscription.amount)}</p>
+                        <p className="font-medium">
+                          {formatCurrency(
+                            subscription.plan === 'basic' ? 29 :
+                            subscription.plan === 'pro' ? 79 :
+                            subscription.plan === 'enterprise' ? 199 : 0
+                          )}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Billing Cycle</p>
-                        <p className="font-medium capitalize">{subscription.billingCycle}</p>
+                        <p className="font-medium capitalize">Monthly</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Start Date</p>
-                        <p className="font-medium">{new Date(subscription.startDate).toLocaleDateString()}</p>
+                        <p className="font-medium">
+                          {subscription.currentPeriodStart 
+                            ? new Date(subscription.currentPeriodStart).toLocaleDateString()
+                            : subscription.createdAt 
+                            ? new Date(subscription.createdAt).toLocaleDateString()
+                            : 'N/A'
+                          }
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">End Date</p>
-                        <p className="font-medium">{new Date(subscription.endDate).toLocaleDateString()}</p>
+                        <p className="font-medium">
+                          {subscription.currentPeriodEnd 
+                            ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                            : 'N/A'
+                          }
+                        </p>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2 ml-4">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewDetails(subscription)}
+                    >
                       <Calendar className="h-4 w-4 mr-1" />
                       View Details
                     </Button>
