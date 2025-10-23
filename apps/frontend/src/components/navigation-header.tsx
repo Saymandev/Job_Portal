@@ -6,30 +6,32 @@ import { useAuthStore } from '@/store/auth-store';
 import { useChatStore } from '@/store/chat-store';
 import { useNotificationsStore } from '@/store/notifications-store';
 import {
-  BarChart3,
-  Bell,
-  Briefcase,
-  Calendar,
-  ChevronDown,
-  CreditCard,
-  FileText,
-  Heart,
-  Key,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  MessageCircle,
-  MessageSquare,
-  Moon,
-  Palette,
-  Settings,
-  Shield,
-  Sun,
-  Upload,
-  User,
-  UserCheck,
-  Users,
-  X
+    BarChart3,
+    Bell,
+    Briefcase,
+    Calendar,
+    ChevronDown,
+    CreditCard,
+    DollarSign,
+    FileText,
+    Heart,
+    Key,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    MessageCircle,
+    MessageSquare,
+    Mic,
+    Moon,
+    Palette,
+    Settings,
+    Shield,
+    Sun,
+    Upload,
+    User,
+    UserCheck,
+    Users,
+    X
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -411,6 +413,23 @@ export default function NavigationHeader() {
                             >
                               <CreditCard className="mr-2 h-4 w-4" />
                               Subscription
+                            </Link>
+                            <div className="border-t border-border my-1"></div>
+                            <Link 
+                              href="/employer/salary-insights" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Salary Insights
+                            </Link>
+                            <Link 
+                              href="/employer/interview-tools" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Mic className="mr-2 h-4 w-4" />
+                              Interview Tools
                             </Link>
                             <Link 
                               href="/pricing" 
