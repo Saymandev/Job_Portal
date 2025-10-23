@@ -39,14 +39,14 @@ export default function HomePage() {
       try {
         // Fetch platform stats
         const statsResponse = await api.get('/public/stats');
-        if (statsResponse.data.success) {
-          setStats(statsResponse.data.data);
+        if ((statsResponse.data as any).success) {
+          setStats((statsResponse.data as any).data);
         }
 
         // Fetch recent jobs
         const jobsResponse = await api.get('/jobs?limit=6');
-        if (jobsResponse.data.success) {
-          setRecentJobs(jobsResponse.data.data || []);
+        if ((jobsResponse.data as any).success) {
+          setRecentJobs((jobsResponse.data as any).data || []);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
