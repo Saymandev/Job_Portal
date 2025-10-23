@@ -484,5 +484,90 @@ startxref
       return false; // Default to false on error
     }
   }
+
+  /**
+   * Get applications for employer with search, filter, and pagination
+   */
+  async findByEmployerWithFilters(
+    employerId: string,
+    page: number,
+    limit: number,
+    search?: string,
+    status?: string,
+    jobId?: string,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc'
+  ): Promise<PaginatedResult<ApplicationDocument>> {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Get all jobs posted by this employer
+    const employerJobs = await this.jobModel.find({ postedBy: employerId }).select('_id');
+    const jobIds = employerJobs.map(job => job._id);
+
+    // Filter by job IDs
+    query.job = { $in: jobIds };
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { 'applicant.name': { $regex: search, $options: 'i' } },
+        { 'applicant.email': { $regex: search, $options: 'i' } },
+        { 'job.title': { $regex: search, $options: 'i' } },
+        { 'job.company.name': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    // Filter by specific job
+    if (jobId && jobId !== 'all') {
+      query.job = jobId;
+    }
+
+    // Sort configuration
+    const sortConfig: any = {};
+    if (sortBy) {
+      const sortField = sortBy === 'applicant' ? 'applicant.name' : 
+                      sortBy === 'job' ? 'job.title' : 
+                      sortBy === 'company' ? 'job.company.name' : 
+                      sortBy;
+      sortConfig[sortField] = sortOrder === 'desc' ? -1 : 1;
+    } else {
+      sortConfig.createdAt = -1; // Default sort by newest
+    }
+
+    const applications = await this.applicationModel
+      .find(query)
+      .populate('applicant', 'name email avatar')
+      .populate({
+        path: 'job',
+        select: 'title company location workType',
+        populate: {
+          path: 'company',
+          select: 'name logo'
+        }
+      })
+      .sort(sortConfig)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.applicationModel.countDocuments(query);
+
+    return {
+      data: applications,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+    };
+  }
 }
 

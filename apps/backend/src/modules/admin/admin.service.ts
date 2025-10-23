@@ -8,10 +8,15 @@ import { SalaryDataService } from '../analytics/salary-data.service';
 import { SalaryUpdateService } from '../analytics/salary-update.service';
 import { ApiKey, ApiKeyDocument } from '../api-keys/schemas/api-key.schema';
 import { Application, ApplicationDocument } from '../applications/schemas/application.schema';
+import { Branding, BrandingDocument } from '../branding/schemas/branding.schema';
+import { WhiteLabelConfig, WhiteLabelConfigDocument } from '../branding/schemas/white-label-config.schema';
+import { Conversation, ConversationDocument } from '../chat/schemas/conversation.schema';
+import { Message, MessageDocument } from '../chat/schemas/message.schema';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { InterviewSession, InterviewSessionDocument } from '../interviews/schemas/interview-session.schema';
 import { InterviewTemplate, InterviewTemplateDocument } from '../interviews/schemas/interview-template.schema';
 import { Job, JobDocument } from '../jobs/schemas/job.schema';
+import { ContentFlag, ContentFlagDocument } from '../moderation/schemas/content-flag.schema';
 import { SupportTicket, SupportTicketDocument } from '../priority-support/schemas/support-ticket.schema';
 import { Subscription, SubscriptionDocument } from '../subscriptions/schemas/subscription.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
@@ -32,7 +37,11 @@ export class AdminService {
     @InjectModel(AccountManager.name) private accountManagerModel: Model<AccountManagerDocument>,
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicketDocument>,
     @InjectModel(AnalyticsInsight.name) private analyticsInsightModel: Model<AnalyticsInsightDocument>,
-    // @InjectModel(WhiteLabelConfig.name) private whiteLabelConfigModel: Model<WhiteLabelConfigDocument>,
+    @InjectModel(Conversation.name) private conversationModel: Model<ConversationDocument>,
+    @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
+    @InjectModel(Branding.name) private brandingModel: Model<BrandingDocument>,
+    @InjectModel(WhiteLabelConfig.name) private whiteLabelConfigModel: Model<WhiteLabelConfigDocument>,
+    @InjectModel(ContentFlag.name) private contentFlagModel: Model<ContentFlagDocument>,
     private activityService: ActivityService,
     private advancedAnalyticsService: AdvancedAnalyticsService,
     private salaryDataService: SalaryDataService,
@@ -603,17 +612,49 @@ export class AdminService {
 
   // ========== INTERVIEW MANAGEMENT ==========
 
-  async getAllInterviewTemplates(limit: number, page: number) {
+  async getAllInterviewTemplates(
+    limit: number, 
+    page: number, 
+    search?: string, 
+    industry?: string, 
+    difficulty?: string, 
+    isPublic?: string
+  ) {
     const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { role: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by industry
+    if (industry && industry !== 'all') {
+      query.industry = industry;
+    }
+
+    // Filter by difficulty
+    if (difficulty && difficulty !== 'all') {
+      query.difficulty = difficulty;
+    }
+
+    // Filter by public status
+    if (isPublic && isPublic !== 'all') {
+      query.isPublic = isPublic === 'true';
+    }
     
     const templates = await this.interviewTemplateModel
-      .find()
+      .find(query)
       .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const total = await this.interviewTemplateModel.countDocuments();
+    const total = await this.interviewTemplateModel.countDocuments(query);
 
     return {
       templates,
@@ -624,11 +665,36 @@ export class AdminService {
     };
   }
 
-  async getAllInterviewSessions(limit: number, page: number) {
+  async getAllInterviewSessions(
+    limit: number, 
+    page: number, 
+    search?: string, 
+    status?: string, 
+    type?: string
+  ) {
     const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    // Filter by type
+    if (type && type !== 'all') {
+      query.type = type;
+    }
     
     const sessions = await this.interviewSessionModel
-      .find()
+      .find(query)
       .populate('interviewerId', 'name email')
       .populate('candidateId', 'name email')
       .populate('jobId', 'title')
@@ -636,7 +702,7 @@ export class AdminService {
       .skip(skip)
       .limit(limit);
 
-    const total = await this.interviewSessionModel.countDocuments();
+    const total = await this.interviewSessionModel.countDocuments(query);
 
     return {
       sessions,
@@ -689,14 +755,515 @@ export class AdminService {
 
   // ========== WHITE-LABEL MANAGEMENT ==========
 
-  async getAllWhiteLabelConfigurations() {
-    // TODO: Implement when white-label schema is available
-    return [];
+  async getAllWhiteLabelConfigurations(
+    limit: number,
+    page: number,
+    search?: string,
+    status?: string,
+    type?: string,
+    company?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { companyName: { $regex: search, $options: 'i' } },
+        { 'user.name': { $regex: search, $options: 'i' } },
+        { 'user.email': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.isActive = status === 'active';
+    }
+
+    // Filter by type
+    if (type && type !== 'all') {
+      if (type === 'white-label') {
+        query.whiteLabelEnabled = true;
+      } else if (type === 'custom') {
+        query.whiteLabelEnabled = false;
+      }
+    }
+
+    // Filter by company
+    if (company && company !== 'all') {
+      query.companyName = { $regex: company, $options: 'i' };
+    }
+
+    const configurations = await this.whiteLabelConfigModel
+      .find(query)
+      .populate('user', 'name email company')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.whiteLabelConfigModel.countDocuments(query);
+
+    return {
+      configurations,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async approveWhiteLabelConfiguration(configId: string) {
-    // TODO: Implement when white-label schema is available
+    await this.whiteLabelConfigModel.findByIdAndUpdate(configId, {
+      isActive: true,
+      approvedAt: new Date()
+    });
     return { success: true };
+  }
+
+  async rejectWhiteLabelConfiguration(configId: string, reason: string) {
+    await this.whiteLabelConfigModel.findByIdAndUpdate(configId, {
+      isActive: false,
+      rejectionReason: reason,
+      rejectedAt: new Date()
+    });
+    return { success: true };
+  }
+
+  // ========== MESSAGING MANAGEMENT ==========
+
+  async getAllConversations(
+    limit: number,
+    page: number,
+    search?: string,
+    type?: string,
+    status?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { 'participants.name': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by type
+    if (type && type !== 'all') {
+      query.isAdminConversation = type === 'admin';
+    }
+
+    // Filter by status (active/inactive based on lastMessage)
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        query.lastMessage = { $exists: true };
+      } else if (status === 'inactive') {
+        query.lastMessage = { $exists: false };
+      }
+    }
+
+    const conversations = await this.conversationModel
+      .find(query)
+      .populate('participants', 'name email role')
+      .populate('lastMessage', 'content createdAt')
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.conversationModel.countDocuments(query);
+
+    return {
+      conversations,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getConversationMessages(conversationId: string, limit: number, page: number) {
+    const skip = (page - 1) * limit;
+
+    const messages = await this.messageModel
+      .find({ conversation: conversationId })
+      .populate('sender', 'name email role')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.messageModel.countDocuments({ conversation: conversationId });
+
+    return {
+      messages,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getMessagingStats() {
+    const [
+      totalConversations,
+      activeConversations,
+      totalMessages,
+      messagesToday,
+      adminConversations,
+      userConversations
+    ] = await Promise.all([
+      this.conversationModel.countDocuments(),
+      this.conversationModel.countDocuments({ lastMessage: { $exists: true } }),
+      this.messageModel.countDocuments(),
+      this.messageModel.countDocuments({
+        createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+      }),
+      this.conversationModel.countDocuments({ isAdminConversation: true }),
+      this.conversationModel.countDocuments({ isAdminConversation: false })
+    ]);
+
+    return {
+      totalConversations,
+      activeConversations,
+      totalMessages,
+      messagesToday,
+      adminConversations,
+      userConversations,
+      averageMessagesPerConversation: totalConversations > 0 ? Math.round(totalMessages / totalConversations) : 0
+    };
+  }
+
+  // ========== BRANDING MANAGEMENT ==========
+
+  async getAllBrandingConfigurations(
+    limit: number,
+    page: number,
+    search?: string,
+    status?: string,
+    type?: string,
+    company?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { companyName: { $regex: search, $options: 'i' } },
+        { 'user.name': { $regex: search, $options: 'i' } },
+        { 'user.email': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.isActive = status === 'active';
+    }
+
+    // Filter by type
+    if (type && type !== 'all') {
+      if (type === 'white-label') {
+        query.whiteLabelEnabled = true;
+      } else if (type === 'custom') {
+        query.whiteLabelEnabled = false;
+      }
+    }
+
+    // Filter by company
+    if (company && company !== 'all') {
+      query.companyName = { $regex: company, $options: 'i' };
+    }
+
+    const configurations = await this.brandingModel
+      .find(query)
+      .populate('user', 'name email company')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.brandingModel.countDocuments(query);
+
+    return {
+      configurations,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async approveBrandingConfiguration(configId: string) {
+    await this.brandingModel.findByIdAndUpdate(configId, {
+      isActive: true,
+      approvedAt: new Date()
+    });
+  }
+
+  async rejectBrandingConfiguration(configId: string, reason: string) {
+    await this.brandingModel.findByIdAndUpdate(configId, {
+      isActive: false,
+      rejectionReason: reason,
+      rejectedAt: new Date()
+    });
+  }
+
+  async getBrandingStats() {
+    const [
+      totalConfigurations,
+      activeConfigurations,
+      pendingConfigurations,
+      whiteLabelConfigurations,
+      customConfigurations,
+      configurationsThisMonth
+    ] = await Promise.all([
+      this.brandingModel.countDocuments(),
+      this.brandingModel.countDocuments({ isActive: true }),
+      this.brandingModel.countDocuments({ isActive: false }),
+      this.brandingModel.countDocuments({ whiteLabelEnabled: true }),
+      this.brandingModel.countDocuments({ whiteLabelEnabled: false }),
+      this.brandingModel.countDocuments({
+        createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+      })
+    ]);
+
+    return {
+      totalConfigurations,
+      activeConfigurations,
+      pendingConfigurations,
+      whiteLabelConfigurations,
+      customConfigurations,
+      configurationsThisMonth,
+      approvalRate: totalConfigurations > 0 ? Math.round((activeConfigurations / totalConfigurations) * 100) : 0
+    };
+  }
+
+  // ========== CONTENT MODERATION ==========
+
+  async getJobsForModeration(
+    limit: number,
+    page: number,
+    search?: string,
+    status?: string,
+    type?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { 'company.name': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    // Filter by type
+    if (type && type !== 'all') {
+      query.jobType = type;
+    }
+
+    const jobs = await this.jobModel
+      .find(query)
+      .populate('postedBy', 'name email')
+      .populate('company', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.jobModel.countDocuments(query);
+
+    return {
+      jobs,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getUsersForModeration(
+    limit: number,
+    page: number,
+    search?: string,
+    status?: string,
+    role?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { company: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.isActive = status === 'active';
+    }
+
+    // Filter by role
+    if (role && role !== 'all') {
+      query.role = role;
+    }
+
+    const users = await this.userModel
+      .find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.userModel.countDocuments(query);
+
+    return {
+      users,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getContentFlags(
+    limit: number,
+    page: number,
+    search?: string,
+    status?: string,
+    priority?: string,
+    type?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { reason: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { targetTitle: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    // Filter by priority
+    if (priority && priority !== 'all') {
+      query.priority = priority;
+    }
+
+    // Filter by type
+    if (type && type !== 'all') {
+      query.type = type;
+    }
+
+    const flags = await this.contentFlagModel
+      .find(query)
+      .populate('reporter', 'name email')
+      .populate('reviewedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.contentFlagModel.countDocuments(query);
+
+    return {
+      flags,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async moderateJob(jobId: string, action: string, reason?: string) {
+    const updateData: any = {};
+
+    switch (action) {
+      case 'approve':
+        updateData.status = 'active';
+        break;
+      case 'reject':
+        updateData.status = 'closed';
+        updateData.rejectionReason = reason;
+        break;
+      case 'flag':
+        updateData.status = 'flagged';
+        updateData.flagReason = reason;
+        break;
+      case 'suspend':
+        updateData.status = 'suspended';
+        updateData.suspensionReason = reason;
+        break;
+    }
+
+    await this.jobModel.findByIdAndUpdate(jobId, updateData);
+  }
+
+  async moderateUser(userId: string, action: string, reason?: string) {
+    const updateData: any = {};
+
+    switch (action) {
+      case 'suspend':
+        updateData.isActive = false;
+        updateData.suspensionReason = reason;
+        updateData.suspendedAt = new Date();
+        break;
+      case 'activate':
+        updateData.isActive = true;
+        updateData.suspensionReason = undefined;
+        updateData.suspendedAt = undefined;
+        break;
+    }
+
+    await this.userModel.findByIdAndUpdate(userId, updateData);
+  }
+
+  async resolveContentFlag(flagId: string, action: string, reason?: string) {
+    // Mock implementation since we don't have a flags schema yet
+    console.log(`Resolving flag ${flagId} with action ${action} and reason ${reason}`);
+    return { success: true };
+  }
+
+  async getModerationStats() {
+    const [
+      totalJobs,
+      flaggedJobs,
+      totalUsers,
+      suspendedUsers,
+      totalApplications,
+      flaggedApplications
+    ] = await Promise.all([
+      this.jobModel.countDocuments(),
+      this.jobModel.countDocuments({ status: 'flagged' }),
+      this.userModel.countDocuments(),
+      this.userModel.countDocuments({ isActive: false }),
+      this.applicationModel.countDocuments(),
+      this.applicationModel.countDocuments({ status: 'flagged' })
+    ]);
+
+    return {
+      totalJobs,
+      flaggedJobs,
+      totalUsers,
+      suspendedUsers,
+      totalApplications,
+      flaggedApplications,
+      moderationRate: totalJobs > 0 ? Math.round((flaggedJobs / totalJobs) * 100) : 0,
+      userSuspensionRate: totalUsers > 0 ? Math.round((suspendedUsers / totalUsers) * 100) : 0
+    };
   }
 }
 

@@ -12,11 +12,17 @@ import { ApiKeysModule } from '../api-keys/api-keys.module';
 import { ApiKey, ApiKeySchema } from '../api-keys/schemas/api-key.schema';
 import { Application, ApplicationSchema } from '../applications/schemas/application.schema';
 import { BrandingModule } from '../branding/branding.module';
+import { Branding, BrandingSchema } from '../branding/schemas/branding.schema';
+import { WhiteLabelConfig, WhiteLabelConfigSchema } from '../branding/schemas/white-label-config.schema';
+import { Conversation, ConversationSchema } from '../chat/schemas/conversation.schema';
+import { Message, MessageSchema } from '../chat/schemas/message.schema';
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { InterviewsModule } from '../interviews/interviews.module';
 import { InterviewSession, InterviewSessionSchema } from '../interviews/schemas/interview-session.schema';
 import { InterviewTemplate, InterviewTemplateSchema } from '../interviews/schemas/interview-template.schema';
 import { Job, JobSchema } from '../jobs/schemas/job.schema';
+import { ModerationModule } from '../moderation/moderation.module';
+import { ContentFlag, ContentFlagSchema } from '../moderation/schemas/content-flag.schema';
 import { PrioritySupportModule } from '../priority-support/priority-support.module';
 import { SupportTicket, SupportTicketSchema } from '../priority-support/schemas/support-ticket.schema';
 import { Subscription, SubscriptionSchema } from '../subscriptions/schemas/subscription.schema';
@@ -47,12 +53,17 @@ import { PlatformSettings, PlatformSettingsSchema } from './schemas/platform-set
       { name: AccountManager.name, schema: AccountManagerSchema },
       { name: SupportTicket.name, schema: SupportTicketSchema },
       { name: AnalyticsInsight.name, schema: AnalyticsInsightSchema },
-      // { name: WhiteLabelConfig.name, schema: WhiteLabelConfigSchema },
+      { name: Conversation.name, schema: ConversationSchema },
+      { name: Message.name, schema: MessageSchema },
+      { name: Branding.name, schema: BrandingSchema },
+      { name: WhiteLabelConfig.name, schema: WhiteLabelConfigSchema },
+      { name: ContentFlag.name, schema: ContentFlagSchema },
     ]),
     AdvancedAnalyticsModule,
     AnalyticsModule,
     ApiKeysModule,
     InterviewsModule,
+    ModerationModule,
     AccountManagersModule,
     PrioritySupportModule,
     BrandingModule,

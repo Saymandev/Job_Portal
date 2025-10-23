@@ -6,19 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import api from '@/lib/api';
 import {
-    AlertCircle,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Eye,
-    MessageSquare,
-    RefreshCw,
-    Reply,
-    Search,
-    Tag,
-    User,
-    XCircle
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Eye,
+  MessageSquare,
+  RefreshCw,
+  Reply,
+  Search,
+  Tag,
+  User,
+  XCircle
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -66,24 +67,59 @@ export default function SupportTicketsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [selectedAdminId, setSelectedAdminId] = useState<string>('');
+  const [admins, setAdmins] = useState<Array<{_id: string, name: string, email: string}>>([]);
+  const [replyMessage, setReplyMessage] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTickets, setTotalTickets] = useState(0);
+  const [limit] = useState(10);
+  
   const { toast } = useToast();
 
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/support-tickets', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(priorityFilter !== 'all' && { priority: priorityFilter }),
+        ...(categoryFilter !== 'all' && { category: categoryFilter }),
+        ...(searchTerm && { search: searchTerm }),
       });
+      
+      const [ticketsResponse, adminsResponse] = await Promise.all([
+        api.get(`/admin/support/tickets?${params.toString()}`),
+        api.get('/admin/users?role=admin&limit=50')
+      ]);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch support tickets');
+      if ((ticketsResponse.data as any).success) {
+        const data = (ticketsResponse.data as any).data;
+        setTickets(data.tickets || []);
+        setTotalTickets(data.total || 0);
+        setTotalPages(data.totalPages || 1);
+        
+        // Calculate stats from tickets data
+        const ticketsData = data.tickets || [];
+        setStats({
+          total: data.total || 0,
+          open: ticketsData.filter((t: any) => t.status === 'open').length,
+          inProgress: ticketsData.filter((t: any) => t.status === 'in_progress').length,
+          resolved: ticketsData.filter((t: any) => t.status === 'resolved').length,
+          closed: ticketsData.filter((t: any) => t.status === 'closed').length,
+          avgResponseTime: 0, // Calculate if needed
+          avgResolutionTime: 0, // Calculate if needed
+        });
       }
 
-      const data = (response as any).data;
-      setTickets(data.tickets || []);
-      setStats(data.stats || null);
+      if ((adminsResponse.data as any).success) {
+        setAdmins((adminsResponse.data as any).data.users || []);
+      }
     } catch (error) {
       console.error('Error fetching support tickets:', error);
       toast({
@@ -94,22 +130,13 @@ export default function SupportTicketsPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, currentPage, statusFilter, priorityFilter, categoryFilter, searchTerm, limit]);
 
-  const handleAssignTicket = async (ticketId: string, assignTo: string) => {
+  const handleAssignTicket = async () => {
+    if (!selectedTicket || !selectedAdminId) return;
+
     try {
-      const response = await fetch(`/api/admin/support-tickets/${ticketId}/assign`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ assignedTo: assignTo }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to assign ticket');
-      }
+      await api.post(`/admin/support/tickets/${selectedTicket._id}/assign`, { adminId: selectedAdminId });
 
       toast({
         title: 'Success',
@@ -117,6 +144,8 @@ export default function SupportTicketsPage() {
       });
 
       fetchTickets();
+      setShowAssignModal(false);
+      setSelectedAdminId('');
     } catch (error) {
       console.error('Error assigning ticket:', error);
       toast({
@@ -127,20 +156,61 @@ export default function SupportTicketsPage() {
     }
   };
 
-  const handleUpdateStatus = async (ticketId: string, status: string) => {
+  const handleReply = async () => {
+    if (!selectedTicket || !replyMessage.trim()) return;
+
     try {
-      const response = await fetch(`/api/admin/support-tickets/${ticketId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ status }),
+      await api.post(`/admin/support/tickets/${selectedTicket._id}/reply`, { 
+        message: replyMessage,
+        isInternal: false 
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update ticket status');
-      }
+      toast({
+        title: 'Success',
+        description: 'Reply sent successfully',
+      });
+
+      fetchTickets();
+      setShowReplyModal(false);
+      setReplyMessage('');
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send reply',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const openAssignModal = (ticket: SupportTicket) => {
+    setSelectedTicket(ticket);
+    setShowAssignModal(true);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'status') {
+      setStatusFilter(value);
+    } else if (filterType === 'priority') {
+      setPriorityFilter(value);
+    } else if (filterType === 'category') {
+      setCategoryFilter(value);
+    }
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handleUpdateStatus = async (ticketId: string, status: string) => {
+    try {
+      await api.patch(`/admin/support/tickets/${ticketId}/status`, { status });
 
       toast({
         title: 'Success',
@@ -203,16 +273,6 @@ export default function SupportTicketsPage() {
     }
   };
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.userName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
-    const matchesCategory = categoryFilter === 'all' || ticket.category === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
-  });
 
   useEffect(() => {
     fetchTickets();
@@ -297,14 +357,14 @@ export default function SupportTicketsPage() {
                 <Input
                   placeholder="Search tickets..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => handleFilterChange('status', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -319,7 +379,7 @@ export default function SupportTicketsPage() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Priority</label>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <Select value={priorityFilter} onValueChange={(value) => handleFilterChange('priority', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Priority" />
                 </SelectTrigger>
@@ -334,7 +394,7 @@ export default function SupportTicketsPage() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Category</label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter} onValueChange={(value) => handleFilterChange('category', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
@@ -355,14 +415,14 @@ export default function SupportTicketsPage() {
       {/* Tickets List */}
       <Card>
         <CardHeader>
-          <CardTitle>Support Tickets ({filteredTickets.length})</CardTitle>
+          <CardTitle>Support Tickets ({totalTickets})</CardTitle>
           <CardDescription>
             Manage and respond to support tickets from users
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredTickets.map((ticket) => (
+            {tickets.map((ticket) => (
               <div
                 key={ticket._id}
                 className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -419,6 +479,16 @@ export default function SupportTicketsPage() {
                       View
                     </Button>
                     
+                    {!ticket.assignedTo && (
+                      <Button
+                        size="sm"
+                        onClick={() => openAssignModal(ticket)}
+                      >
+                        <User className="h-4 w-4 mr-1" />
+                        Assign
+                      </Button>
+                    )}
+                    
                     <Select
                       value={ticket.status}
                       onValueChange={(value) => handleUpdateStatus(ticket._id, value)}
@@ -438,7 +508,7 @@ export default function SupportTicketsPage() {
               </div>
             ))}
             
-            {filteredTickets.length === 0 && (
+            {tickets.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>No support tickets found matching your filters</p>
@@ -448,13 +518,53 @@ export default function SupportTicketsPage() {
         </CardContent>
       </Card>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalTickets)} of {totalTickets} tickets
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className="w-8 h-8 p-0"
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Ticket Details Modal */}
       {showDetails && selectedTicket && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card border rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">{selectedTicket.title}</h2>
+                <h2 className="text-2xl font-bold text-card-foreground">{selectedTicket.title}</h2>
                 <Button
                   variant="outline"
                   onClick={() => setShowDetails(false)}
@@ -466,7 +576,7 @@ export default function SupportTicketsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="font-semibold">Status</label>
+                    <label className="font-semibold text-card-foreground">Status</label>
                     <div className="flex items-center gap-2 mt-1">
                       {getStatusIcon(selectedTicket.status)}
                       <Badge className={getStatusColor(selectedTicket.status)}>
@@ -475,7 +585,7 @@ export default function SupportTicketsPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="font-semibold">Priority</label>
+                    <label className="font-semibold text-card-foreground">Priority</label>
                     <div className="mt-1">
                       <Badge className={getPriorityColor(selectedTicket.priority)}>
                         {selectedTicket.priority}
@@ -485,35 +595,35 @@ export default function SupportTicketsPage() {
                 </div>
                 
                 <div>
-                  <label className="font-semibold">Description</label>
-                  <p className="mt-1 text-gray-700">{selectedTicket.description}</p>
+                  <label className="font-semibold text-card-foreground">Description</label>
+                  <p className="mt-1 text-card-foreground">{selectedTicket.description}</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="font-semibold">User</label>
-                    <p className="mt-1">{selectedTicket.userName} ({selectedTicket.userEmail})</p>
+                    <label className="font-semibold text-card-foreground">User</label>
+                    <p className="mt-1 text-card-foreground">{selectedTicket.userName} ({selectedTicket.userEmail})</p>
                   </div>
                   <div>
-                    <label className="font-semibold">Category</label>
-                    <p className="mt-1">{selectedTicket.category}</p>
+                    <label className="font-semibold text-card-foreground">Category</label>
+                    <p className="mt-1 text-card-foreground">{selectedTicket.category}</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="font-semibold">Created</label>
-                    <p className="mt-1">{new Date(selectedTicket.createdAt).toLocaleString()}</p>
+                    <label className="font-semibold text-card-foreground">Created</label>
+                    <p className="mt-1 text-card-foreground">{new Date(selectedTicket.createdAt).toLocaleString()}</p>
                   </div>
                   <div>
-                    <label className="font-semibold">Last Updated</label>
-                    <p className="mt-1">{new Date(selectedTicket.updatedAt).toLocaleString()}</p>
+                    <label className="font-semibold text-card-foreground">Last Updated</label>
+                    <p className="mt-1 text-card-foreground">{new Date(selectedTicket.updatedAt).toLocaleString()}</p>
                   </div>
                 </div>
                 
                 {selectedTicket.tags.length > 0 && (
                   <div>
-                    <label className="font-semibold">Tags</label>
+                    <label className="font-semibold text-card-foreground">Tags</label>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {selectedTicket.tags.map((tag, index) => (
                         <Badge key={index} variant="secondary">{tag}</Badge>
@@ -525,11 +635,8 @@ export default function SupportTicketsPage() {
                 <div className="flex gap-2 pt-4">
                   <Button
                     onClick={() => {
-                      // TODO: Implement reply functionality
-                      toast({
-                        title: 'Coming Soon',
-                        description: 'Reply functionality will be implemented soon',
-                      });
+                      // Open reply modal or navigate to reply page
+                      setShowReplyModal(true);
                     }}
                   >
                     <Reply className="h-4 w-4 mr-2" />
@@ -540,6 +647,121 @@ export default function SupportTicketsPage() {
                     onClick={() => setShowDetails(false)}
                   >
                     Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Modal */}
+      {showAssignModal && selectedTicket && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card border rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-card-foreground">Assign Ticket</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAssignModal(false)}
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="font-semibold text-card-foreground">Ticket</label>
+                  <p className="text-card-foreground">{selectedTicket.title}</p>
+                  <p className="text-sm text-muted-foreground">#{selectedTicket._id.slice(-8)}</p>
+                </div>
+                
+                <div>
+                  <label className="font-semibold mb-2 block text-card-foreground">Assign to Admin</label>
+                  <Select value={selectedAdminId} onValueChange={setSelectedAdminId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose an admin to assign" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {admins.map((admin) => (
+                        <SelectItem key={admin._id} value={admin._id}>
+                          {admin.name} ({admin.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    onClick={handleAssignTicket}
+                    disabled={!selectedAdminId}
+                    className="flex-1"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Assign Ticket
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAssignModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {showReplyModal && selectedTicket && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card border rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-card-foreground">Reply to Ticket</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowReplyModal(false)}
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="font-semibold text-card-foreground">Ticket</label>
+                  <p className="text-card-foreground">{selectedTicket.title}</p>
+                  <p className="text-sm text-muted-foreground">#{selectedTicket._id.slice(-8)}</p>
+                </div>
+                
+                <div>
+                  <label className="font-semibold mb-2 block text-card-foreground">Your Reply</label>
+                  <textarea
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    className="w-full p-3 border rounded-md resize-none"
+                    rows={4}
+                    placeholder="Type your reply here..."
+                  />
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    onClick={handleReply}
+                    disabled={!replyMessage.trim()}
+                    className="flex-1"
+                  >
+                    <Reply className="h-4 w-4 mr-2" />
+                    Send Reply
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowReplyModal(false)}
+                  >
+                    Cancel
                   </Button>
                 </div>
               </div>

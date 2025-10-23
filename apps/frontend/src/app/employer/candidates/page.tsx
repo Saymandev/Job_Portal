@@ -107,9 +107,15 @@ export default function CandidatePipelinePage() {
   const fetchApplications = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/applications/employer');
+      const params = new URLSearchParams();
+      if (selectedJob !== 'all') params.append('jobId', selectedJob);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('page', '1'); // For now, get all results for the pipeline view
+      params.append('limit', '1000'); // Large limit to get all applications
+
+      const response = await api.get(`/applications/employer?${params}`);
       if ((response.data as any).success) {
-        setApplications((response.data as any).data);
+        setApplications((response.data as any).data.data || []);
       }
     } catch (error) {
       toast({
@@ -120,7 +126,7 @@ export default function CandidatePipelinePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [selectedJob, searchQuery, toast]);
 
 
   // Wait for Zustand store to hydrate from localStorage
@@ -140,24 +146,16 @@ export default function CandidatePipelinePage() {
     fetchApplications();
   }, [isAuthenticated, user, router, isHydrated, fetchJobs, fetchApplications]);
 
-  // Organize applications into columns whenever applications, searchQuery, or selectedJob changes
+  // Organize applications into columns whenever applications change
   useEffect(() => {
     if (applications.length > 0) {
       const organized = PIPELINE_STAGES.map(stage => ({
         ...stage,
-        applications: applications.filter(app => {
-          const statusMatch = app.status === stage.status;
-          const jobMatch = selectedJob === 'all' || app.job._id === selectedJob;
-          const searchMatch = searchQuery === '' || 
-            app.applicant.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            app.applicant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            app.job.title.toLowerCase().includes(searchQuery.toLowerCase());
-          return statusMatch && jobMatch && searchMatch;
-        }),
+        applications: applications.filter(app => app.status === stage.status),
       }));
       setColumns(organized);
     }
-  }, [applications, selectedJob, searchQuery]);
+  }, [applications]);
 
   const handleDragStart = (e: React.DragEvent, application: Application) => {
     setDraggedApplication(application);

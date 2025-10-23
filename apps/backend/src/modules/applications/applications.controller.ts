@@ -3,16 +3,16 @@ import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Post,
-    Put,
-    Query,
-    Res,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -91,13 +91,31 @@ export class ApplicationsController {
   @Get('employer')
   @UseGuards(RolesGuard)
   @Roles(Role.EMPLOYER)
-  @ApiOperation({ summary: 'Get all applications for employer' })
-  async getEmployerApplications(@CurrentUser('id') userId: string) {
-    const applications = await this.applicationsService.findByEmployer(userId);
+  @ApiOperation({ summary: 'Get all applications for employer with search, filter, and pagination' })
+  async getEmployerApplications(
+    @CurrentUser('id') userId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('jobId') jobId?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
+  ) {
+    const result = await this.applicationsService.findByEmployerWithFilters(
+      userId,
+      page || 1,
+      limit || 10,
+      search,
+      status,
+      jobId,
+      sortBy,
+      sortOrder
+    );
 
     return {
       success: true,
-      data: applications,
+      data: result,
     };
   }
 

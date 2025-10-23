@@ -502,6 +502,14 @@ export default function NavigationHeader() {
                               <Shield className="mr-2 h-4 w-4" />
                               System Health
                             </Link>
+                            <Link 
+                              href="/admin/revenue-analytics" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Revenue Analytics
+                            </Link>
                             
                             {/* Communication & Support */}
                             <div className="border-t border-border my-1"></div>
@@ -523,6 +531,52 @@ export default function NavigationHeader() {
                             >
                               <MessageSquare className="mr-2 h-4 w-4" />
                               Support Tickets
+                            </Link>
+                            <Link 
+                              href="/admin/account-managers" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Account Managers
+                            </Link>
+                            <Link 
+                              href="/admin/messaging-management" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <MessageCircle className="mr-2 h-4 w-4" />
+                              Messaging Management
+                            </Link>
+                            
+                            {/* Content & Branding Management */}
+                            <div className="border-t border-border my-1"></div>
+                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Content & Branding
+                            </div>
+                            <Link 
+                              href="/admin/interview-management" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
+                              Interview Management
+                            </Link>
+                            <Link 
+                              href="/admin/branding-management" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Palette className="mr-2 h-4 w-4" />
+                              Branding Management
+                            </Link>
+                            <Link 
+                              href="/admin/content-moderation" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Shield className="mr-2 h-4 w-4" />
+                              Content Moderation
                             </Link>
                             
                             {/* Security & Settings */}

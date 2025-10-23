@@ -28,6 +28,7 @@ import { InterviewsModule } from './modules/interviews/interviews.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { MailModule } from './modules/mail/mail.module';
 import { MessagingPermissionsModule } from './modules/messaging-permissions/messaging-permissions.module';
+import { ModerationModule } from './modules/moderation/moderation.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrioritySupportModule } from './modules/priority-support/priority-support.module';
 import { PublicModule } from './modules/public/public.module';
@@ -99,6 +100,7 @@ import { User, UserSchema } from './modules/users/schemas/user.schema';
     SubscriptionsModule,
     ChatModule,
     MessagingPermissionsModule,
+    ModerationModule,
     NotificationsModule,
     InterviewsModule,
     IntegrationsModule,

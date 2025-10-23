@@ -140,8 +140,22 @@ export class AdminController {
 
   @Get('interviews/templates')
   @ApiOperation({ summary: 'Get all interview templates across all users' })
-  async getAllInterviewTemplates(@Query('limit') limit?: number, @Query('page') page?: number) {
-    const templates = await this.adminService.getAllInterviewTemplates(limit || 50, page || 1);
+  async getAllInterviewTemplates(
+    @Query('limit') limit?: number, 
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('industry') industry?: string,
+    @Query('difficulty') difficulty?: string,
+    @Query('isPublic') isPublic?: string
+  ) {
+    const templates = await this.adminService.getAllInterviewTemplates(
+      limit || 50, 
+      page || 1,
+      search,
+      industry,
+      difficulty,
+      isPublic
+    );
     return {
       success: true,
       data: templates,
@@ -150,8 +164,20 @@ export class AdminController {
 
   @Get('interviews/sessions')
   @ApiOperation({ summary: 'Get all interview sessions across all users' })
-  async getAllInterviewSessions(@Query('limit') limit?: number, @Query('page') page?: number) {
-    const sessions = await this.adminService.getAllInterviewSessions(limit || 50, page || 1);
+  async getAllInterviewSessions(
+    @Query('limit') limit?: number, 
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('type') type?: string
+  ) {
+    const sessions = await this.adminService.getAllInterviewSessions(
+      limit || 50, 
+      page || 1,
+      search,
+      status,
+      type
+    );
     return {
       success: true,
       data: sessions,
@@ -206,8 +232,22 @@ export class AdminController {
 
   @Get('white-label/configurations')
   @ApiOperation({ summary: 'Get all white-label configurations' })
-  async getAllWhiteLabelConfigurations() {
-    const configurations = await this.adminService.getAllWhiteLabelConfigurations();
+  async getAllWhiteLabelConfigurations(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('type') type?: string,
+    @Query('company') company?: string
+  ) {
+    const configurations = await this.adminService.getAllWhiteLabelConfigurations(
+      limit || 50,
+      page || 1,
+      search,
+      status,
+      type,
+      company
+    );
     return {
       success: true,
       data: configurations,
@@ -443,6 +483,233 @@ export class AdminController {
   async getSubscriptionStats() {
     const stats = await this.adminService.getSubscriptionStats();
     return { success: true, data: stats };
+  }
+
+  // ========== MESSAGING MANAGEMENT ==========
+
+  @Get('messaging/conversations')
+  @ApiOperation({ summary: 'Get all conversations for admin monitoring' })
+  async getAllConversations(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string
+  ) {
+    const conversations = await this.adminService.getAllConversations(
+      limit || 50,
+      page || 1,
+      search,
+      type,
+      status
+    );
+    return {
+      success: true,
+      data: conversations,
+    };
+  }
+
+  @Get('messaging/conversations/:id/messages')
+  @ApiOperation({ summary: 'Get messages for a specific conversation' })
+  async getConversationMessages(
+    @Param('id') conversationId: string,
+    @Query('limit') limit?: number,
+    @Query('page') page?: number
+  ) {
+    const messages = await this.adminService.getConversationMessages(
+      conversationId,
+      limit || 50,
+      page || 1
+    );
+    return {
+      success: true,
+      data: messages,
+    };
+  }
+
+  @Get('messaging/stats')
+  @ApiOperation({ summary: 'Get messaging statistics' })
+  async getMessagingStats() {
+    const stats = await this.adminService.getMessagingStats();
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  // ========== BRANDING MANAGEMENT ==========
+
+  @Get('branding/configurations')
+  @ApiOperation({ summary: 'Get all branding configurations for admin review' })
+  async getAllBrandingConfigurations(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('type') type?: string,
+    @Query('company') company?: string
+  ) {
+    const configurations = await this.adminService.getAllWhiteLabelConfigurations(
+      limit || 50,
+      page || 1,
+      search,
+      status,
+      type,
+      company
+    );
+    return {
+      success: true,
+      data: configurations,
+    };
+  }
+
+  @Post('branding/configurations/:id/approve')
+  @ApiOperation({ summary: 'Approve a branding configuration' })
+  async approveBrandingConfiguration(@Param('id') configId: string) {
+    await this.adminService.approveWhiteLabelConfiguration(configId);
+    return {
+      success: true,
+      message: 'Branding configuration approved successfully',
+    };
+  }
+
+  @Post('branding/configurations/:id/reject')
+  @ApiOperation({ summary: 'Reject a branding configuration' })
+  async rejectBrandingConfiguration(@Param('id') configId: string, @Body() body: { reason: string }) {
+    await this.adminService.rejectWhiteLabelConfiguration(configId, body.reason);
+    return {
+      success: true,
+      message: 'Branding configuration rejected successfully',
+    };
+  }
+
+  @Get('branding/stats')
+  @ApiOperation({ summary: 'Get branding statistics' })
+  async getBrandingStats() {
+    const stats = await this.adminService.getBrandingStats();
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  // ========== CONTENT MODERATION ==========
+
+  @Get('moderation/jobs')
+  @ApiOperation({ summary: 'Get jobs for content moderation' })
+  async getJobsForModeration(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('type') type?: string
+  ) {
+    const jobs = await this.adminService.getJobsForModeration(
+      limit || 50,
+      page || 1,
+      search,
+      status,
+      type
+    );
+    return {
+      success: true,
+      data: jobs,
+    };
+  }
+
+  @Get('moderation/users')
+  @ApiOperation({ summary: 'Get users for content moderation' })
+  async getUsersForModeration(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('role') role?: string
+  ) {
+    const users = await this.adminService.getUsersForModeration(
+      limit || 50,
+      page || 1,
+      search,
+      status,
+      role
+    );
+    return {
+      success: true,
+      data: users,
+    };
+  }
+
+  @Get('moderation/flags')
+  @ApiOperation({ summary: 'Get content flags for moderation' })
+  async getContentFlags(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('priority') priority?: string,
+    @Query('type') type?: string
+  ) {
+    const flags = await this.adminService.getContentFlags(
+      limit || 50,
+      page || 1,
+      search,
+      status,
+      priority,
+      type
+    );
+    return {
+      success: true,
+      data: flags,
+    };
+  }
+
+  @Post('moderation/jobs/:id/action')
+  @ApiOperation({ summary: 'Perform moderation action on a job' })
+  async moderateJob(
+    @Param('id') jobId: string,
+    @Body() body: { action: string; reason?: string }
+  ) {
+    await this.adminService.moderateJob(jobId, body.action, body.reason);
+    return {
+      success: true,
+      message: 'Job moderation action completed successfully',
+    };
+  }
+
+  @Post('moderation/users/:id/action')
+  @ApiOperation({ summary: 'Perform moderation action on a user' })
+  async moderateUser(
+    @Param('id') userId: string,
+    @Body() body: { action: string; reason?: string }
+  ) {
+    await this.adminService.moderateUser(userId, body.action, body.reason);
+    return {
+      success: true,
+      message: 'User moderation action completed successfully',
+    };
+  }
+
+  @Post('moderation/flags/:id/action')
+  @ApiOperation({ summary: 'Resolve a content flag' })
+  async resolveContentFlag(
+    @Param('id') flagId: string,
+    @Body() body: { action: string; reason?: string }
+  ) {
+    await this.adminService.resolveContentFlag(flagId, body.action, body.reason);
+    return {
+      success: true,
+      message: 'Content flag resolved successfully',
+    };
+  }
+
+  @Get('moderation/stats')
+  @ApiOperation({ summary: 'Get content moderation statistics' })
+  async getModerationStats() {
+    const stats = await this.adminService.getModerationStats();
+    return {
+      success: true,
+      data: stats,
+    };
   }
 }
 

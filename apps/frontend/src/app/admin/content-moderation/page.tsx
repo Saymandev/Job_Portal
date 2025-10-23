@@ -1,0 +1,1069 @@
+'use client';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/use-toast';
+import api from '@/lib/api';
+import {
+    AlertTriangle,
+    Ban,
+    Briefcase,
+    CheckCircle,
+    CheckSquare,
+    Download,
+    Eye,
+    Flag,
+    RefreshCw,
+    Search,
+    Shield,
+    User,
+    XCircle
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
+interface JobPosting {
+  _id: string;
+  title: string;
+  description: string;
+  company: {
+    _id: string;
+    name: string;
+    logo?: string;
+  };
+  postedBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  status: 'active' | 'paused' | 'closed' | 'flagged' | 'under_review';
+  workType: 'full-time' | 'part-time' | 'contract' | 'internship';
+  location: string;
+  salary?: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+  requirements: string[];
+  benefits: string[];
+  tags: string[];
+  flaggedReason?: string;
+  flaggedBy?: string;
+  flaggedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface UserProfile {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'candidate' | 'employer' | 'admin';
+  company?: string;
+  avatar?: string;
+  status: 'active' | 'suspended' | 'flagged' | 'under_review';
+  flaggedReason?: string;
+  flaggedBy?: string;
+  flaggedAt?: string;
+  lastActive: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ContentFlag {
+  _id: string;
+  type: 'job' | 'profile' | 'message' | 'company';
+  targetId: string;
+  targetTitle: string;
+  reporter: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  reason: string;
+  description: string;
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assignedTo?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  resolution?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ModerationStats {
+  totalJobs: number;
+  flaggedJobs: number;
+  totalUsers: number;
+  flaggedUsers: number;
+  pendingFlags: number;
+  resolvedFlags: number;
+  activeModerators: number;
+}
+
+export default function ContentModerationPage() {
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [flags, setFlags] = useState<ContentFlag[]>([]);
+  const [stats, setStats] = useState<ModerationStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Job filters
+  const [jobSearch, setJobSearch] = useState('');
+  const [jobStatus, setJobStatus] = useState('all');
+  const [jobType, setJobType] = useState('all');
+  
+  // User filters
+  const [userSearch, setUserSearch] = useState('');
+  const [userStatus, setUserStatus] = useState('all');
+  const [userRole, setUserRole] = useState('all');
+  
+  // Flag filters
+  const [flagSearch, setFlagSearch] = useState('');
+  const [flagStatus, setFlagStatus] = useState('all');
+  const [flagPriority, setFlagPriority] = useState('all');
+  const [flagType, setFlagType] = useState('all');
+  
+  // Pagination state
+  const [currentJobPage, setCurrentJobPage] = useState(1);
+  const [currentUserPage, setCurrentUserPage] = useState(1);
+  const [currentFlagPage, setCurrentFlagPage] = useState(1);
+  const [totalJobPages, setTotalJobPages] = useState(1);
+  const [totalUserPages, setTotalUserPages] = useState(1);
+  const [totalFlagPages, setTotalFlagPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalFlags, setTotalFlags] = useState(0);
+  const [limit] = useState(10);
+  
+  const { toast } = useToast();
+
+  const fetchJobs = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        page: currentJobPage.toString(),
+        limit: limit.toString(),
+        ...(jobStatus !== 'all' && { status: jobStatus }),
+        ...(jobType !== 'all' && { workType: jobType }),
+        ...(jobSearch && { search: jobSearch }),
+      });
+
+      const response = await api.get(`/admin/moderation/jobs?${params}`);
+      if ((response.data as any).success) {
+        const data = (response.data as any).data;
+        setJobs(data.jobs || []);
+        setTotalJobs(data.total || 0);
+        setTotalJobPages(data.totalPages || 1);
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch jobs',
+        variant: 'destructive',
+      });
+    }
+  }, [toast, currentJobPage, jobStatus, jobType, jobSearch, limit]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        page: currentUserPage.toString(),
+        limit: limit.toString(),
+        ...(userStatus !== 'all' && { status: userStatus }),
+        ...(userRole !== 'all' && { role: userRole }),
+        ...(userSearch && { search: userSearch }),
+      });
+
+      const response = await api.get(`/admin/moderation/users?${params}`);
+      if ((response.data as any).success) {
+        const data = (response.data as any).data;
+        setUsers(data.users || []);
+        setTotalUsers(data.total || 0);
+        setTotalUserPages(data.totalPages || 1);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch users',
+        variant: 'destructive',
+      });
+    }
+  }, [toast, currentUserPage, userStatus, userRole, userSearch, limit]);
+
+  const fetchFlags = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (flagStatus !== 'all') params.append('status', flagStatus);
+      if (flagPriority !== 'all') params.append('priority', flagPriority);
+      if (flagType !== 'all') params.append('type', flagType);
+      if (flagSearch) params.append('search', flagSearch);
+      params.append('page', currentFlagPage.toString());
+      params.append('limit', limit.toString());
+
+      const response = await api.get(`/admin/moderation/flags?${params}`);
+      
+      if ((response.data as any).success) {
+        const data = (response.data as any).data;
+        setFlags(data.flags || []);
+        setTotalFlags(data.total || 0);
+        setTotalFlagPages(data.totalPages || 1);
+      }
+    } catch (error) {
+      console.error('Error fetching flags:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch content flags',
+        variant: 'destructive',
+      });
+    }
+  }, [flagStatus, flagPriority, flagType, flagSearch, currentFlagPage, limit, toast]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      // Calculate stats from data
+      const totalJobs = jobs.length;
+      const flaggedJobs = jobs.filter(j => j.status === 'flagged' || j.status === 'under_review').length;
+      const totalUsers = users.length;
+      const flaggedUsers = users.filter(u => u.status === 'flagged' || u.status === 'under_review').length;
+      const pendingFlags = flags.filter(f => f.status === 'pending').length;
+      const resolvedFlags = flags.filter(f => f.status === 'resolved').length;
+      const activeModerators = 1; // This would come from actual data
+
+      setStats({
+        totalJobs,
+        flaggedJobs,
+        totalUsers,
+        flaggedUsers,
+        pendingFlags,
+        resolvedFlags,
+        activeModerators,
+      });
+    } catch (error) {
+      console.error('Error calculating stats:', error);
+    }
+  }, [jobs, users, flags]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      await Promise.all([fetchJobs(), fetchUsers(), fetchFlags()]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchJobs, fetchUsers, fetchFlags]);
+
+  // Pagination handlers
+  const handleJobPageChange = (page: number) => {
+    setCurrentJobPage(page);
+  };
+
+  const handleUserPageChange = (page: number) => {
+    setCurrentUserPage(page);
+  };
+
+  const handleFlagPageChange = (page: number) => {
+    setCurrentFlagPage(page);
+  };
+
+  // Search handlers
+  const handleJobSearch = (value: string) => {
+    setJobSearch(value);
+    setCurrentJobPage(1);
+  };
+
+  const handleUserSearch = (value: string) => {
+    setUserSearch(value);
+    setCurrentUserPage(1);
+  };
+
+  const handleFlagSearch = (value: string) => {
+    setFlagSearch(value);
+    setCurrentFlagPage(1);
+  };
+
+  // Filter handlers
+  const handleJobFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'status') {
+      setJobStatus(value);
+    } else if (filterType === 'type') {
+      setJobType(value);
+    }
+    setCurrentJobPage(1);
+  };
+
+  const handleUserFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'status') {
+      setUserStatus(value);
+    } else if (filterType === 'role') {
+      setUserRole(value);
+    }
+    setCurrentUserPage(1);
+  };
+
+  const handleFlagFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'status') {
+      setFlagStatus(value);
+    } else if (filterType === 'priority') {
+      setFlagPriority(value);
+    } else if (filterType === 'type') {
+      setFlagType(value);
+    }
+    setCurrentFlagPage(1);
+  };
+
+  const handleJobAction = async (jobId: string, action: string) => {
+    try {
+      await api.post(`/admin/moderation/jobs/${jobId}/action`, { action });
+      
+      toast({
+        title: 'Success',
+        description: `Job ${action}ed successfully`,
+      });
+      
+      fetchJobs();
+    } catch (error) {
+      console.error('Error performing job action:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to perform action',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUserAction = async (userId: string, action: string) => {
+    try {
+      await api.post(`/admin/moderation/users/${userId}/action`, { action });
+      
+      toast({
+        title: 'Success',
+        description: `User ${action}ed successfully`,
+      });
+      
+      fetchUsers();
+    } catch (error) {
+      console.error('Error performing user action:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to perform action',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleFlagAction = async (flagId: string, action: string) => {
+    try {
+      await api.post(`/admin/moderation/flags/${flagId}/action`, { action });
+      
+      toast({
+        title: 'Success',
+        description: `Flag ${action}ed successfully`,
+      });
+      
+      fetchFlags();
+    } catch (error) {
+      console.error('Error performing flag action:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to perform action',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'flagged':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'under_review':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'suspended':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'closed':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'high':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'employer':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'candidate':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Content Moderation</h1>
+          <p className="text-muted-foreground">
+            Moderate job postings, review user profiles, and manage content policies
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button onClick={fetchData} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Overview */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalJobs}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.flaggedJobs} flagged
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.flaggedUsers} flagged
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Flags</CardTitle>
+              <Flag className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pendingFlags}</div>
+              <p className="text-xs text-muted-foreground">
+                need review
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Resolved Flags</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.resolvedFlags}</div>
+              <p className="text-xs text-muted-foreground">
+                this week
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Moderators</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeModerators}</div>
+              <p className="text-xs text-muted-foreground">
+                online now
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Flag Rate</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.totalJobs > 0 ? Math.round((stats.flaggedJobs / stats.totalJobs) * 100) : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                of jobs flagged
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Resolution Rate</CardTitle>
+              <CheckSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.pendingFlags + stats.resolvedFlags > 0 
+                  ? Math.round((stats.resolvedFlags / (stats.pendingFlags + stats.resolvedFlags)) * 100) 
+                  : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                flags resolved
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Tabs defaultValue="jobs" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="jobs">Jobs ({totalJobs})</TabsTrigger>
+          <TabsTrigger value="users">Users ({totalUsers})</TabsTrigger>
+          <TabsTrigger value="flags">Flags ({totalFlags})</TabsTrigger>
+        </TabsList>
+
+        {/* Jobs Tab */}
+        <TabsContent value="jobs" className="space-y-4">
+          {/* Job Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Search</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search jobs..."
+                      value={jobSearch}
+                      onChange={(e) => handleJobSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Status</label>
+                  <Select value={jobStatus} onValueChange={(value) => handleJobFilterChange('status', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="flagged">Flagged</SelectItem>
+                      <SelectItem value="under_review">Under Review</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Type</label>
+                  <Select value={jobType} onValueChange={(value) => handleJobFilterChange('type', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="full-time">Full-time</SelectItem>
+                      <SelectItem value="part-time">Part-time</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                      <SelectItem value="internship">Internship</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Jobs List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Job Postings</CardTitle>
+              <CardDescription>
+                Review and moderate job postings across the platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {jobs.map((job) => (
+                  <div
+                    key={job._id}
+                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Briefcase className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">{job.title}</h3>
+                            <p className="text-sm text-gray-600">
+                              {job.company.name} • {job.location} • {job.workType}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge className={getStatusColor(job.status)}>
+                              {job.status.replace('_', ' ')}
+                            </Badge>
+                            {job.salary && (
+                              <Badge variant="secondary">
+                                {job.salary.currency} {job.salary.min}-{job.salary.max}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {job.description}
+                        </p>
+                        
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                          <span>Posted by: {job.postedBy.name}</span>
+                          <span>Created: {new Date(job.createdAt).toLocaleDateString()}</span>
+                          <span>Updated: {new Date(job.updatedAt).toLocaleDateString()}</span>
+                        </div>
+                        
+                        {job.flaggedReason && (
+                          <div className="bg-red-50 border border-red-200 rounded p-3 mb-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Flag className="h-4 w-4 text-red-600" />
+                              <span className="text-sm font-medium text-red-800">Flagged Reason:</span>
+                            </div>
+                            <p className="text-sm text-red-700">{job.flaggedReason}</p>
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {job.tags.map((tag, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        {job.status === 'flagged' || job.status === 'under_review' ? (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleJobAction(job._id, 'approve')}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleJobAction(job._id, 'reject')}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleJobAction(job._id, 'flag')}
+                            className="text-yellow-600 hover:text-yellow-700"
+                          >
+                            <Flag className="h-4 w-4 mr-1" />
+                            Flag
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {jobs.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No jobs found matching your filters</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Users Tab */}
+        <TabsContent value="users" className="space-y-4">
+          {/* User Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Search</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search users..."
+                      value={userSearch}
+                      onChange={(e) => handleUserSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Status</label>
+                  <Select value={userStatus} onValueChange={(value) => handleUserFilterChange('status', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                      <SelectItem value="flagged">Flagged</SelectItem>
+                      <SelectItem value="under_review">Under Review</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Role</label>
+                  <Select value={userRole} onValueChange={(value) => handleUserFilterChange('role', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Roles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="candidate">Candidate</SelectItem>
+                      <SelectItem value="employer">Employer</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Users List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>User Profiles</CardTitle>
+              <CardDescription>
+                Review and moderate user profiles across the platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {users.map((user) => (
+                  <div
+                    key={user._id}
+                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">{user.name}</h3>
+                            <p className="text-sm text-gray-600">
+                              {user.email} • {user.company || 'No company'}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge className={getStatusColor(user.status)}>
+                              {user.status.replace('_', ' ')}
+                            </Badge>
+                            <Badge className={getRoleColor(user.role)}>
+                              {user.role}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                          <span>Last Active: {new Date(user.lastActive).toLocaleDateString()}</span>
+                          <span>Created: {new Date(user.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        
+                        {user.flaggedReason && (
+                          <div className="bg-red-50 border border-red-200 rounded p-3 mb-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Flag className="h-4 w-4 text-red-600" />
+                              <span className="text-sm font-medium text-red-800">Flagged Reason:</span>
+                            </div>
+                            <p className="text-sm text-red-700">{user.flaggedReason}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        {user.status === 'active' ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleUserAction(user._id, 'suspend')}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Ban className="h-4 w-4 mr-1" />
+                            Suspend
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleUserAction(user._id, 'activate')}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Activate
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {users.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No users found matching your filters</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Flags Tab */}
+        <TabsContent value="flags" className="space-y-4">
+          {/* Flag Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Search</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search flags..."
+                      value={flagSearch}
+                      onChange={(e) => handleFlagSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Status</label>
+                  <Select value={flagStatus} onValueChange={(value) => handleFlagFilterChange('status', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="reviewed">Reviewed</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="dismissed">Dismissed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Priority</label>
+                  <Select value={flagPriority} onValueChange={(value) => handleFlagFilterChange('priority', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Priorities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priorities</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Type</label>
+                  <Select value={flagType} onValueChange={(value) => handleFlagFilterChange('type', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="job">Job</SelectItem>
+                      <SelectItem value="profile">Profile</SelectItem>
+                      <SelectItem value="message">Message</SelectItem>
+                      <SelectItem value="company">Company</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Flags List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Content Flags</CardTitle>
+              <CardDescription>
+                Review and manage content flags reported by users
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {flags.map((flag) => (
+                  <div
+                    key={flag._id}
+                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Flag className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">{flag.targetTitle}</h3>
+                            <p className="text-sm text-gray-600">
+                              {flag.type} • Reported by {flag.reporter.name}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge className={getStatusColor(flag.status)}>
+                              {flag.status}
+                            </Badge>
+                            <Badge className={getPriorityColor(flag.priority)}>
+                              {flag.priority}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gray-50 rounded p-3 mb-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertTriangle className="h-4 w-4 text-gray-600" />
+                            <span className="text-sm font-medium text-gray-800">Reason: {flag.reason}</span>
+                          </div>
+                          <p className="text-sm text-gray-700">{flag.description}</p>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>Created: {new Date(flag.createdAt).toLocaleDateString()}</span>
+                          {flag.reviewedAt && (
+                            <span>Reviewed: {new Date(flag.reviewedAt).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                        
+                        {flag.resolution && (
+                          <div className="bg-green-50 border border-green-200 rounded p-3 mt-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <span className="text-sm font-medium text-green-800">Resolution:</span>
+                            </div>
+                            <p className="text-sm text-green-700">{flag.resolution}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        {flag.status === 'pending' && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleFlagAction(flag._id, 'resolve')}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Resolve
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleFlagAction(flag._id, 'dismiss')}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Dismiss
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {flags.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Flag className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No content flags found matching your filters</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
