@@ -387,6 +387,17 @@ export class AdminController {
     };
   }
 
+  @Get('revenue/charts')
+  @ApiOperation({ summary: 'Get revenue charts data' })
+  async getRevenueCharts() {
+    const charts = await this.adminService.getRevenueCharts();
+
+    return {
+      success: true,
+      data: charts,
+    };
+  }
+
   @Get('users/:id/activities')
   @ApiOperation({ summary: 'Get user activities' })
   async getUserActivities(@Param('id') userId: string) {

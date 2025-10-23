@@ -256,6 +256,58 @@ export class AdminService {
     };
   }
 
+  async getRevenueCharts() {
+    // Generate monthly revenue data for the last 12 months
+    const monthlyData = [];
+    const currentDate = new Date();
+    
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+      
+      const monthlySubscriptions = await this.subscriptionModel.find({
+        status: 'active',
+        createdAt: { $gte: date, $lt: nextMonth }
+      });
+
+      const prices = { basic: 29, pro: 79, enterprise: 199 };
+      const monthlyRevenue = monthlySubscriptions.reduce((sum, sub) => sum + (prices[sub.plan] || 0), 0);
+
+      monthlyData.push({
+        month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        revenue: monthlyRevenue,
+        subscriptions: monthlySubscriptions.length
+      });
+    }
+
+    // Generate yearly revenue data for the last 3 years
+    const yearlyData = [];
+    for (let i = 2; i >= 0; i--) {
+      const year = currentDate.getFullYear() - i;
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year + 1, 0, 1);
+      
+      const yearlySubscriptions = await this.subscriptionModel.find({
+        status: 'active',
+        createdAt: { $gte: startOfYear, $lt: endOfYear }
+      });
+
+      const prices = { basic: 29, pro: 79, enterprise: 199 };
+      const yearlyRevenue = yearlySubscriptions.reduce((sum, sub) => sum + (prices[sub.plan] || 0), 0);
+
+      yearlyData.push({
+        year: year.toString(),
+        revenue: yearlyRevenue,
+        subscriptions: yearlySubscriptions.length
+      });
+    }
+
+    return {
+      monthly: monthlyData,
+      yearly: yearlyData
+    };
+  }
+
   async getSystemHealth() {
     // Simulate system health checks
     const startTime = Date.now();

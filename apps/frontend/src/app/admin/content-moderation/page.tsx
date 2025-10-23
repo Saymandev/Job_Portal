@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
@@ -432,8 +433,74 @@ export default function ContentModerationPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-20" />
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-20 mb-2" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Tabs Skeleton */}
+        <Tabs defaultValue="jobs" className="space-y-4">
+          <TabsList>
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-32" />
+          </TabsList>
+          
+          <TabsContent value="jobs" className="space-y-4">
+            {/* Filters Skeleton */}
+            <div className="flex items-center space-x-4">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+            
+            {/* Jobs List Skeleton */}
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-64" />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Skeleton className="h-6 w-16" />
+                        <Skeleton className="h-8 w-20" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
@@ -647,7 +714,7 @@ export default function ContentModerationPage() {
                           </div>
                           <div className="flex gap-2">
                             <Badge className={getStatusColor(job.status)}>
-                              {job.status.replace('_', ' ')}
+                              {(job.status || '').replace('_', ' ')}
                             </Badge>
                             {job.salary && (
                               <Badge variant="secondary">
@@ -822,7 +889,7 @@ export default function ContentModerationPage() {
                           </div>
                           <div className="flex gap-2">
                             <Badge className={getStatusColor(user.status)}>
-                              {user.status.replace('_', ' ')}
+                              {(user.status || '').replace('_', ' ')}
                             </Badge>
                             <Badge className={getRoleColor(user.role)}>
                               {user.role}

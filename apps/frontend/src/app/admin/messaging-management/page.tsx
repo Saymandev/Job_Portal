@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
@@ -260,8 +261,8 @@ export default function MessagingManagementPage() {
   const filteredConversations = conversations.filter(conversation => {
     const matchesSearch = !conversationSearch || 
       conversation.participants.some(p => 
-        p.fullName.toLowerCase().includes(conversationSearch.toLowerCase()) ||
-        p.email.toLowerCase().includes(conversationSearch.toLowerCase())
+        p?.fullName?.toLowerCase().includes(conversationSearch.toLowerCase()) ||
+        p?.email?.toLowerCase().includes(conversationSearch.toLowerCase())
       );
     
     const matchesType = conversationType === 'all' || 
@@ -279,7 +280,7 @@ export default function MessagingManagementPage() {
   const filteredMessages = messages.filter(message => {
     const matchesSearch = !messageSearch || 
       message.content.toLowerCase().includes(messageSearch.toLowerCase()) ||
-      message.sender.fullName.toLowerCase().includes(messageSearch.toLowerCase());
+      message.sender?.fullName?.toLowerCase().includes(messageSearch.toLowerCase());
     
     const matchesType = messageType === 'all' ||
       (messageType === 'admin' && message.isAdminMessage) ||
@@ -302,8 +303,72 @@ export default function MessagingManagementPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-20" />
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-20 mb-2" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Tabs Skeleton */}
+        <Tabs defaultValue="conversations" className="space-y-4">
+          <TabsList>
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-24" />
+          </TabsList>
+          
+          <TabsContent value="conversations" className="space-y-4">
+            {/* Filters Skeleton */}
+            <div className="flex items-center space-x-4">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+            
+            {/* Conversations List Skeleton */}
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-48" />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Skeleton className="h-6 w-16" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
@@ -487,7 +552,7 @@ export default function MessagingManagementPage() {
                           </div>
                           <div>
                             <h3 className="font-semibold">
-                              {conversation.participants.map(p => p.fullName).join(' & ')}
+                              {conversation.participants.map(p => p?.fullName || 'Unknown').join(' & ')}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {conversation.participants.map(p => p.email).join(', ')}
@@ -625,7 +690,7 @@ export default function MessagingManagementPage() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-sm">
-                              {message.sender.fullName}
+                              {message.sender?.fullName || 'Unknown'}
                             </h3>
                             <p className="text-xs text-gray-600">
                               {message.sender.email} • {message.sender.role}

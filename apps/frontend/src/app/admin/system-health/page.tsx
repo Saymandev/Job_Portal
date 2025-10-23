@@ -4,19 +4,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
-    Activity,
-    AlertTriangle,
-    CheckCircle,
-    Clock,
-    Cpu,
-    Database,
-    MemoryStick,
-    RefreshCw,
-    Server,
-    XCircle
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Cpu,
+  Database,
+  MemoryStick,
+  RefreshCw,
+  Server,
+  XCircle
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -136,11 +137,100 @@ export default function SystemHealthPage() {
 
   if (loading && !health) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading system health...</span>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-20" />
+          </div>
         </div>
+
+        {/* Status Overview Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                  <Skeleton className="h-4 w-24 mx-auto" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* System Metrics Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Services Status Skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div>
+                      <Skeleton className="h-4 w-32 mb-2" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -197,7 +287,7 @@ export default function SystemHealthPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold">
-                {health?.memory.percentage || 0}%
+                {health?.memory?.percentage || 0}%
               </div>
               <p className="text-sm text-muted-foreground">Memory Usage</p>
             </div>
@@ -233,7 +323,7 @@ export default function SystemHealthPage() {
                 <Progress value={health?.memory.percentage || 0} className="h-2" />
               </div>
               <div className="text-sm text-muted-foreground">
-                {health?.memory.percentage || 0}% of total memory in use
+                {health?.memory?.percentage || 0}% of total memory in use
               </div>
             </div>
           </CardContent>
