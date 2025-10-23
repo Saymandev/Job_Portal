@@ -244,7 +244,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto items-start">
           {plans.map((plan) => {
             const Icon = plan.icon;
             return (
@@ -312,7 +312,7 @@ export default function PricingPage() {
                     </ul>
                   </div>
                   <Button
-                    className={`w-full h-12 text-base font-semibold transition-all duration-200 mt-auto ${
+                    className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
                       plan.popular 
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl' 
                         : plan.buttonStyle === 'outline'
