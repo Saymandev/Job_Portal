@@ -171,8 +171,8 @@ export class SalaryDataService {
         timeout: 10000,
       });
 
-      if (response.data && response.data.results) {
-        return this.transformAdzunaData(response.data, query);
+      if (response.data && (response.data as any).results) {
+        return this.transformAdzunaData(response.data as any, query);
       }
     } catch (error) {
       this.logger.error('Adzuna API error:', error.message);
@@ -210,8 +210,8 @@ export class SalaryDataService {
         timeout: 10000,
       });
 
-      if (response.data && response.data.results) {
-        return this.transformIndeedData(response.data, query);
+      if (response.data && (response.data as any).results) {
+        return this.transformIndeedData(response.data as any, query);
       }
     } catch (error) {
       this.logger.error('Indeed API error:', error.message);
@@ -246,8 +246,8 @@ export class SalaryDataService {
         timeout: 10000,
       });
 
-      if (response.data && response.data.response && response.data.response.jobs) {
-        const jobData = response.data.response.jobs[0];
+      if (response.data && (response.data as any).response && (response.data as any).response.jobs) {
+        const jobData = (response.data as any).response.jobs[0];
         return this.transformGlassdoorData(jobData, query);
       }
     } catch (error) {
@@ -281,8 +281,8 @@ export class SalaryDataService {
         timeout: 10000,
       });
 
-      if (response.data && response.data.salary) {
-        return this.transformPayScaleData(response.data, query);
+      if (response.data && (response.data as any).salary) {
+        return this.transformPayScaleData(response.data as any, query);
       }
     } catch (error) {
       this.logger.error('PayScale API error:', error.message);
@@ -315,8 +315,8 @@ export class SalaryDataService {
         timeout: 10000,
       });
 
-      if (response.data && response.data.salaryInsights) {
-        return this.transformLinkedInData(response.data, query);
+      if (response.data && (response.data as any).salaryInsights) {
+        return this.transformLinkedInData(response.data as any, query);
       }
     } catch (error) {
       this.logger.error('LinkedIn API error:', error.message);
