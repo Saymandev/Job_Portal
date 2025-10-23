@@ -8,20 +8,20 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    AlertCircle,
-    BarChart3,
-    BookOpen,
-    CheckCircle,
-    Clock,
-    FileText,
-    Mic,
-    Play,
-    RefreshCw,
-    Star,
-    Target,
-    Users
+  AlertCircle,
+  BarChart3,
+  BookOpen,
+  CheckCircle,
+  Clock,
+  FileText,
+  Mic,
+  Play,
+  RefreshCw,
+  Star,
+  Target,
+  Users
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface InterviewQuestion {
   _id?: string;
@@ -83,14 +83,7 @@ export default function InterviewToolsPage() {
     role: '',
   });
 
-  useEffect(() => {
-    fetchQuestions();
-    fetchTemplates();
-    fetchSessions();
-    fetchInterviewTips();
-  }, [filters]);
-
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get('/interviews/prep/questions', {
@@ -107,27 +100,27 @@ export default function InterviewToolsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, toast]);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const response = await api.get('/interviews/prep/templates');
       setTemplates(response.data.data);
     } catch (error: any) {
       console.error('Error fetching templates:', error);
     }
-  };
+  }, []);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       const response = await api.get('/interviews/prep/sessions');
       setSessions(response.data.data);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);
     }
-  };
+  }, []);
 
-  const fetchInterviewTips = async () => {
+  const fetchInterviewTips = useCallback(async () => {
     try {
       const response = await api.get('/interviews/prep/tips', {
         params: {
@@ -140,7 +133,14 @@ export default function InterviewToolsPage() {
     } catch (error: any) {
       console.error('Error fetching tips:', error);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchQuestions();
+    fetchTemplates();
+    fetchSessions();
+    fetchInterviewTips();
+  }, [fetchQuestions, fetchTemplates, fetchSessions, fetchInterviewTips]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -183,6 +183,19 @@ export default function InterviewToolsPage() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handleUseTemplate = (template: InterviewTemplate) => {
+    toast({
+      title: "Template Selected",
+      description: `"${template.name}" template has been selected. You can now use these ${template.questions.length} questions for your interview.`,
+    });
+    
+    // In a real app, this would:
+    // 1. Create a new interview session
+    // 2. Navigate to interview setup page
+    // 3. Or open a modal to configure the interview
+    console.log('Using template:', template);
   };
 
   if (loading) {
@@ -382,7 +395,10 @@ export default function InterviewToolsPage() {
                       <BarChart3 className="h-4 w-4" />
                       <span>Difficulty: {template.difficulty}</span>
                     </div>
-                    <Button className="w-full mt-4">
+                    <Button 
+                      className="w-full mt-4"
+                      onClick={() => handleUseTemplate(template)}
+                    >
                       <Play className="h-4 w-4 mr-2" />
                       Use Template
                     </Button>
@@ -397,7 +413,7 @@ export default function InterviewToolsPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Templates Available</h3>
                   <p className="text-muted-foreground">
-                    Interview templates will appear here once they're created.
+                    Interview templates will appear here once they&apos;re created.
                   </p>
                 </CardContent>
               </Card>
@@ -470,7 +486,7 @@ export default function InterviewToolsPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Interview Sessions</h3>
                   <p className="text-muted-foreground">
-                    Interview sessions will appear here once they're scheduled.
+                    Interview sessions will appear here once they&apos;re scheduled.
                   </p>
                 </CardContent>
               </Card>

@@ -8,13 +8,13 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    AlertCircle,
-    ArrowRight,
-    Calendar,
-    CheckCircle,
-    Crown,
-    TrendingUp,
-    Zap
+  AlertCircle,
+  ArrowRight,
+  Calendar,
+  CheckCircle,
+  Crown,
+  TrendingUp,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -38,7 +38,7 @@ interface Subscription {
   applicationAnalyticsEnabled: boolean;
   directMessagingEnabled: boolean;
   featuredProfileEnabled: boolean;
-  unlimitedResumeDownloads: boolean;
+  unlimitedResumeDownloadsEnabled: boolean;
   salaryInsightsEnabled: boolean;
   interviewPrepEnabled: boolean;
 }
@@ -364,7 +364,7 @@ export default function SubscriptionPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.unlimitedResumeDownloads ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
+                <CheckCircle className={`h-5 w-5 mt-0.5 ${subscription?.unlimitedResumeDownloadsEnabled ? 'text-green-500 dark:text-green-400' : 'text-muted-foreground'}`} />
                 <div>
                   <p className="font-semibold">📄 Unlimited Resume Downloads</p>
                   <p className="text-sm text-muted-foreground">

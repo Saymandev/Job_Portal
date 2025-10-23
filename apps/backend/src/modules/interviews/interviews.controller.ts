@@ -1,12 +1,13 @@
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/roles.guard';
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
 import { InterviewPrepService } from './interview-prep.service';
+import { CreateTemplateDto, InterviewTemplateService, UpdateTemplateDto } from './interview-template.service';
 import { InterviewsService } from './interviews.service';
 
 export class UpdateInterviewStatusDto {
@@ -50,7 +51,8 @@ export class ApproveRescheduleDto {
 export class InterviewsController {
   constructor(
     private readonly interviewsService: InterviewsService,
-    private readonly interviewPrepService: InterviewPrepService
+    private readonly interviewPrepService: InterviewPrepService,
+    private readonly interviewTemplateService: InterviewTemplateService,
   ) {}
 
   @Post()
@@ -262,6 +264,170 @@ export class InterviewsController {
     return {
       success: true,
       data: tips,
+    };
+  }
+
+  // ========== INTERVIEW TEMPLATE ENDPOINTS ==========
+
+  @Post('templates')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Create a new interview template' })
+  async createTemplate(
+    @Body() createTemplateDto: CreateTemplateDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    const template = await this.interviewTemplateService.createTemplate(createTemplateDto, userId);
+
+    return {
+      success: true,
+      data: template,
+    };
+  }
+
+  @Get('templates')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get interview templates with filtering' })
+  async getTemplates(@Query() query: any) {
+    const result = await this.interviewTemplateService.getTemplates(query);
+
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Get('templates/:id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get a specific interview template' })
+  async getTemplate(@Param('id') id: string) {
+    const template = await this.interviewTemplateService.getTemplateById(id);
+
+    return {
+      success: true,
+      data: template,
+    };
+  }
+
+  @Put('templates/:id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Update an interview template' })
+  async updateTemplate(
+    @Param('id') id: string,
+    @Body() updateTemplateDto: UpdateTemplateDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    const template = await this.interviewTemplateService.updateTemplate(id, updateTemplateDto, userId);
+
+    return {
+      success: true,
+      data: template,
+    };
+  }
+
+  @Post('templates/:id/use')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Use an interview template' })
+  async useTemplate(@Param('id') id: string) {
+    const template = await this.interviewTemplateService.useTemplate(id);
+
+    return {
+      success: true,
+      data: template,
+      message: 'Template used successfully',
+    };
+  }
+
+  @Post('templates/:id/rate')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Rate an interview template' })
+  async rateTemplate(
+    @Param('id') id: string,
+    @Body() body: { rating: number },
+  ) {
+    const template = await this.interviewTemplateService.rateTemplate(id, body.rating);
+
+    return {
+      success: true,
+      data: template,
+      message: 'Template rated successfully',
+    };
+  }
+
+  @Get('templates/popular')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get popular interview templates' })
+  async getPopularTemplates(@Query('limit') limit?: number) {
+    const templates = await this.interviewTemplateService.getPopularTemplates(limit);
+
+    return {
+      success: true,
+      data: templates,
+    };
+  }
+
+  @Get('templates/my')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get user\'s interview templates' })
+  async getUserTemplates(@CurrentUser('id') userId: string) {
+    const templates = await this.interviewTemplateService.getUserTemplates(userId);
+
+    return {
+      success: true,
+      data: templates,
+    };
+  }
+
+  @Post('templates/:id/duplicate')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Duplicate an interview template' })
+  async duplicateTemplate(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    const template = await this.interviewTemplateService.duplicateTemplate(id, userId);
+
+    return {
+      success: true,
+      data: template,
+      message: 'Template duplicated successfully',
+    };
+  }
+
+  @Delete('templates/:id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Delete an interview template' })
+  async deleteTemplate(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    await this.interviewTemplateService.deleteTemplate(id, userId);
+
+    return {
+      success: true,
+      message: 'Template deleted successfully',
+    };
+  }
+
+  @Get('templates/stats')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get template statistics' })
+  async getTemplateStats() {
+    const stats = await this.interviewTemplateService.getTemplateStats();
+
+    return {
+      success: true,
+      data: stats,
     };
   }
 }

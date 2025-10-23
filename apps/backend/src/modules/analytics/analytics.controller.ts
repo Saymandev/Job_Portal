@@ -6,6 +6,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
 import { ApplicationAnalyticsService } from './application-analytics.service';
+import { SalaryUpdateService } from './salary-update.service';
 
 @ApiTags('Analytics')
 @Controller('analytics')
@@ -14,7 +15,8 @@ import { ApplicationAnalyticsService } from './application-analytics.service';
 export class AnalyticsController {
   constructor(
     private readonly analyticsService: AnalyticsService,
-    private readonly applicationAnalyticsService: ApplicationAnalyticsService
+    private readonly applicationAnalyticsService: ApplicationAnalyticsService,
+    private readonly salaryUpdateService: SalaryUpdateService,
   ) {}
 
   @Get('employer')
@@ -105,6 +107,60 @@ export class AnalyticsController {
     return {
       success: true,
       data: analysis,
+    };
+  }
+
+  // ========== SALARY DATA UPDATE ENDPOINTS ==========
+
+  @Get('salary-update/status')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Get salary data update status' })
+  async getUpdateStatus() {
+    const status = this.salaryUpdateService.getUpdateStatus();
+
+    return {
+      success: true,
+      data: status,
+    };
+  }
+
+  @Get('salary-update/cache-stats')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Get salary data cache statistics' })
+  async getCacheStats() {
+    const stats = this.salaryUpdateService.getCacheStatistics();
+
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  @Get('salary-update/trigger')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Manually trigger salary data update' })
+  async triggerUpdate() {
+    const result = await this.salaryUpdateService.triggerUpdate();
+
+    return {
+      success: result.success,
+      message: result.message,
+    };
+  }
+
+  @Get('salary-update/clear-cache')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Clear salary data cache' })
+  async clearCache() {
+    this.salaryUpdateService.clearAllCaches();
+
+    return {
+      success: true,
+      message: 'Salary data cache cleared successfully',
     };
   }
 }
