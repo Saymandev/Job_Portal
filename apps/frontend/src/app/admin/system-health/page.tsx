@@ -293,7 +293,7 @@ export default function SystemHealthPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold">
-                {health?.cpu.usage || 0}%
+                {health?.cpu?.usage || 0}%
               </div>
               <p className="text-sm text-muted-foreground">CPU Usage</p>
             </div>

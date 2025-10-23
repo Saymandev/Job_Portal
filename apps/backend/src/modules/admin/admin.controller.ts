@@ -367,8 +367,20 @@ export class AdminController {
 
   @Get('subscriptions')
   @ApiOperation({ summary: 'Get all subscriptions' })
-  async getAllSubscriptions() {
-    const subscriptions = await this.adminService.getAllSubscriptions();
+  async getAllSubscriptions(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('plan') plan?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string
+  ) {
+    const subscriptions = await this.adminService.getAllSubscriptions(
+      page || 1,
+      limit || 10,
+      plan,
+      status,
+      search
+    );
 
     return {
       success: true,

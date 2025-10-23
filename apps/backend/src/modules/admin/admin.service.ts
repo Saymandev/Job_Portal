@@ -231,11 +231,51 @@ export class AdminService {
       .sort({ createdAt: -1 });
   }
 
-  async getAllSubscriptions() {
-    return this.subscriptionModel
-      .find()
+  async getAllSubscriptions(
+    page: number = 1,
+    limit: number = 10,
+    plan?: string,
+    status?: string,
+    search?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Filter by plan
+    if (plan && plan !== 'all') {
+      query.plan = plan;
+    }
+
+    // Filter by status
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { 'user.fullName': { $regex: search, $options: 'i' } },
+        { 'user.email': { $regex: search, $options: 'i' } },
+        { plan: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const subscriptions = await this.subscriptionModel
+      .find(query)
       .populate('user', 'fullName email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.subscriptionModel.countDocuments(query);
+
+    return {
+      subscriptions,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getRevenueStats() {

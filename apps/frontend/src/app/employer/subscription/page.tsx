@@ -4,17 +4,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
-  AlertCircle,
-  ArrowRight,
-  Calendar,
-  CheckCircle,
-  Crown,
-  TrendingUp,
-  Zap
+    AlertCircle,
+    ArrowRight,
+    Calendar,
+    CheckCircle,
+    Crown,
+    TrendingUp,
+    Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -118,10 +119,43 @@ export default function SubscriptionPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading subscription details...</p>
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header Skeleton */}
+          <div className="text-center">
+            <Skeleton className="h-8 w-64 mx-auto mb-2" />
+            <Skeleton className="h-4 w-96 mx-auto" />
+          </div>
+
+          {/* Current Plan Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48 mb-2" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-8 w-32" />
+              <Skeleton className="h-2 w-full" />
+              <Skeleton className="h-4 w-48" />
+            </CardContent>
+          </Card>
+
+          {/* Plans Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32 mb-2" />
+                  <Skeleton className="h-4 w-24" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );

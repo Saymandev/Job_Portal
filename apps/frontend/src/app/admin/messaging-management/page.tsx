@@ -555,7 +555,7 @@ export default function MessagingManagementPage() {
                               {conversation.participants.map(p => p?.fullName || 'Unknown').join(' & ')}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {conversation.participants.map(p => p.email).join(', ')}
+                              {conversation.participants.map(p => p?.email || 'No email').join(', ')}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -693,7 +693,7 @@ export default function MessagingManagementPage() {
                               {message.sender?.fullName || 'Unknown'}
                             </h3>
                             <p className="text-xs text-gray-600">
-                              {message.sender.email} • {message.sender.role}
+                              {message.sender?.email || 'No email'} • {message.sender?.role || 'Unknown'}
                             </p>
                           </div>
                           <div className="flex gap-2">

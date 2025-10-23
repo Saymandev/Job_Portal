@@ -1,5 +1,6 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { clearAuthData, safeGetItem } from '@/lib/auth-utils';
 import { useAuthStore } from '@/store/auth-store';
 import { useCallback, useEffect, useState } from 'react';
@@ -73,7 +74,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-4 w-32 mx-auto" />
+        </div>
       </div>
     );
   }
