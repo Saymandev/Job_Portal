@@ -6,32 +6,32 @@ import { useAuthStore } from '@/store/auth-store';
 import { useChatStore } from '@/store/chat-store';
 import { useNotificationsStore } from '@/store/notifications-store';
 import {
-    BarChart3,
-    Bell,
-    Briefcase,
-    Calendar,
-    ChevronDown,
-    CreditCard,
-    DollarSign,
-    FileText,
-    Heart,
-    Key,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    MessageCircle,
-    MessageSquare,
-    Mic,
-    Moon,
-    Palette,
-    Settings,
-    Shield,
-    Sun,
-    Upload,
-    User,
-    UserCheck,
-    Users,
-    X
+  BarChart3,
+  Bell,
+  Briefcase,
+  Calendar,
+  ChevronDown,
+  CreditCard,
+  DollarSign,
+  FileText,
+  Heart,
+  Key,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageCircle,
+  MessageSquare,
+  Mic,
+  Moon,
+  Palette,
+  Settings,
+  Shield,
+  Sun,
+  Upload,
+  User,
+  UserCheck,
+  Users,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -455,6 +455,7 @@ export default function NavigationHeader() {
                           <>
                             <div className="border-t border-border my-1"></div>
                             
+                            {/* Core Management */}
                             <Link 
                               href="/admin/users" 
                               className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
@@ -479,6 +480,34 @@ export default function NavigationHeader() {
                               <CreditCard className="mr-2 h-4 w-4" />
                               Subscriptions
                             </Link>
+                            
+                            {/* Analytics & Monitoring */}
+                            <div className="border-t border-border my-1"></div>
+                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Analytics & Monitoring
+                            </div>
+                            <Link 
+                              href="/admin/analytics" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <BarChart3 className="mr-2 h-4 w-4" />
+                              Platform Analytics
+                            </Link>
+                            <Link 
+                              href="/admin/system-health" 
+                              className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              <Shield className="mr-2 h-4 w-4" />
+                              System Health
+                            </Link>
+                            
+                            {/* Communication & Support */}
+                            <div className="border-t border-border my-1"></div>
+                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Communication & Support
+                            </div>
                             <Link 
                               href="/admin/messages" 
                               className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
@@ -488,13 +517,19 @@ export default function NavigationHeader() {
                               Messages
                             </Link>
                             <Link 
-                              href="/admin/analytics" 
+                              href="/admin/support-tickets" 
                               className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
                               onClick={() => setIsDropdownOpen(false)}
                             >
-                              <BarChart3 className="mr-2 h-4 w-4" />
-                              Platform Analytics
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Support Tickets
                             </Link>
+                            
+                            {/* Security & Settings */}
+                            <div className="border-t border-border my-1"></div>
+                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Security & Settings
+                            </div>
                             <Link 
                               href="/admin/ip-management" 
                               className="flex items-center px-4 py-2 text-sm text-popover-foreground hover:bg-accent"

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AccountManager, AccountManagerDocument } from '../account-managers/schemas/account-manager.schema';
 import { AdvancedAnalyticsService } from '../advanced-analytics/advanced-analytics.service';
+import { AnalyticsInsight, AnalyticsInsightDocument } from '../advanced-analytics/schemas/analytics-insight.schema';
 import { SalaryDataService } from '../analytics/salary-data.service';
 import { SalaryUpdateService } from '../analytics/salary-update.service';
 import { ApiKey, ApiKeyDocument } from '../api-keys/schemas/api-key.schema';
@@ -30,6 +31,7 @@ export class AdminService {
     @InjectModel(InterviewSession.name) private interviewSessionModel: Model<InterviewSessionDocument>,
     @InjectModel(AccountManager.name) private accountManagerModel: Model<AccountManagerDocument>,
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicketDocument>,
+    @InjectModel(AnalyticsInsight.name) private analyticsInsightModel: Model<AnalyticsInsightDocument>,
     // @InjectModel(WhiteLabelConfig.name) private whiteLabelConfigModel: Model<WhiteLabelConfigDocument>,
     private activityService: ActivityService,
     private advancedAnalyticsService: AdvancedAnalyticsService,
@@ -515,21 +517,27 @@ export class AdminService {
   async getAllAnalyticsInsights(limit: number, page: number) {
     const skip = (page - 1) * limit;
     
-    const insights = await this.advancedAnalyticsService.getInsights('admin', {
-      limit,
-      page,
-    });
+    // For admin, get all insights without user restriction
+    const query: any = {
+      isActive: true,
+    };
 
-    const total = await this.advancedAnalyticsService.getInsights('admin', {
-      limit: 1000, // Get total count
-    });
+    const insights = await this.analyticsInsightModel
+      .find(query)
+      .sort({ priority: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('userId', 'name email')
+      .exec();
+
+    const total = await this.analyticsInsightModel.countDocuments(query);
 
     return {
       insights,
-      total: total.length,
+      total,
       page,
       limit,
-      totalPages: Math.ceil(total.length / limit),
+      totalPages: Math.ceil(total / limit),
     };
   }
 

@@ -6,6 +6,7 @@ import { IpBlockService } from '../../common/services/ip-block.service';
 import { AccountManagersModule } from '../account-managers/account-managers.module';
 import { AccountManager, AccountManagerSchema } from '../account-managers/schemas/account-manager.schema';
 import { AdvancedAnalyticsModule } from '../advanced-analytics/advanced-analytics.module';
+import { AnalyticsInsight, AnalyticsInsightSchema } from '../advanced-analytics/schemas/analytics-insight.schema';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { ApiKeysModule } from '../api-keys/api-keys.module';
 import { ApiKey, ApiKeySchema } from '../api-keys/schemas/api-key.schema';
@@ -45,6 +46,7 @@ import { PlatformSettings, PlatformSettingsSchema } from './schemas/platform-set
       { name: InterviewSession.name, schema: InterviewSessionSchema },
       { name: AccountManager.name, schema: AccountManagerSchema },
       { name: SupportTicket.name, schema: SupportTicketSchema },
+      { name: AnalyticsInsight.name, schema: AnalyticsInsightSchema },
       // { name: WhiteLabelConfig.name, schema: WhiteLabelConfigSchema },
     ]),
     AdvancedAnalyticsModule,
