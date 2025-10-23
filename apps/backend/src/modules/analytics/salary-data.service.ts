@@ -159,23 +159,47 @@ export class SalaryDataService {
     }
 
     try {
+      // Clean and prepare search terms
+      const searchPosition = query.position.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+      const searchLocation = query.location.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+      
+      this.logger.log(`Calling Adzuna API for position: "${searchPosition}", location: "${searchLocation}"`);
+      
+      // Adzuna API endpoint for job search (correct endpoint)
       const response = await axios.get('https://api.adzuna.com/v1/api/jobs/us/search/1', {
         params: {
           app_id: appId,
           app_key: appKey,
-          what: query.position,
-          where: query.location,
+          what: searchPosition,
+          where: searchLocation,
           results_per_page: 50,
-          content_type: 'application/json',
         },
-        timeout: 10000,
+        timeout: 15000,
+        headers: {
+          'User-Agent': 'JobPortal/1.0',
+          'Accept': 'application/json',
+        },
       });
 
-      if (response.data && (response.data as any).results) {
+      this.logger.log(`Adzuna API response status: ${response.status}`);
+      this.logger.log(`Adzuna API response data keys: ${Object.keys(response.data || {}).join(', ')}`);
+
+      if (response.data && (response.data as any).results && (response.data as any).results.length > 0) {
+        this.logger.log(`Adzuna API returned ${(response.data as any).results.length} results`);
         return this.transformAdzunaData(response.data as any, query);
+      } else {
+        this.logger.warn('Adzuna API returned no results');
+        return null;
       }
     } catch (error) {
-      this.logger.error('Adzuna API error:', error.message);
+      this.logger.error('Adzuna API error:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        params: error.config?.params,
+      });
     }
 
     return null;
@@ -365,11 +389,23 @@ export class SalaryDataService {
    */
   private transformAdzunaData(data: any, query: any): SalaryData {
     const results = data.results || [];
+    this.logger.log(`Adzuna API returned ${results.length} results`);
+    
+    // Extract salaries from various possible fields
     const salaries = results
-      .map((job: any) => job.salary_min || job.salary_max)
-      .filter((salary: any) => salary && salary > 0);
+      .map((job: any) => {
+        // Try different salary fields that Adzuna might use
+        const salary = job.salary_min || job.salary_max || job.salary || 
+                      this.extractSalaryFromText(job.title) || 
+                      this.extractSalaryFromText(job.description);
+        return salary;
+      })
+      .filter((salary: any) => salary && salary > 0 && salary < 500000); // Reasonable salary range
+
+    this.logger.log(`Extracted ${salaries.length} valid salaries from Adzuna data`);
 
     if (salaries.length === 0) {
+      this.logger.warn('No valid salary data found in Adzuna response, using fallback');
       return this.getFallbackSalary(query);
     }
 
