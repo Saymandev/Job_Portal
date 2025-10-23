@@ -250,7 +250,7 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+                className={`relative transition-all duration-300 hover:shadow-xl hover:scale-105 flex flex-col h-full ${
                   plan.popular ? `border-2 ${plan.borderColor} shadow-2xl ${plan.bgColor} ring-2 ring-purple-200` : 
                   currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 dark:border-green-400 shadow-xl bg-green-50 dark:bg-green-900/20 ring-2 ring-green-200' : 
                   `border ${plan.borderColor} ${plan.bgColor} hover:shadow-lg`
@@ -288,8 +288,8 @@ export default function PricingPage() {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3 mb-8">
+                <CardContent className="pt-0 flex flex-col flex-grow">
+                  <div className="space-y-3 mb-8 flex-grow">
                     <ul className="space-y-3">
                       {plan.features.map((feature, index) => {
                         const FeatureIcon = feature.icon;
@@ -310,7 +310,7 @@ export default function PricingPage() {
                     </ul>
                   </div>
                   <Button
-                    className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
+                    className={`w-full h-12 text-base font-semibold transition-all duration-200 mt-auto ${
                       plan.popular 
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl' 
                         : plan.buttonStyle === 'outline'
@@ -338,7 +338,7 @@ export default function PricingPage() {
 
 
         {/* FAQ or Additional Info */}
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto pt-16">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">Frequently Asked Questions</h2>
             <p className="text-xl text-muted-foreground">
