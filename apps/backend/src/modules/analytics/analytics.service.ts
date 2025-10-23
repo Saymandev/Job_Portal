@@ -489,4 +489,122 @@ export class AnalyticsService {
       .map(([category, count]) => ({ category, count }))
       .sort((a: any, b: any) => b.count - a.count);
   }
+
+  // ========== SALARY INSIGHTS ==========
+
+  async getSalaryInsights(query: any): Promise<any> {
+    const { position = 'Software Engineer', location = 'San Francisco', experienceLevel = 'Mid-level' } = query;
+
+    // Mock salary data - in a real app, this would come from a salary database
+    const baseSalary = this.getBaseSalary(position, experienceLevel);
+    const locationMultiplier = this.getLocationMultiplier(location);
+    const adjustedSalary = Math.round(baseSalary * locationMultiplier);
+
+    const salaryRange = {
+      min: Math.round(adjustedSalary * 0.8),
+      max: Math.round(adjustedSalary * 1.3),
+      median: adjustedSalary,
+      average: Math.round(adjustedSalary * 1.05),
+    };
+
+    const percentile = {
+      p25: Math.round(adjustedSalary * 0.85),
+      p50: adjustedSalary,
+      p75: Math.round(adjustedSalary * 1.15),
+      p90: Math.round(adjustedSalary * 1.25),
+    };
+
+    const marketTrend = {
+      direction: Math.random() > 0.5 ? 'up' : 'down',
+      percentage: Math.floor(Math.random() * 15) + 5,
+      period: 'last 12 months',
+    };
+
+    const recommendations = {
+      competitiveSalary: Math.round(adjustedSalary * 1.1),
+      budgetRange: {
+        min: Math.round(adjustedSalary * 0.9),
+        max: Math.round(adjustedSalary * 1.2),
+      },
+      negotiationTips: [
+        'Research market rates for similar positions',
+        'Consider total compensation package, not just salary',
+        'Highlight unique skills and experience',
+        'Be prepared to discuss specific achievements',
+        'Consider non-monetary benefits and growth opportunities',
+      ],
+    };
+
+    return {
+      position,
+      location,
+      experienceLevel,
+      salaryRange,
+      marketTrend,
+      percentile,
+      recommendations,
+      dataPoints: Math.floor(Math.random() * 500) + 100,
+      lastUpdated: new Date(),
+    };
+  }
+
+  async getMarketAnalysis(): Promise<any> {
+    // Mock market analysis data
+    const hotSkills = [
+      { skill: 'React', demand: 85, avgSalary: 95000 },
+      { skill: 'Node.js', demand: 78, avgSalary: 92000 },
+      { skill: 'Python', demand: 82, avgSalary: 88000 },
+      { skill: 'AWS', demand: 75, avgSalary: 105000 },
+      { skill: 'TypeScript', demand: 88, avgSalary: 98000 },
+    ];
+
+    const topPayingRoles = [
+      { role: 'Senior Software Engineer', avgSalary: 130000, growth: 12 },
+      { role: 'DevOps Engineer', avgSalary: 125000, growth: 18 },
+      { role: 'Data Scientist', avgSalary: 120000, growth: 15 },
+      { role: 'Product Manager', avgSalary: 115000, growth: 8 },
+      { role: 'Full Stack Developer', avgSalary: 110000, growth: 10 },
+    ];
+
+    const locationInsights = [
+      { location: 'San Francisco', avgSalary: 140000, costOfLiving: 'High' },
+      { location: 'New York', avgSalary: 135000, costOfLiving: 'High' },
+      { location: 'Seattle', avgSalary: 125000, costOfLiving: 'Medium-High' },
+      { location: 'Austin', avgSalary: 110000, costOfLiving: 'Medium' },
+      { location: 'Denver', avgSalary: 105000, costOfLiving: 'Medium' },
+    ];
+
+    return {
+      overallTrend: 'growing',
+      hotSkills,
+      topPayingRoles,
+      locationInsights,
+    };
+  }
+
+  private getBaseSalary(position: string, experienceLevel: string): number {
+    const baseSalaries: { [key: string]: { [key: string]: number } } = {
+      'Software Engineer': { 'Entry-level': 70000, 'Mid-level': 95000, 'Senior-level': 130000, 'Executive': 180000 },
+      'Data Scientist': { 'Entry-level': 80000, 'Mid-level': 110000, 'Senior-level': 150000, 'Executive': 200000 },
+      'Product Manager': { 'Entry-level': 75000, 'Mid-level': 105000, 'Senior-level': 140000, 'Executive': 190000 },
+      'DevOps Engineer': { 'Entry-level': 85000, 'Mid-level': 115000, 'Senior-level': 155000, 'Executive': 210000 },
+    };
+
+    return baseSalaries[position]?.[experienceLevel] || 95000;
+  }
+
+  private getLocationMultiplier(location: string): number {
+    const multipliers: { [key: string]: number } = {
+      'San Francisco': 1.4,
+      'New York': 1.35,
+      'Seattle': 1.25,
+      'Austin': 1.1,
+      'Denver': 1.05,
+      'Chicago': 1.0,
+      'Atlanta': 0.95,
+      'Dallas': 0.9,
+    };
+
+    return multipliers[location] || 1.0;
+  }
 }

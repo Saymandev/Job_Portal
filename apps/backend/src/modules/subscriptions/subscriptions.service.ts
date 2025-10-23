@@ -725,7 +725,7 @@ export class SubscriptionsService {
         features.applicationAnalyticsEnabled = false;
         features.directMessagingEnabled = false;
         features.featuredProfileEnabled = false;
-        features.unlimitedResumeDownloads = false;
+        features.unlimitedResumeDownloadsEnabled = false;
         features.salaryInsightsEnabled = false;
         features.interviewPrepEnabled = false;
         features.applicationsLimit = 0;
@@ -736,7 +736,7 @@ export class SubscriptionsService {
         features.priorityApplicationsEnabled = true;
         features.enhancedMatchingEnabled = true;
         features.applicationAnalyticsEnabled = true;
-        features.unlimitedResumeDownloads = true;
+        features.unlimitedResumeDownloadsEnabled = true;
         features.directMessagingEnabled = false;
         features.featuredProfileEnabled = false;
         features.salaryInsightsEnabled = false;
@@ -751,7 +751,7 @@ export class SubscriptionsService {
         features.applicationAnalyticsEnabled = true;
         features.directMessagingEnabled = true;
         features.featuredProfileEnabled = true;
-        features.unlimitedResumeDownloads = true;
+        features.unlimitedResumeDownloadsEnabled = true;
         features.salaryInsightsEnabled = true;
         features.interviewPrepEnabled = true;
         features.applicationsLimit = 0;
@@ -764,7 +764,7 @@ export class SubscriptionsService {
         features.applicationAnalyticsEnabled = true;
         features.directMessagingEnabled = true;
         features.featuredProfileEnabled = true;
-        features.unlimitedResumeDownloads = true;
+        features.unlimitedResumeDownloadsEnabled = true;
         features.salaryInsightsEnabled = true;
         features.interviewPrepEnabled = true;
         features.applicationsLimit = 0;

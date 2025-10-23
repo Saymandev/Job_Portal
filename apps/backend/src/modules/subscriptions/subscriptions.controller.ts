@@ -83,7 +83,7 @@ export class SubscriptionsController {
       priorityApplicationsEnabled: subscription.priorityApplicationsEnabled || false,
       enhancedMatchingEnabled: subscription.enhancedMatchingEnabled || false,
       applicationAnalyticsEnabled: subscription.applicationAnalyticsEnabled || false,
-      unlimitedResumeDownloads: subscription.unlimitedResumeDownloads || false,
+      unlimitedResumeDownloadsEnabled: subscription.unlimitedResumeDownloadsEnabled || false,
       directMessagingEnabled: subscription.directMessagingEnabled || false,
       featuredProfileEnabled: subscription.featuredProfileEnabled || false,
       salaryInsightsEnabled: subscription.salaryInsightsEnabled || false,

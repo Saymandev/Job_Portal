@@ -81,4 +81,30 @@ export class AnalyticsController {
       data: analytics,
     };
   }
+
+  @Get('salary-insights')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get salary insights and market data' })
+  async getSalaryInsights(@Query() query: any) {
+    const insights = await this.analyticsService.getSalaryInsights(query);
+
+    return {
+      success: true,
+      data: insights,
+    };
+  }
+
+  @Get('market-analysis')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get market analysis data' })
+  async getMarketAnalysis() {
+    const analysis = await this.analyticsService.getMarketAnalysis();
+
+    return {
+      success: true,
+      data: analysis,
+    };
+  }
 }

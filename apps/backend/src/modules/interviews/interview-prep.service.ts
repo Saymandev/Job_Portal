@@ -68,6 +68,24 @@ export class InterviewPrepService {
   /**
    * Get interview questions by category and difficulty
    */
+  async getQuestions(query: any): Promise<InterviewQuestion[]> {
+    const { category, difficulty, industry, role } = query;
+    return this.getInterviewQuestions(category, difficulty, industry, role, 20);
+  }
+
+  async getTemplates(): Promise<InterviewTemplate[]> {
+    return this.getInterviewTemplates();
+  }
+
+  async getSessions(employerId: string): Promise<InterviewSession[]> {
+    return this.getInterviewSessions(employerId);
+  }
+
+  async getTips(query: any): Promise<any> {
+    const { industry = 'Technology', role = 'Software Engineer', difficulty = 'medium' } = query;
+    return this.getInterviewTips(industry, role, difficulty);
+  }
+
   async getInterviewQuestions(
     category?: string,
     difficulty?: string,

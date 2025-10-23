@@ -1,11 +1,12 @@
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/roles.guard';
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
+import { InterviewPrepService } from './interview-prep.service';
 import { InterviewsService } from './interviews.service';
 
 export class UpdateInterviewStatusDto {
@@ -47,7 +48,10 @@ export class ApproveRescheduleDto {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class InterviewsController {
-  constructor(private readonly interviewsService: InterviewsService) {}
+  constructor(
+    private readonly interviewsService: InterviewsService,
+    private readonly interviewPrepService: InterviewPrepService
+  ) {}
 
   @Post()
   @UseGuards(RolesGuard)
@@ -204,6 +208,60 @@ export class InterviewsController {
       success: true,
       message: approveDto.approved ? 'Reschedule request approved' : 'Reschedule request rejected',
       data: interview,
+    };
+  }
+
+  // ========== INTERVIEW PREP ENDPOINTS ==========
+
+  @Get('prep/questions')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get interview questions' })
+  async getInterviewQuestions(@Query() query: any) {
+    const questions = await this.interviewPrepService.getQuestions(query);
+
+    return {
+      success: true,
+      data: questions,
+    };
+  }
+
+  @Get('prep/templates')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get interview templates' })
+  async getInterviewTemplates() {
+    const templates = await this.interviewPrepService.getTemplates();
+
+    return {
+      success: true,
+      data: templates,
+    };
+  }
+
+  @Get('prep/sessions')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get interview sessions' })
+  async getInterviewSessions(@CurrentUser('id') userId: string) {
+    const sessions = await this.interviewPrepService.getSessions(userId);
+
+    return {
+      success: true,
+      data: sessions,
+    };
+  }
+
+  @Get('prep/tips')
+  @UseGuards(RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @ApiOperation({ summary: 'Get interview preparation tips' })
+  async getInterviewTips(@Query() query: any) {
+    const tips = await this.interviewPrepService.getTips(query);
+
+    return {
+      success: true,
+      data: tips,
     };
   }
 }

@@ -25,7 +25,7 @@ interface EnhancedFeaturesProps {
     priorityApplicationsEnabled?: boolean;
     enhancedMatchingEnabled?: boolean;
     applicationAnalyticsEnabled?: boolean;
-    unlimitedResumeDownloads?: boolean;
+    unlimitedResumeDownloadsEnabled?: boolean;
     directMessagingEnabled?: boolean;
     featuredProfileEnabled?: boolean;
     salaryInsightsEnabled?: boolean;

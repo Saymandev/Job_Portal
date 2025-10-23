@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Application, ApplicationSchema } from '../applications/schemas/application.schema';
 import { MailModule } from '../mail/mail.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { InterviewPrepService } from './interview-prep.service';
 import { InterviewsController } from './interviews.controller';
 import { InterviewsCronService } from './interviews.cron';
 import { InterviewsService } from './interviews.service';
@@ -18,7 +19,7 @@ import { Interview, InterviewSchema } from './schemas/interview.schema';
     NotificationsModule,
   ],
   controllers: [InterviewsController],
-  providers: [InterviewsService, InterviewsCronService],
-  exports: [InterviewsService],
+  providers: [InterviewsService, InterviewsCronService, InterviewPrepService],
+  exports: [InterviewsService, InterviewPrepService],
 })
 export class InterviewsModule {}

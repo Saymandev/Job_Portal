@@ -84,7 +84,7 @@ export class Subscription {
   featuredProfileEnabled: boolean;
 
   @Prop({ default: false })
-  unlimitedResumeDownloads: boolean;
+  unlimitedResumeDownloadsEnabled: boolean;
 
   @Prop({ default: false })
   salaryInsightsEnabled: boolean;
