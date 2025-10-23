@@ -117,7 +117,7 @@ const plans = [
     id: 'pro',
     name: 'Professional',
     price: 149,
-    interval: 'month',
+    interval: '2 months',
     icon: Crown,
     color: 'text-purple-600',
     bgColor: 'bg-gradient-to-br from-purple-50 to-indigo-50',
@@ -136,7 +136,7 @@ const plans = [
     id: 'enterprise',
     name: 'Enterprise',
     price: 499,
-    interval: 'month',
+    interval: '3 months',
     icon: Crown,
     color: 'text-amber-600',
     bgColor: 'bg-gradient-to-br from-amber-50 to-orange-50',
@@ -250,7 +250,7 @@ export default function PricingPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative transition-all duration-300 hover:shadow-xl hover:scale-105 flex flex-col h-full ${
+                className={`relative transition-all duration-300 hover:shadow-xl hover:scale-105 flex flex-col ${
                   plan.popular ? `border-2 ${plan.borderColor} shadow-2xl ${plan.bgColor} ring-2 ring-purple-200` : 
                   currentSubscription && currentSubscription.plan === plan.id ? 'border-2 border-green-500 dark:border-green-400 shadow-xl bg-green-50 dark:bg-green-900/20 ring-2 ring-green-200' : 
                   `border ${plan.borderColor} ${plan.bgColor} hover:shadow-lg`
@@ -283,13 +283,15 @@ export default function PricingPage() {
                     </div>
                     {plan.price > 0 && (
                       <p className="text-sm text-muted-foreground mt-2">
-                        Billed {plan.interval === 'month' ? 'monthly' : 'annually'}
+                        Billed {plan.interval === 'month' ? 'monthly' : 
+                                plan.interval === '2 months' ? 'every 2 months' :
+                                plan.interval === '3 months' ? 'every 3 months' : 'annually'}
                       </p>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0 flex flex-col flex-grow">
-                  <div className="space-y-3 mb-8 flex-grow">
+                <CardContent className="pt-0 flex flex-col">
+                  <div className="space-y-3 mb-6">
                     <ul className="space-y-3">
                       {plan.features.map((feature, index) => {
                         const FeatureIcon = feature.icon;
