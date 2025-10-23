@@ -48,7 +48,7 @@ export default function ApiKeysManager() {
     try {
       setLoading(true);
       const response = await api.get('/api-keys');
-      setApiKeys(response.data.data);
+      setApiKeys((response.data as any).data);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -80,7 +80,7 @@ export default function ApiKeysManager() {
         permissions: newKeyPermissions,
       });
 
-      setCreatedKey(response.data.data);
+      setCreatedKey((response.data as any).data);
       setNewKeyName('');
       setNewKeyPermissions([]);
       setShowCreateDialog(false);

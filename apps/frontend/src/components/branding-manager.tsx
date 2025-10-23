@@ -137,7 +137,7 @@ export default function BrandingManager() {
     try {
       setLoading(true);
       const response = await api.get('/branding');
-      setBranding(response.data.data || defaultBranding);
+      setBranding((response.data as any).data || defaultBranding);
     } catch (error: any) {
       if (error.response?.status === 404) {
         setBranding(defaultBranding);
@@ -161,7 +161,7 @@ export default function BrandingManager() {
     try {
       setSaving(true);
       const response = await api.post('/branding', branding);
-      setBranding(response.data.data);
+      setBranding((response.data as any).data);
       toast({
         title: 'Success',
         description: 'Branding saved successfully',
@@ -186,7 +186,7 @@ export default function BrandingManager() {
     try {
       setDomainCheck({ checking: true });
       const response = await api.get(`/branding/domain/check?domain=${domain}`);
-      setDomainCheck({ available: response.data.data.available });
+      setDomainCheck({ available: (response.data as any).data.available });
     } catch (error: any) {
       setDomainCheck({ available: false });
     }

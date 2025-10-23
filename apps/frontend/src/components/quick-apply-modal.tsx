@@ -65,8 +65,8 @@ export function QuickApplyModal({
   const fetchUserResume = async () => {
     try {
       const response = await api.get('/users/cv');
-      if (response.data.success && response.data.data.resume) {
-        const resume = response.data.data.resume;
+      if ((response.data as any).success && (response.data as any).data.resume) {
+        const resume = (response.data as any).data.resume;
         setResumeUrl(resume.url || resume);
         setSelectedResume(resume.url || resume);
       }
@@ -79,10 +79,10 @@ export function QuickApplyModal({
     try {
       setIsLoading(true);
       const response = await api.get('/cover-letter-templates');
-      if (response.data.success) {
-        setCoverLetterTemplates(response.data.data);
+      if ((response.data as any).success) {
+        setCoverLetterTemplates((response.data as any).data);
         // Auto-select default template
-        const defaultTemplate = response.data.data.find((t: CoverLetterTemplate) => t.isDefault);
+        const defaultTemplate = (response.data as any).data.find((t: CoverLetterTemplate) => t.isDefault);
         if (defaultTemplate) {
           setSelectedTemplate(defaultTemplate._id);
         }
@@ -103,8 +103,8 @@ export function QuickApplyModal({
         templateId: selectedTemplate || undefined,
       });
 
-      if (response.data.success) {
-        setCoverLetter(response.data.data.coverLetter);
+      if ((response.data as any).success) {
+        setCoverLetter((response.data as any).data.coverLetter);
         toast({
           title: 'Cover Letter Generated',
           description: 'You can edit it before submitting',
@@ -132,7 +132,7 @@ export function QuickApplyModal({
         coverLetter: coverLetter || undefined,
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success!',
           description: 'Your application has been submitted',

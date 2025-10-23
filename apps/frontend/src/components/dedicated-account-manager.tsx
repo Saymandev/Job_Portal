@@ -84,7 +84,7 @@ export default function DedicatedAccountManager() {
     try {
       setLoading(true);
       const response = await api.get('/account-managers/client/me');
-      setAssignment(response.data.data);
+      setAssignment((response.data as any).data);
     } catch (error: any) {
       if (error.response?.status === 404) {
         setAssignment(null);

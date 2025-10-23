@@ -86,8 +86,8 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.get('/messaging-permissions/my-requests');
       
-      if (response.data.success) {
-        set({ myRequests: response.data.data, isLoading: false });
+      if ((response.data as any).success) {
+        set({ myRequests: (response.data as any).data, isLoading: false });
       } else {
         set({ error: 'Failed to fetch permission requests', isLoading: false });
       }
@@ -105,8 +105,8 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.get('/messaging-permissions/received-requests');
       
-      if (response.data.success) {
-        set({ receivedRequests: response.data.data, isLoading: false });
+      if ((response.data as any).success) {
+        set({ receivedRequests: (response.data as any).data, isLoading: false });
       } else {
         set({ error: 'Failed to fetch received requests', isLoading: false });
       }
@@ -124,8 +124,8 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.get('/messaging-permissions/active');
       
-      if (response.data.success) {
-        set({ activePermissions: response.data.data, isLoading: false });
+      if ((response.data as any).success) {
+        set({ activePermissions: (response.data as any).data, isLoading: false });
       } else {
         set({ error: 'Failed to fetch active permissions', isLoading: false });
       }
@@ -141,8 +141,8 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.get('/messaging-permissions/stats');
       
-      if (response.data.success) {
-        set({ stats: response.data.data });
+      if ((response.data as any).success) {
+        set({ stats: (response.data as any).data });
       }
     } catch (error: any) {
       console.error('Failed to fetch permission stats:', error);
@@ -153,7 +153,7 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.post('/messaging-permissions/request', data);
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         // Refresh the requests list
         get().fetchMyRequests();
         get().fetchStats();
@@ -172,7 +172,7 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
         responseMessage,
       });
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         // Refresh the relevant lists
         get().fetchReceivedRequests();
         get().fetchActivePermissions();
@@ -189,7 +189,7 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.patch(`/messaging-permissions/${permissionId}/revoke`);
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         // Refresh the relevant lists
         get().fetchMyRequests();
         get().fetchActivePermissions();
@@ -206,7 +206,7 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.post(`/messaging-permissions/block/${targetUserId}`);
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         // Refresh the relevant lists
         get().fetchActivePermissions();
         get().fetchStats();
@@ -222,7 +222,7 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.post(`/messaging-permissions/unblock/${targetUserId}`);
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         // Refresh the relevant lists
         get().fetchActivePermissions();
         get().fetchStats();
@@ -238,8 +238,8 @@ export const useMessagingPermissionsStore = create<MessagingPermissionsState>((s
     try {
       const response = await api.get(`/messaging-permissions/check/${targetUserId}`);
       
-      if (response.data.success) {
-        return response.data.data;
+      if ((response.data as any).success) {
+        return (response.data as any).data; 
       } else {
         return { canMessage: false, reason: 'Failed to check permission' };
       }

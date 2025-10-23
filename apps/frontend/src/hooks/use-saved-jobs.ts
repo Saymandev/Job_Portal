@@ -42,8 +42,8 @@ export const useSavedJobs = () => {
       const response = await api.get('/saved-jobs?limit=100'); // Get all saved jobs
       
       
-      if (response.data.success) {
-        const jobs = response.data.data;
+      if ((response.data as any).success) {
+        const jobs = (response.data as any).data;
         
         setSavedJobIds(new Set(jobs.map((sj: SavedJob) => sj.jobId._id)));
       } else {
@@ -86,7 +86,7 @@ export const useSavedJobs = () => {
       
       const response = await api.post('/saved-jobs', payload);
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         setSavedJobIds(prev => new Set([...prev, jobId]));
         toast({
           title: 'Job Saved',
@@ -148,8 +148,8 @@ export const useSavedJobs = () => {
   const getSavedJobStats = async () => {
     try {
       const response = await api.get('/saved-jobs/stats');
-      if (response.data.success) {
-        return response.data.data;
+      if ((response.data as any).success) {
+        return (response.data as any).data;
       }
     } catch (error) {
       console.error('Error fetching saved job stats:', error);
@@ -160,8 +160,8 @@ export const useSavedJobs = () => {
   const getRecommendations = async (limit: number = 10) => {
     try {
       const response = await api.get(`/saved-jobs/recommendations?limit=${limit}`);
-      if (response.data.success) {
-        return response.data.data;
+      if ((response.data as any).success) {
+        return (response.data as any).data;
       }
     } catch (error) {
       console.error('Error fetching recommendations:', error);

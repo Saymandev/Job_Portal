@@ -43,7 +43,7 @@ export default function ResumeDownload({
       });
       
       // Create blob and download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data as any as BlobPart], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

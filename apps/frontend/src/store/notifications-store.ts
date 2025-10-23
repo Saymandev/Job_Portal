@@ -60,9 +60,9 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
       const response = await api.get(`/notifications?${params}`);
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         set({ 
-          notifications: response.data.data,
+          notifications: (response.data as any).data,
           isLoading: false 
         });
       } else {
@@ -89,8 +89,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     
       const response = await api.get('/notifications/unread-count');
       
-      if (response.data.success) {
-        set({ unreadCount: response.data.data.count });
+      if ((response.data as any).success) {
+        set({ unreadCount: (response.data as any).data.count });
         
       } else {
         console.warn('⚠️ API returned success: false');
@@ -129,7 +129,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       const response = await api.patch(`/notifications/${notificationId}/read`);
       
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         set(state => ({
           notifications: state.notifications.map(notification =>
             notification._id === notificationId
@@ -155,7 +155,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     try {
       const response = await api.patch('/notifications/mark-all-read');
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         set(state => ({
           notifications: state.notifications.map(notification => ({
             ...notification,
@@ -173,7 +173,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     try {
       const response = await api.delete(`/notifications/${notificationId}`);
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         set(state => {
           const notification = state.notifications.find(n => n._id === notificationId);
           return {

@@ -175,9 +175,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await api.get('/chat/conversations');
       
-      if (response.data.success) {
+      if ((response.data as any).success) {
         // Deduplicate conversations by _id
-        const conversations = response.data.data;
+        const conversations = (response.data as any).data;
         const uniqueConversations = deduplicateConversations(conversations);
         
         
@@ -201,8 +201,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         jobId,
       });
       
-      if (response.data.success) {
-        const newConversation = response.data.data;
+      if ((response.data as any).success) {
+        const newConversation = (response.data as any).data;
         set(state => {
           // Check if conversation already exists to prevent duplicates
           const conversationExists = state.conversations.some(conv => conv._id === newConversation._id);
@@ -252,8 +252,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       try {
         // Fetch fresh conversation data with populated participants
         const response = await api.get(`/chat/conversations/${conversationId}`);
-        if (response.data.success) {
-          const freshConversation = response.data.data;
+        if ((response.data as any).success) {
+          const freshConversation = (response.data as any).data;
           set({ currentConversation: freshConversation });
           
           // Update the conversation in the conversations array as well
@@ -292,8 +292,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await api.get(`/chat/conversations/${conversationId}/messages?page=${page}&limit=50`);
       
-      if (response.data.success) {
-        const fetchedMessages = response.data.data;
+      if ((response.data as any).success) {
+        const fetchedMessages = (response.data as any).data;
         
         
         // Sort messages by creation date to ensure proper order (oldest first)
@@ -363,8 +363,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
       });
       
-      if (response.data.success) {
-        const newMessage = response.data.data;
+      if ((response.data as any).success) {
+        const newMessage = (response.data as any).data;
         
         // Don't add to local state immediately - let socket listener handle it
         // This prevents duplicate messages

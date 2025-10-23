@@ -12,6 +12,7 @@ api.interceptors.request.use(
   (config) => {
     const token = safeGetItem('accessToken');
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -39,8 +40,8 @@ api.interceptors.response.use(
           { refreshToken }
         );
 
-        safeSetItem('accessToken', data.accessToken);
-        api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
+        safeSetItem('accessToken', (data as any).accessToken);
+        api.defaults.headers.common.Authorization = `Bearer ${(data as any).accessToken}`;
 
         return api(originalRequest);
       } catch (refreshError) {

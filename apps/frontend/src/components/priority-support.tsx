@@ -97,7 +97,7 @@ export default function PrioritySupport() {
       if (filters.priority !== 'all') params.priority = filters.priority;
       
       const response = await api.get('/priority-support/tickets', { params });
-      setTickets(response.data.data);
+      setTickets((response.data as any).data);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -112,7 +112,7 @@ export default function PrioritySupport() {
   const fetchSupportInfo = useCallback(async () => {
     try {
       const response = await api.get('/priority-support/info');
-      setSupportInfo(response.data.data);
+      setSupportInfo((response.data as any).data);
     } catch (error: any) {
       console.error('Failed to fetch support info:', error);
     }

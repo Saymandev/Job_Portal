@@ -69,8 +69,8 @@ export default function ApplicationAnalytics({ isEnabled, timeRange = '30d' }: A
     
     try {
       const response = await api.get(`analytics/applications?timeRange=${timeRange}`);
-      if (response.data.success) {
-        setAnalytics(response.data.data);
+      if ((response.data as any).success) {
+        setAnalytics((response.data as any).data);
       }
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to fetch analytics');

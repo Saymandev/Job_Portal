@@ -114,8 +114,8 @@ export const useJobsStore = create<JobsState>((set, get) => ({
       const { data } = await api.get('/jobs', { params });
 
       set({
-        jobs: data.data,
-        pagination: data.meta,
+        jobs: (data as any).data,
+        pagination: (data as any).meta,
         isLoading: false,
       });
     } catch (error) {
@@ -128,7 +128,7 @@ export const useJobsStore = create<JobsState>((set, get) => ({
     try {
       set({ isLoading: true });
       const { data } = await api.get(`/jobs/${id}`);
-      set({ selectedJob: data.data, isLoading: false });
+      set({ selectedJob: (data as any).data, isLoading: false });
     } catch (error) {
       console.error('Error fetching job:', error);
       set({ isLoading: false });

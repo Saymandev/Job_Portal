@@ -44,8 +44,8 @@ export default function NotificationSettingsPage() {
   const fetchPreferences = async () => {
     try {
       const response = await api.get('/users/me');
-      if (response.data.success && response.data.data.notificationPreferences) {
-        setPreferences(response.data.data.notificationPreferences);
+      if ((response.data as any).success && (response.data as any).data.notificationPreferences) {
+        setPreferences((response.data as any).data.notificationPreferences);
       }
     } catch (error) {
       console.error('Error fetching preferences:', error);
@@ -63,7 +63,7 @@ export default function NotificationSettingsPage() {
         notificationPreferences: preferences,
       });
 
-      if (response.data.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: 'Notification preferences saved successfully',

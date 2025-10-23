@@ -96,7 +96,7 @@ export default function AdvancedAnalytics() {
     try {
       setLoading(true);
       const response = await api.get('/advanced-analytics/dashboard');
-      setDashboard(response.data.data);
+      setDashboard((response.data as any).data);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -117,7 +117,7 @@ export default function AdvancedAnalytics() {
       if (filters.isRead !== undefined) params.isRead = filters.isRead;
       
       const response = await api.get('/advanced-analytics/insights', { params });
-      setInsights(response.data.data);
+      setInsights((response.data as any).data);
     } catch (error: any) {
       toast({
         title: 'Error',

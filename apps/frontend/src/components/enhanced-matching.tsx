@@ -44,8 +44,8 @@ export default function EnhancedMatching({ jobId, employerId, isEnabled }: Enhan
     
     try {
       const response = await api.get(`/jobs/${jobId}/enhanced-matches`);
-      if (response.data.success) {
-        setMatches(response.data.data);
+      if ((response.data as any).success) {
+        setMatches((response.data as any).data);
       }
     } catch (error: any) {
       setError(error.response?.data?.message || 'Failed to fetch enhanced matches');

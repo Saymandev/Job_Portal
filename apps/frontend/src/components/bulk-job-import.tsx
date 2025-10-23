@@ -7,14 +7,14 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import {
-    AlertCircle,
-    CheckCircle,
-    Clock,
-    Download,
-    FileText,
-    Trash2,
-    Upload,
-    XCircle
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Download,
+  FileText,
+  Trash2,
+  Upload,
+  XCircle
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -51,7 +51,7 @@ export default function BulkJobImport() {
     try {
       setLoading(true);
       const response = await api.get('/bulk-import');
-      setImports(response.data.data);
+      setImports((response.data as any).data);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -127,7 +127,7 @@ export default function BulkJobImport() {
         responseType: 'blob',
       });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data as any]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'job-import-template.csv');
