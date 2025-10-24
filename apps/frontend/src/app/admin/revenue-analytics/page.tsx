@@ -21,6 +21,27 @@ import {
   Users
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="font-medium text-gray-900">{`Period: ${label}`}</p>
+        <p className="text-blue-600 font-semibold">
+          Revenue: ${payload[0].value}
+        </p>
+        {payload[1] && (
+          <p className="text-gray-600">
+            Subscriptions: {payload[1].value}
+          </p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
 
 interface RevenueStats {
   totalRevenue: number;
@@ -125,12 +146,12 @@ export default function RevenueAnalyticsPage() {
   const fetchRevenueData = useCallback(async () => {
     try {
       const response = await api.get('/admin/revenue/charts');
-      console.log('Revenue data response:', response.data);
+      
       if ((response.data as any).success) {
         setRevenueData((response.data as any).data);
       }
     } catch (error) {
-      console.error('Error fetching revenue data:', error);
+     
       // Set empty data on error
       setRevenueData({ monthly: [], yearly: [] });
     }
@@ -496,76 +517,54 @@ export default function RevenueAnalyticsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-80 flex items-end justify-between space-x-2 relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[320px] bg-gray-50">
-            {/* Y-axis labels */}
-            <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-2">
-              <div className="text-right">${Math.max(...(currentData?.map(d => d.revenue) || [0]))}</div>
-              <div className="text-right">${Math.max(...(currentData?.map(d => d.revenue) || [0])) / 2}</div>
-              <div className="text-right">$0</div>
-            </div>
-            
-            {/* Grid lines */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 left-8 right-0 h-px bg-gray-200"></div>
-              <div className="absolute top-1/2 left-8 right-0 h-px bg-gray-200"></div>
-              <div className="absolute bottom-0 left-8 right-0 h-px bg-gray-200"></div>
-            </div>
-            {revenueData && currentData && currentData.length > 0 ? (() => {
-              const maxRevenue = Math.max(...currentData.map(d => d.revenue));
-              return (
-                <>
-                  {/* Debug info */}
-                  <div className="absolute top-0 left-0 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded">
-                    Rendering {currentData.length} bars | Max: ${maxRevenue}
-                  </div>
-                  {currentData.map((item, index) => {
-                    // Calculate proper bar height with better scaling
-                    const height = maxRevenue > 0 
-                      ? Math.max((item.revenue / maxRevenue) * 85, item.revenue > 0 ? 20 : 12) // 85% max height, 20% min for non-zero, 12% for zero
-                      : 12; // 12% minimum height when no revenue data
-                    
-                    // Debug logging for first few items
-                    if (index < 3) {
-                      console.log(`Bar ${index}:`, {
-                        month: timeRange === 'monthly' ? (item as any).month : (item as any).year,
-                        revenue: item.revenue,
-                        maxRevenue,
-                        height: `${height}%`
-                      });
-                    }
-                    
-                    return (
-                      <div key={index} className="flex flex-col items-center flex-1 min-w-0 ml-8">
-                        <div 
-                          className={`w-8 rounded-t transition-all duration-300 hover:opacity-80 shadow-sm ${
-                            item.revenue > 0 ? 'bg-gradient-to-t from-primary to-primary/80' : 'bg-gradient-to-t from-gray-200 to-gray-100'
-                          }`}
-                          style={{ 
-                            height: `${height}%`,
-                            minHeight: '16px' // Ensure minimum visible height
-                          }}
-                          title={`${timeRange === 'monthly' ? (item as any).month : (item as any).year}: ${formatCurrency(item.revenue)}`}
-                        ></div>
-                        <div className="text-xs text-muted-foreground mt-2 text-center truncate w-full">
-                          {timeRange === 'monthly' ? (item as any).month?.split(' ')[0] : (item as any).year}
-                        </div>
-                        <div className="text-xs font-medium mt-1 text-center">
-                          {formatCurrency(item.revenue)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </>
-              );
-            })() : (
+          <div className="h-80 w-full">
+            {revenueData && currentData && currentData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={currentData.map(item => ({
+                    name: timeRange === 'monthly' 
+                      ? (item as any).month?.split(' ')[0] 
+                      : (item as any).year,
+                    revenue: item.revenue,
+                    subscriptions: item.subscriptions,
+                    fullName: timeRange === 'monthly' 
+                      ? (item as any).month 
+                      : (item as any).year
+                  }))}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 60,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 12 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="#3b82f6"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={60}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground w-full">
                 <div className="text-center">
                   <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <p>No revenue data available</p>
                   <p className="text-sm mt-2">Revenue data will appear here once subscriptions are created</p>
-                  <p className="text-xs mt-1 text-gray-400">
-                    Debug: revenueData={!!revenueData}, currentData={!!currentData}, length={currentData?.length || 0}
-                  </p>
                 </div>
               </div>
             )}
