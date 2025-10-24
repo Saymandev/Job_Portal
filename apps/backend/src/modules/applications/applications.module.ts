@@ -4,6 +4,7 @@ import { JobsModule } from '../jobs/jobs.module';
 import { Job, JobSchema } from '../jobs/schemas/job.schema';
 import { MailModule } from '../mail/mail.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { ApplicationsController } from './applications.controller';
 import { ApplicationsService } from './applications.service';
@@ -23,6 +24,7 @@ import { CoverLetterTemplate, CoverLetterTemplateSchema } from './schemas/cover-
     forwardRef(() => JobsModule),
     MailModule,
     forwardRef(() => NotificationsModule),
+    forwardRef(() => SubscriptionsModule),
   ],
   controllers: [ApplicationsController, CoverLetterTemplatesController],
   providers: [ApplicationsService, CoverLetterTemplatesService],

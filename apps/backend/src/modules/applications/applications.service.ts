@@ -1,5 +1,6 @@
 import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -12,6 +13,7 @@ import { Job, JobDocument } from '../jobs/schemas/job.schema';
 import { MailService } from '../mail/mail.service';
 import { EnhancedNotificationsService } from '../notifications/enhanced-notifications.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
@@ -27,6 +29,7 @@ export class ApplicationsService {
     private mailService: MailService,
     private notificationsService: NotificationsService,
     private enhancedNotificationsService: EnhancedNotificationsService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async create(
@@ -35,45 +38,79 @@ export class ApplicationsService {
   ): Promise<ApplicationDocument> {
     const { jobId, resume, coverLetter, portfolio } = createApplicationDto;
 
-    // Check if job exists
-    const job = await this.jobModel.findById(jobId).populate('company');
-    if (!job || job.status !== 'open') {
-      throw new NotFoundException('Job not found or not accepting applications');
+    try {
+      // Validate input
+      if (!jobId) {
+        throw new BadRequestException('Job ID is required');
+      }
+
+      // Check if job exists
+      const job = await this.jobModel.findById(jobId).populate('company');
+      if (!job) {
+        throw new NotFoundException('Job not found');
+      }
+
+      if (job.status !== 'open') {
+        throw new ConflictException('This job is no longer accepting applications');
+      }
+
+      // Check if already applied
+      const existingApplication = await this.applicationModel.findOne({
+        job: jobId,
+        applicant: userId,
+      });
+
+      if (existingApplication) {
+        throw new ConflictException('You have already applied for this job');
+      }
+
+      // Get user details
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Validate resume
+      const resumeToUse = resume || user.resume;
+      if (!resumeToUse) {
+        throw new BadRequestException('Resume is required to apply for this job');
+      }
+
+      // Create application
+      const application = await this.applicationModel.create({
+        job: jobId,
+        applicant: userId,
+        company: job.company,
+        resume: resumeToUse,
+        coverLetter,
+        portfolio,
+        status: 'pending', // Default status
+      });
+
+      // Increment job application count
+      await this.jobsService.incrementApplicationCount(jobId);
+
+      // Send enhanced notification to job poster (employer)
+      try {
+        await this.enhancedNotificationsService.notifyNewJobApplication(application._id.toString());
+      } catch (error) {
+        console.error('Error sending notification:', error);
+        // Don't fail the application if notification fails
+      }
+
+      // Send confirmation email to applicant
+      try {
+        await this.mailService.sendApplicationConfirmation(user.email, job.title);
+      } catch (error) {
+        console.error('Error sending confirmation email:', error);
+        // Don't fail the application if email fails
+      }
+
+      return application.populate(['job', 'applicant', 'company']);
+    } catch (error) {
+      console.error('Error creating application:', error);
+      throw error;
     }
-
-    // Check if already applied
-    const existingApplication = await this.applicationModel.findOne({
-      job: jobId,
-      applicant: userId,
-    });
-
-    if (existingApplication) {
-      throw new ConflictException('You have already applied for this job');
-    }
-
-    // Get user details
-    const user = await this.userModel.findById(userId);
-
-    // Create application
-    const application = await this.applicationModel.create({
-      job: jobId,
-      applicant: userId,
-      company: job.company,
-      resume: resume || user.resume,
-      coverLetter,
-      portfolio,
-    });
-
-    // Increment job application count
-    await this.jobsService.incrementApplicationCount(jobId);
-
-    // Send enhanced notification to job poster (employer)
-    await this.enhancedNotificationsService.notifyNewJobApplication(application._id.toString());
-
-    // Send confirmation email to applicant
-    await this.mailService.sendApplicationConfirmation(user.email, job.title);
-
-    return application.populate(['job', 'applicant', 'company']);
   }
 
   async findByApplicant(userId: string): Promise<ApplicationDocument[]> {
@@ -107,12 +144,17 @@ export class ApplicationsService {
 
     if (hasPriorityApplications) {
       // Sort by priority: premium users first, then by creation date
-      applications = applications.sort((a, b) => {
-        const aIsPremium = this.isApplicantPremium(a.applicant);
-        const bIsPremium = this.isApplicantPremium(b.applicant);
-        
-        if (aIsPremium && !bIsPremium) return -1;
-        if (!aIsPremium && bIsPremium) return 1;
+      // We need to check premium status for each applicant
+      const applicationsWithPremium = await Promise.all(
+        applications.map(async (app) => ({
+          ...app,
+          isPremium: await this.isApplicantPremium(app.applicant)
+        }))
+      );
+      
+      applications = applicationsWithPremium.sort((a, b) => {
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
         
         // If both have same priority status, sort by creation date (newest first)
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -323,19 +365,102 @@ export class ApplicationsService {
   /**
    * Check if an applicant has premium features (for priority application processing)
    */
-  private isApplicantPremium(applicant: any): boolean {
-    // For now, we'll consider an applicant premium if they have a subscription
-    // In a real implementation, you might check their subscription status
-    // For this demo, we'll use a simple heuristic based on profile completeness
+  private async isApplicantPremium(applicant: any): Promise<boolean> {
+    if (!applicant || !applicant._id) return false;
+    
+    try {
+      // Check if user has an active premium subscription
+      const subscription = await this.subscriptionsService.getUserSubscription(applicant._id.toString());
+      
+      if (!subscription) {
+        // Job seekers don't have subscriptions, but we can check for premium features
+        // based on profile completeness and activity
+        return this.checkJobSeekerPremiumFeatures(applicant);
+      }
+      
+      // Check if subscription is active and has premium features
+      const isActive = subscription.status === 'active';
+      const hasPremiumPlan = ['pro', 'enterprise'].includes(subscription.plan);
+      const hasFeaturedProfile = subscription.featuredProfileEnabled;
+      
+      return isActive && (hasPremiumPlan || hasFeaturedProfile);
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+      // Fallback to profile-based check
+      return this.checkJobSeekerPremiumFeatures(applicant);
+    }
+  }
+
+  /**
+   * Check premium features for job seekers (who don't have subscriptions)
+   */
+  private checkJobSeekerPremiumFeatures(applicant: any): boolean {
     if (!applicant) return false;
     
-    // Check if user has complete profile (indicates they're serious about job searching)
+    // Premium job seekers have:
+    // 1. Complete profile with all essential fields
     const hasCompleteProfile = applicant.skills && 
-                              applicant.skills.length > 0 && 
+                              applicant.skills.length >= 5 && 
                               applicant.location && 
-                              applicant.fullName;
+                              applicant.fullName &&
+                              applicant.professionalTitle &&
+                              (applicant.cvExperience && applicant.cvExperience.length > 0);
     
-    return hasCompleteProfile;
+    // 2. High profile completion percentage (90%+)
+    const profileCompletion = this.calculateProfileCompletion(applicant);
+    const hasHighCompletion = profileCompletion >= 90;
+    
+    // 3. Recent activity (applied to jobs in last 30 days)
+    const hasRecentActivity = applicant.lastLogin && 
+                             (new Date().getTime() - new Date(applicant.lastLogin).getTime()) < (30 * 24 * 60 * 60 * 1000);
+    
+    // 4. Professional indicators
+    const hasProfessionalIndicators = applicant.linkedinUrl || 
+                                     applicant.githubUrl || 
+                                     applicant.portfolioUrl ||
+                                     (applicant.certifications && applicant.certifications.length > 0);
+    
+    return hasCompleteProfile && hasHighCompletion && (hasRecentActivity || hasProfessionalIndicators);
+  }
+
+  /**
+   * Calculate profile completion percentage for job seekers
+   */
+  private calculateProfileCompletion(applicant: any): number {
+    if (!applicant) return 0;
+    
+    const fields = [
+      'fullName',
+      'email', 
+      'phone',
+      'location',
+      'professionalTitle',
+      'bio',
+      'skills',
+      'cvExperience',
+      'cvEducation',
+      'resume',
+      'linkedinUrl',
+      'githubUrl',
+      'portfolioUrl'
+    ];
+    
+    let completedFields = 0;
+    
+    fields.forEach(field => {
+      const value = applicant[field];
+      if (value) {
+        if (Array.isArray(value)) {
+          if (value.length > 0) completedFields++;
+        } else if (typeof value === 'string') {
+          if (value.trim().length > 0) completedFields++;
+        } else {
+          completedFields++;
+        }
+      }
+    });
+    
+    return Math.round((completedFields / fields.length) * 100);
   }
 
   /**
@@ -406,14 +531,31 @@ export class ApplicationsService {
   }
 
   private async getResumeDownloadCount(employerId: string): Promise<number> {
-    // In a real implementation, you'd track downloads in a separate collection
-    // For now, return 0 (unlimited for demo)
-    return 0;
+    try {
+      // Create a simple download tracking collection
+      const downloadCollection = this.applicationModel.db.collection('resume_downloads');
+      const count = await downloadCollection.countDocuments({ employerId });
+      return count;
+    } catch (error) {
+      console.error('Error getting download count:', error);
+      return 0; // Default to 0 on error
+    }
   }
 
   private async trackResumeDownload(employerId: string, applicationId: string): Promise<void> {
-    // Track download for analytics
-    // Resume downloaded by employer
+    try {
+      // Track download for analytics
+      const downloadCollection = this.applicationModel.db.collection('resume_downloads');
+      await downloadCollection.insertOne({
+        employerId,
+        applicationId,
+        downloadedAt: new Date(),
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      console.error('Error tracking download:', error);
+      // Don't throw error as this is not critical
+    }
   }
 
   private generateMockResume(applicant: any): Buffer {
@@ -480,11 +622,10 @@ startxref
    */
   private async checkFeatureEnabled(employerId: string, featureName: string): Promise<boolean> {
     try {
-      // Get subscription from database
-      const { Subscription, SubscriptionSchema } = await import('../subscriptions/schemas/subscription.schema');
-      const subscriptionModel = this.applicationModel.db.model('Subscription', SubscriptionSchema);
+      // Get subscription from database using direct collection access
+      const subscriptionCollection = this.applicationModel.db.collection('subscriptions');
+      const subscription = await subscriptionCollection.findOne({ user: employerId });
       
-      const subscription = await subscriptionModel.findOne({ user: employerId });
       if (!subscription) {
         return false; // No subscription = no features
       }
@@ -494,6 +635,51 @@ startxref
     } catch (error) {
       console.error('Error checking feature:', error);
       return false; // Default to false on error
+    }
+  }
+
+  /**
+   * Get download analytics for an employer
+   */
+  async getDownloadAnalytics(employerId: string): Promise<any> {
+    try {
+      const downloadCollection = this.applicationModel.db.collection('resume_downloads');
+      
+      const [totalDownloads, recentDownloads, downloadsByMonth] = await Promise.all([
+        downloadCollection.countDocuments({ employerId }),
+        downloadCollection.find({ employerId })
+          .sort({ downloadedAt: -1 })
+          .limit(10)
+          .toArray(),
+        downloadCollection.aggregate([
+          { $match: { employerId } },
+          {
+            $group: {
+              _id: {
+                year: { $year: '$downloadedAt' },
+                month: { $month: '$downloadedAt' }
+              },
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { '_id.year': -1, '_id.month': -1 } }
+        ]).toArray()
+      ]);
+
+      return {
+        totalDownloads,
+        recentDownloads,
+        downloadsByMonth,
+        remainingDownloads: Math.max(0, 5 - totalDownloads) // Free plan limit
+      };
+    } catch (error) {
+      console.error('Error getting download analytics:', error);
+      return {
+        totalDownloads: 0,
+        recentDownloads: [],
+        downloadsByMonth: [],
+        remainingDownloads: 5
+      };
     }
   }
 
@@ -520,13 +706,44 @@ startxref
     // Filter by job IDs
     query.job = { $in: jobIds };
 
-    // Search functionality
+    // Search functionality - need to use aggregation for populated fields
+    let searchPipeline: any[] = [];
     if (search) {
-      query.$or = [
-        { 'applicant.name': { $regex: search, $options: 'i' } },
-        { 'applicant.email': { $regex: search, $options: 'i' } },
-        { 'job.title': { $regex: search, $options: 'i' } },
-        { 'job.company.name': { $regex: search, $options: 'i' } }
+      searchPipeline = [
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'applicant',
+            foreignField: '_id',
+            as: 'applicantData'
+          }
+        },
+        {
+          $lookup: {
+            from: 'jobs',
+            localField: 'job',
+            foreignField: '_id',
+            as: 'jobData'
+          }
+        },
+        {
+          $lookup: {
+            from: 'companies',
+            localField: 'jobData.company',
+            foreignField: '_id',
+            as: 'companyData'
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { 'applicantData.fullName': { $regex: search, $options: 'i' } },
+              { 'applicantData.email': { $regex: search, $options: 'i' } },
+              { 'jobData.title': { $regex: search, $options: 'i' } },
+              { 'companyData.name': { $regex: search, $options: 'i' } }
+            ]
+          }
+        }
       ];
     }
 
@@ -552,22 +769,80 @@ startxref
       sortConfig.createdAt = -1; // Default sort by newest
     }
 
-    const applications = await this.applicationModel
-      .find(query)
-      .populate('applicant', 'name email avatar')
-      .populate({
-        path: 'job',
-        select: 'title company location workType',
-        populate: {
-          path: 'company',
-          select: 'name logo'
-        }
-      })
-      .sort(sortConfig)
-      .skip(skip)
-      .limit(limit);
+    let applications: any[];
+    let total: number;
 
-    const total = await this.applicationModel.countDocuments(query);
+    if (search) {
+      // Use aggregation for search functionality
+      const pipeline = [
+        { $match: query },
+        ...searchPipeline,
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'applicant',
+            foreignField: '_id',
+            as: 'applicant'
+          }
+        },
+        {
+          $lookup: {
+            from: 'jobs',
+            localField: 'job',
+            foreignField: '_id',
+            as: 'job'
+          }
+        },
+        {
+          $lookup: {
+            from: 'companies',
+            localField: 'job.company',
+            foreignField: '_id',
+            as: 'company'
+          }
+        },
+        {
+          $addFields: {
+            applicant: { $arrayElemAt: ['$applicant', 0] },
+            job: { $arrayElemAt: ['$job', 0] },
+            company: { $arrayElemAt: ['$company', 0] }
+          }
+        },
+        { $sort: sortConfig },
+        { $skip: skip },
+        { $limit: limit }
+      ];
+
+      const [results, countResults] = await Promise.all([
+        this.applicationModel.aggregate(pipeline),
+        this.applicationModel.aggregate([
+          { $match: query },
+          ...searchPipeline,
+          { $count: 'total' }
+        ])
+      ]);
+
+      applications = results;
+      total = countResults[0]?.total || 0;
+    } else {
+      // Use regular find for non-search queries
+      applications = await this.applicationModel
+        .find(query)
+        .populate('applicant', 'fullName email avatar phone skills location')
+        .populate({
+          path: 'job',
+          select: 'title company location workType',
+          populate: {
+            path: 'company',
+            select: 'name logo'
+          }
+        })
+        .sort(sortConfig)
+        .skip(skip)
+        .limit(limit);
+
+      total = await this.applicationModel.countDocuments(query);
+    }
 
     return {
       data: applications,
