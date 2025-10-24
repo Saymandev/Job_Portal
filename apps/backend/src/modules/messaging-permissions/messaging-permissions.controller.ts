@@ -175,4 +175,14 @@ export class MessagingPermissionsController {
       data: result,
     };
   }
+
+  @Post('renew-expired')
+  @ApiOperation({ summary: 'Renew all expired messaging permissions for premium users' })
+  async renewExpiredPermissions(@CurrentUser('id') userId: string) {
+    const result = await this.messagingPermissionsService.renewExpiredPermissions(userId);
+    return {
+      success: true,
+      data: result,
+    };
+  }
 }

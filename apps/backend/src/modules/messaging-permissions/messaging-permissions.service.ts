@@ -354,7 +354,64 @@ export class MessagingPermissionsService {
     }
 
     if (permission.expiresAt && permission.expiresAt < new Date()) {
-      // Update permission status if expired
+      // Check if this is an auto-created permission for premium users
+      if ((permission as any).type === 'employer_candidate') {
+        // For employer-candidate relationships, check if the EMPLOYER still has premium subscription
+        // The employer is the one who needs the premium plan for auto-messaging
+        try {
+          // Determine which user is the employer
+          const { User } = await import('../users/schemas/user.schema');
+          const UserModel = this.messagingPermissionModel.db.model('User');
+          const [sender, receiver] = await Promise.all([
+            UserModel.findById(senderId),
+            UserModel.findById(receiverId)
+          ]);
+
+          let employerId = null;
+          if (sender && receiver) {
+            if (sender.role === 'employer') {
+              employerId = senderId;
+            } else if (receiver.role === 'employer') {
+              employerId = receiverId;
+            }
+          }
+
+          if (employerId) {
+            const subscription = await this.subscriptionsService.getUserSubscription(employerId);
+            
+            console.log('🔍 [PERMISSION RENEWAL] Checking employer subscription:', { 
+              employerId, 
+              hasSubscription: !!subscription, 
+              plan: subscription?.plan,
+              status: subscription?.status 
+            });
+            
+            if (subscription && 
+                subscription.status === 'active' && 
+                ['pro', 'enterprise'].includes(subscription.plan) && 
+                subscription.directMessagingEnabled) {
+              
+              console.log('🔄 [PERMISSION CHECK] Renewing expired permission for premium employer');
+              
+              // Renew the permission for another 90 days
+              permission.expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+              permission.isActive = true;
+              await permission.save();
+              
+              console.log('✅ [PERMISSION CHECK] Permission renewed successfully');
+              return { canMessage: true, permission };
+            } else {
+              console.log('❌ [PERMISSION RENEWAL] Employer does not have valid subscription for renewal');
+            }
+          } else {
+            console.log('❌ [PERMISSION RENEWAL] Could not determine employer ID');
+          }
+        } catch (error) {
+          console.error('Error checking subscription for permission renewal:', error);
+        }
+      }
+      
+      // Update permission status if expired and not renewable
       permission.isActive = false;
       await permission.save();
       
@@ -557,6 +614,75 @@ export class MessagingPermissionsService {
       return { 
         hasPermissions: false, 
         reason: 'Error checking subscription status' 
+      };
+    }
+  }
+
+  // Renew all expired permissions for a premium user
+  async renewExpiredPermissions(userId: string): Promise<{ renewed: number; message: string }> {
+    try {
+      // Check if the user is an employer with premium subscription
+      const { User } = await import('../users/schemas/user.schema');
+      const UserModel = this.messagingPermissionModel.db.model('User');
+      const user = await UserModel.findById(userId);
+      
+      if (!user || user.role !== 'employer') {
+        return { 
+          renewed: 0, 
+          message: 'Only employers can renew messaging permissions' 
+        };
+      }
+
+      const subscription = await this.subscriptionsService.getUserSubscription(userId);
+      
+      if (!subscription || 
+          subscription.status !== 'active' || 
+          !['pro', 'enterprise'].includes(subscription.plan) || 
+          !subscription.directMessagingEnabled) {
+        return { 
+          renewed: 0, 
+          message: 'User does not have valid subscription for permission renewal' 
+        };
+      }
+
+      // Find all expired employer-candidate permissions for this employer
+      const expiredPermissions = await this.messagingPermissionModel.find({
+        $or: [
+          { user: userId, type: 'employer_candidate', expiresAt: { $lt: new Date() } },
+          { targetUser: userId, type: 'employer_candidate', expiresAt: { $lt: new Date() } }
+        ]
+      });
+
+      if (expiredPermissions.length === 0) {
+        return { 
+          renewed: 0, 
+          message: 'No expired permissions found' 
+        };
+      }
+
+      // Renew all expired permissions
+      const renewalDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
+      
+      await this.messagingPermissionModel.updateMany(
+        { _id: { $in: expiredPermissions.map(p => p._id) } },
+        { 
+          expiresAt: renewalDate,
+          isActive: true,
+          updatedAt: new Date()
+        }
+      );
+
+      console.log(`✅ [PERMISSION RENEWAL] Renewed ${expiredPermissions.length} expired permissions for employer ${userId}`);
+
+      return { 
+        renewed: expiredPermissions.length, 
+        message: `Successfully renewed ${expiredPermissions.length} expired permissions` 
+      };
+    } catch (error) {
+      console.error('Error renewing expired permissions:', error);
+      return { 
+        renewed: 0, 
+        message: 'Error renewing permissions' 
       };
     }
   }
