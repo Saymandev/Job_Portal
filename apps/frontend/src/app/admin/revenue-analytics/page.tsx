@@ -21,26 +21,96 @@ import {
   Users
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+// Custom chart component
+const CustomChart = ({ data, timeRange }: { data: any[], timeRange: string }) => {
+  const maxRevenue = Math.max(...data.map(d => d.revenue));
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
 
-// Custom tooltip component
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-        <p className="font-medium text-gray-900">{`Period: ${label}`}</p>
-        <p className="text-blue-600 font-semibold">
-          Revenue: ${payload[0].value}
-        </p>
-        {payload[1] && (
-          <p className="text-gray-600">
-            Subscriptions: {payload[1].value}
-          </p>
-        )}
+  return (
+    <div className="relative h-full w-full">
+      {/* Y-axis labels */}
+      <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-3">
+        <div className="text-right font-medium">${maxRevenue}</div>
+        <div className="text-right">${Math.round(maxRevenue * 0.75)}</div>
+        <div className="text-right">${Math.round(maxRevenue * 0.5)}</div>
+        <div className="text-right">${Math.round(maxRevenue * 0.25)}</div>
+        <div className="text-right">$0</div>
       </div>
-    );
-  }
-  return null;
+
+      {/* Chart area */}
+      <div className="ml-12 h-full flex items-end justify-between space-x-1 relative">
+        {/* Grid lines */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => (
+            <div
+              key={index}
+              className="absolute left-0 right-0 h-px bg-gray-100"
+              style={{ top: `${ratio * 100}%` }}
+            />
+          ))}
+        </div>
+
+        {/* Bars */}
+        {data.map((item, index) => {
+          const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
+          const isHovered = hoveredBar === index;
+          
+          return (
+            <div
+              key={index}
+              className="flex flex-col items-center flex-1 group relative"
+              onMouseEnter={() => setHoveredBar(index)}
+              onMouseLeave={() => setHoveredBar(null)}
+            >
+              {/* Bar */}
+              <div
+                className={`w-8 rounded-t-lg transition-all duration-300 cursor-pointer ${
+                  item.revenue > 0
+                    ? 'bg-gradient-to-t from-blue-600 to-blue-500 shadow-lg hover:shadow-xl'
+                    : 'bg-gradient-to-t from-gray-200 to-gray-100'
+                } ${isHovered ? 'scale-105' : ''}`}
+                style={{
+                  height: `${Math.max(height, 2)}%`,
+                  minHeight: '8px'
+                }}
+              >
+                {/* Bar value on top */}
+                {item.revenue > 0 && (
+                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700 whitespace-nowrap">
+                    ${item.revenue}
+                  </div>
+                )}
+              </div>
+
+              {/* X-axis label */}
+              <div className="text-xs text-gray-600 mt-2 text-center">
+                {timeRange === 'monthly' 
+                  ? (item as any).month?.split(' ')[0] 
+                  : (item as any).year}
+              </div>
+
+              {/* Hover tooltip */}
+              {isHovered && (
+                <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-10 whitespace-nowrap">
+                  <div className="font-medium">
+                    {timeRange === 'monthly' ? (item as any).month : (item as any).year}
+                  </div>
+                  <div className="text-blue-300">
+                    Revenue: ${item.revenue}
+                  </div>
+                  <div className="text-gray-300">
+                    Subscriptions: {item.subscriptions}
+                  </div>
+                  {/* Arrow */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 interface RevenueStats {
@@ -519,46 +589,7 @@ export default function RevenueAnalyticsPage() {
         <CardContent>
           <div className="h-80 w-full">
             {revenueData && currentData && currentData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={currentData.map(item => ({
-                    name: timeRange === 'monthly' 
-                      ? (item as any).month?.split(' ')[0] 
-                      : (item as any).year,
-                    revenue: item.revenue,
-                    subscriptions: item.subscriptions,
-                    fullName: timeRange === 'monthly' 
-                      ? (item as any).month 
-                      : (item as any).year
-                  }))}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 60,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="revenue" 
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={60}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <CustomChart data={currentData} timeRange={timeRange} />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground w-full">
                 <div className="text-center">
