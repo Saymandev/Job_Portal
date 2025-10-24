@@ -269,29 +269,42 @@ export class UsersService {
       let response;
       
       if (url.includes('cloudinary.com')) {
-        // For Cloudinary URLs, try with different access modes
-        const cloudinaryUrl = url.replace('/raw/upload/', '/raw/upload/fl_attachment/');
+        // For Cloudinary URLs, try multiple strategies
+        const strategies = [
+          // Strategy 1: Try with attachment flag
+          url.replace('/raw/upload/', '/raw/upload/fl_attachment/'),
+          // Strategy 2: Try with public access flag
+          url.replace('/raw/upload/', '/raw/upload/fl_public/'),
+          // Strategy 3: Try with explicit public access
+          url.replace('/raw/upload/', '/raw/upload/fl_public,fl_attachment/'),
+          // Strategy 4: Try original URL
+          url
+        ];
         
-        try {
-          response = await axios.get(cloudinaryUrl, {
-            responseType: 'arraybuffer',
-            timeout: 30000,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-              'Accept': 'application/pdf,application/octet-stream,*/*',
-            },
-          });
-        } catch (cloudinaryError) {
-          console.log('Cloudinary attachment mode failed, trying original URL...');
-          // Fallback to original URL
-          response = await axios.get(url, {
-            responseType: 'arraybuffer',
-            timeout: 30000,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-              'Accept': 'application/pdf,application/octet-stream,*/*',
-            },
-          });
+        let lastError;
+        for (const strategyUrl of strategies) {
+          try {
+            console.log(`🔄 [CLOUDINARY DEBUG] Trying strategy: ${strategyUrl}`);
+            response = await axios.get(strategyUrl, {
+              responseType: 'arraybuffer',
+              timeout: 30000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/pdf,application/octet-stream,*/*',
+                'Referer': 'https://job-portal.com', // Add referer to help with CORS
+              },
+            });
+            console.log(`✅ [CLOUDINARY DEBUG] Success with strategy: ${strategyUrl}`);
+            break; // Success, exit the loop
+          } catch (strategyError) {
+            console.log(`❌ [CLOUDINARY DEBUG] Strategy failed: ${strategyError.response?.status} - ${strategyUrl}`);
+            lastError = strategyError;
+            continue; // Try next strategy
+          }
+        }
+        
+        if (!response) {
+          throw lastError || new Error('All Cloudinary strategies failed');
         }
       } else {
         // For other URLs, use standard request
@@ -311,7 +324,7 @@ export class UsersService {
       
       // Provide more specific error messages
       if (error.response?.status === 401) {
-        throw new BadRequestException('File access denied. The file may be private or require authentication.');
+        throw new BadRequestException('File access denied. Please enable PDF delivery in Cloudinary security settings or the file may be private.');
       } else if (error.response?.status === 404) {
         throw new BadRequestException('File not found. The file may have been deleted or moved.');
       } else if (error.code === 'ECONNABORTED') {

@@ -117,6 +117,15 @@ export class UsersController {
           } catch (downloadError) {
             console.log('⚠️ [PRODUCTION DEBUG] Failed to download from Cloudinary:', downloadError.message);
             console.log('📝 [PRODUCTION DEBUG] Will skip parsing but continue with upload');
+            
+            // Log specific instructions for fixing this
+            if (downloadError.message?.includes('401') || downloadError.message?.includes('access denied')) {
+              console.log('🔧 [CLOUDINARY FIX] To enable PDF parsing, please:');
+              console.log('   1. Go to Cloudinary Dashboard > Settings > Security');
+              console.log('   2. Enable "Allow delivery of PDF and ZIP files"');
+              console.log('   3. Save the settings');
+              console.log('   4. Re-upload the resume to enable automatic parsing');
+            }
             // Don't throw error, just skip parsing
           }
         } else {
@@ -150,9 +159,17 @@ export class UsersController {
     const filePath = file.path || (file as any).secureUrl || 'cloudinary-upload';
     const result = await this.usersService.uploadResume(userId, filePath, file.originalname, parsedData);
 
+    // Determine the appropriate success message
+    let message = 'Resume uploaded successfully';
+    if (result.parsedData) {
+      message = 'Resume uploaded and profile updated successfully';
+    } else if (file.path && file.path.includes('cloudinary.com')) {
+      message = 'Resume uploaded successfully. Note: Automatic profile parsing is disabled due to Cloudinary security settings. To enable parsing, please contact support.';
+    }
+
     const response = {
       success: true,
-      message: result.parsedData ? 'Resume uploaded and profile updated successfully' : 'Resume uploaded successfully',
+      message: message,
       data: result,
     };
     
