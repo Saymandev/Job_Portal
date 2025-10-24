@@ -354,67 +354,83 @@ export class MessagingPermissionsService {
     }
 
     if (permission.expiresAt && permission.expiresAt < new Date()) {
-      // Check if this is an auto-created permission for premium users
-      if ((permission as any).type === 'employer_candidate') {
-        // For employer-candidate relationships, check if the EMPLOYER still has premium subscription
-        // The employer is the one who needs the premium plan for auto-messaging
-        try {
-          // Determine which user is the employer
-          const { User } = await import('../users/schemas/user.schema');
-          const UserModel = this.messagingPermissionModel.db.model('User');
-          const [sender, receiver] = await Promise.all([
-            UserModel.findById(senderId),
-            UserModel.findById(receiverId)
-          ]);
+      console.log('🔍 [PERMISSION CHECK] Permission expired, checking renewal eligibility:', {
+        expiresAt: permission.expiresAt,
+        currentTime: new Date(),
+        permissionType: (permission as any).type,
+        senderId,
+        receiverId
+      });
+      
+      // Try to renew permission if it's between an employer and job seeker
+      try {
+        // Determine which user is the employer
+        const { User } = await import('../users/schemas/user.schema');
+        const UserModel = this.messagingPermissionModel.db.model('User');
+        const [sender, receiver] = await Promise.all([
+          UserModel.findById(senderId),
+          UserModel.findById(receiverId)
+        ]);
 
-          let employerId = null;
-          if (sender && receiver) {
-            if (sender.role === 'employer') {
-              employerId = senderId;
-            } else if (receiver.role === 'employer') {
-              employerId = receiverId;
-            }
+        let employerId = null;
+        let isEmployerCandidateRelationship = false;
+        
+        if (sender && receiver) {
+          if (sender.role === 'employer' && receiver.role === 'job_seeker') {
+            employerId = senderId;
+            isEmployerCandidateRelationship = true;
+          } else if (receiver.role === 'employer' && sender.role === 'job_seeker') {
+            employerId = receiverId;
+            isEmployerCandidateRelationship = true;
           }
-
-          if (employerId) {
-            const subscription = await this.subscriptionsService.getUserSubscription(employerId);
-            
-            console.log('🔍 [PERMISSION RENEWAL] Checking employer subscription:', { 
-              employerId, 
-              hasSubscription: !!subscription, 
-              plan: subscription?.plan,
-              status: subscription?.status 
-            });
-            
-            if (subscription && 
-                subscription.status === 'active' && 
-                ['pro', 'enterprise'].includes(subscription.plan) && 
-                subscription.directMessagingEnabled) {
-              
-              console.log('🔄 [PERMISSION CHECK] Renewing expired permission for premium employer');
-              
-              // Renew the permission for another 90 days
-              permission.expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
-              permission.isActive = true;
-              await permission.save();
-              
-              console.log('✅ [PERMISSION CHECK] Permission renewed successfully');
-              return { canMessage: true, permission };
-            } else {
-              console.log('❌ [PERMISSION RENEWAL] Employer does not have valid subscription for renewal');
-            }
-          } else {
-            console.log('❌ [PERMISSION RENEWAL] Could not determine employer ID');
-          }
-        } catch (error) {
-          console.error('Error checking subscription for permission renewal:', error);
         }
+
+        console.log('🔍 [PERMISSION RENEWAL] Checking relationship:', {
+          senderRole: sender?.role,
+          receiverRole: receiver?.role,
+          isEmployerCandidateRelationship,
+          employerId
+        });
+
+        if (isEmployerCandidateRelationship && employerId) {
+          const subscription = await this.subscriptionsService.getUserSubscription(employerId);
+          
+          console.log('🔍 [PERMISSION RENEWAL] Checking employer subscription:', { 
+            employerId, 
+            hasSubscription: !!subscription, 
+            plan: subscription?.plan,
+            status: subscription?.status 
+          });
+          
+          if (subscription && 
+              subscription.status === 'active' && 
+              ['pro', 'enterprise'].includes(subscription.plan) && 
+              subscription.directMessagingEnabled) {
+            
+            console.log('🔄 [PERMISSION CHECK] Renewing expired permission for premium employer');
+            
+            // Renew the permission for another 90 days
+            permission.expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+            permission.isActive = true;
+            await permission.save();
+            
+            console.log('✅ [PERMISSION CHECK] Permission renewed successfully');
+            return { canMessage: true, permission };
+          } else {
+            console.log('❌ [PERMISSION RENEWAL] Employer does not have valid subscription for renewal');
+          }
+        } else {
+          console.log('❌ [PERMISSION RENEWAL] Not an employer-candidate relationship or could not determine employer ID');
+        }
+      } catch (error) {
+        console.error('Error checking subscription for permission renewal:', error);
       }
       
       // Update permission status if expired and not renewable
       permission.isActive = false;
       await permission.save();
       
+      console.log('❌ [PERMISSION CHECK] Permission expired and not renewable, denying access');
       return {
         canMessage: false,
         reason: 'Messaging permission has expired.',
