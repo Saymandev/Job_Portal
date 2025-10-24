@@ -13,6 +13,8 @@ import { getSocket, initSocket } from '@/lib/socket';
 import { useAuthStore } from '@/store/auth-store';
 import {
   CheckCheck,
+  Eye,
+  Flag,
   MessageCircle,
   Paperclip,
   Plus,
@@ -29,6 +31,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface User {
   _id: string;
   fullName: string;
+  name?: string; // Added for backend compatibility
   email: string;
   avatar?: string;
   role: string;
@@ -599,6 +602,23 @@ export default function AdminMessagesPage() {
     // Note: Fetching messages and joining conversation room is now handled by the useEffect that watches selectedConversation
   };
 
+  const handleViewMessage = (message: Message) => {
+    console.log('Viewing message:', message);
+    toast({
+      title: 'Message Details',
+      description: `From: ${message.sender?.fullName || message.sender?.name || 'Unknown'} (${message.sender?.role || 'Unknown'})\nContent: ${message.content}\nSent: ${formatTime(message.createdAt)}`,
+    });
+  };
+
+  const handleFlagMessage = (message: Message) => {
+    console.log('Flagging message:', message);
+    toast({
+      title: 'Message Flagged',
+      description: `Message from ${message.sender?.fullName || message.sender?.name || 'Unknown'} has been flagged for review.`,
+      variant: 'default',
+    });
+  };
+
   const getOtherParticipant = (conversation: Conversation) => {
     console.log('Getting other participant for conversation:', {
       conversationId: conversation._id,
@@ -933,7 +953,7 @@ export default function AdminMessagesPage() {
                           >
                             {!isOwnMessage && message.sender.role !== 'admin' && (
                               <p className="text-xs font-medium mb-1 opacity-70">
-                                {message.sender.fullName} ({message.sender.role})
+                                {message.sender?.fullName || message.sender?.name || 'Unknown'} ({message.sender?.role || 'Unknown'})
                               </p>
                             )}
                             <p className="text-sm">{message.content}</p>
@@ -955,13 +975,35 @@ export default function AdminMessagesPage() {
                                 </div>
                               </div>
                             )}
-                            <div className="flex items-center gap-1 mt-1">
-                              <p className="text-xs opacity-70">
-                                {formatTime(message.createdAt)}
-                              </p>
-                              {isOwnMessage && (
-                                <CheckCheck className="h-3 w-3 opacity-70" />
-                              )}
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="flex items-center gap-1">
+                                <p className="text-xs opacity-70">
+                                  {formatTime(message.createdAt)}
+                                </p>
+                                {isOwnMessage && (
+                                  <CheckCheck className="h-3 w-3 opacity-70" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewMessage(message)}
+                                  className="h-6 w-6 p-0 opacity-70 hover:opacity-100"
+                                  title="View message details"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleFlagMessage(message)}
+                                  className="h-6 w-6 p-0 opacity-70 hover:opacity-100 text-red-500 hover:text-red-700"
+                                  title="Flag message"
+                                >
+                                  <Flag className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -973,6 +1015,43 @@ export default function AdminMessagesPage() {
                     <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
+
+                {/* Pagination Controls */}
+                {messages.length > 0 && (
+                  <div className="border-t p-3 bg-muted/50">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {messages.length} messages
+                        {hasMoreMessages && ' (scroll up to load more)'}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => loadMoreMessages()}
+                          disabled={!hasMoreMessages || isLoadingMore}
+                        >
+                          {isLoadingMore ? 'Loading...' : 'Load More'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={scrollToBottom}
+                        >
+                          Latest
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Message Input */}
                 <div className="border-t p-4">

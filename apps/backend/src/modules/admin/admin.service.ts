@@ -1016,7 +1016,7 @@ export class AdminService {
 
     const conversations = await this.conversationModel
       .find(query)
-      .populate('participants', 'name email role')
+      .populate('participants', 'fullName name email role')
       .populate('lastMessage', 'content createdAt')
       .sort({ updatedAt: -1 })
       .skip(skip)
@@ -1038,12 +1038,64 @@ export class AdminService {
 
     const messages = await this.messageModel
       .find({ conversation: conversationId })
-      .populate('sender', 'name email role')
+      .populate('sender', 'fullName name email role')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
     const total = await this.messageModel.countDocuments({ conversation: conversationId });
+
+    return {
+      messages,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getAllMessages(
+    limit: number,
+    page: number,
+    search?: string,
+    type?: string,
+    status?: string
+  ) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { content: { $regex: search, $options: 'i' } },
+        { 'sender.fullName': { $regex: search, $options: 'i' } },
+        { 'sender.email': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by type (admin/user messages)
+    if (type && type !== 'all') {
+      query.isAdminMessage = type === 'admin';
+    }
+
+    // Filter by status (read/unread)
+    if (status && status !== 'all') {
+      if (status === 'unread') {
+        query.readBy = { $size: 0 };
+      } else if (status === 'read') {
+        query.readBy = { $exists: true, $ne: [] };
+      }
+    }
+
+    const messages = await this.messageModel
+      .find(query)
+      .populate('sender', 'fullName name email role')
+      .populate('conversation', 'title participants')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await this.messageModel.countDocuments(query);
 
     return {
       messages,

@@ -550,6 +550,28 @@ export class AdminController {
     };
   }
 
+  @Get('messaging/messages')
+  @ApiOperation({ summary: 'Get all messages across all conversations for admin management' })
+  async getAllMessages(
+    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('search') search?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string
+  ) {
+    const messages = await this.adminService.getAllMessages(
+      limit || 50,
+      page || 1,
+      search,
+      type,
+      status
+    );
+    return {
+      success: true,
+      data: messages,
+    };
+  }
+
   @Get('messaging/stats')
   @ApiOperation({ summary: 'Get messaging statistics' })
   async getMessagingStats() {

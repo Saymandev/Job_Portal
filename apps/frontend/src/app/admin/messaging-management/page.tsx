@@ -138,16 +138,13 @@ export default function MessagingManagementPage() {
 
   const fetchMessages = useCallback(async () => {
     try {
-      // For now, we'll fetch messages from the first conversation
-      // In a real implementation, you'd want to fetch all messages across conversations
-      if (conversations.length > 0) {
-        const response = await api.get(`/admin/messaging/conversations/${conversations[0]._id}/messages?page=${currentMessagePage}&limit=${limit}`);
-        if ((response.data as any).success) {
-          const data = (response.data as any).data;
-          setMessages(data.messages || []);
-          setTotalMessages(data.total || 0);
-          setTotalMessagePages(data.totalPages || 1);
-        }
+      // Fetch all messages across all conversations for admin management
+      const response = await api.get(`/admin/messaging/messages?page=${currentMessagePage}&limit=${limit}&search=${messageSearch}&type=${messageType}&status=${messageStatus}`);
+      if ((response.data as any).success) {
+        const data = (response.data as any).data;
+        setMessages(data.messages || []);
+        setTotalMessages(data.total || 0);
+        setTotalMessagePages(data.totalPages || 1);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -157,21 +154,19 @@ export default function MessagingManagementPage() {
         variant: 'destructive',
       });
     }
-  }, [toast, conversations, currentMessagePage, limit]);
+  }, [toast, currentMessagePage, limit, messageSearch, messageType, messageStatus]);
 
   const calculateStats = useCallback(() => {
     try {
-      // Calculate stats from conversations and messages data
-      const totalConversations = conversations.length;
-      const totalMessages = messages.length;
+      // Use total counts from database, not paginated results
       const adminConversations = conversations.filter(c => c.isAdminConversation).length;
       const unreadMessages = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
       const flaggedMessages = 0; // This would need to be implemented
       const activeUsers = new Set([...conversations.flatMap(c => c.participants.map(p => p._id))]).size;
 
       setStats({
-        totalConversations,
-        totalMessages,
+        totalConversations, // Use state variable with total count
+        totalMessages, // Use state variable with total count
         adminConversations,
         unreadMessages,
         flaggedMessages,
@@ -180,18 +175,29 @@ export default function MessagingManagementPage() {
     } catch (error) {
       console.error('Error calculating stats:', error);
     }
-  }, [conversations, messages]);
+  }, [conversations, totalConversations, totalMessages]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await api.get('/admin/messaging/stats');
+      if ((response.data as any).success) {
+        setStats((response.data as any).data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      // Fallback to calculating stats from loaded data
+      calculateStats();
+    }
+  }, [calculateStats]);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      await Promise.all([fetchConversations(), fetchMessages()]);
-      // Calculate stats after data is fetched
-      calculateStats();
+      await Promise.all([fetchConversations(), fetchMessages(), fetchStats()]);
     } finally {
       setLoading(false);
     }
-  }, [fetchConversations, fetchMessages, calculateStats]);
+  }, [fetchConversations, fetchMessages, fetchStats]);
 
   // Pagination handlers
   const handleConversationPageChange = (page: number) => {
