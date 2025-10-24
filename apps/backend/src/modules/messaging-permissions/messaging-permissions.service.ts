@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { MessagingPermission, MessagingPermissionDocument } from './schemas/messaging-permission.schema';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class MessagingPermissionsService {
   constructor(
     @InjectModel(MessagingPermission.name) 
     private messagingPermissionModel: Model<MessagingPermissionDocument>,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async requestMessagingPermission(data: {
@@ -100,6 +102,45 @@ export class MessagingPermissionsService {
       .sort({ createdAt: -1 });
   }
 
+  private async autoCreateEmployerCandidatePermission(senderId: string, receiverId: string): Promise<void> {
+    try {
+      // Check if permission already exists
+      const existingPermission = await this.messagingPermissionModel.findOne({
+        $or: [
+          { user: senderId, targetUser: receiverId },
+          { user: receiverId, targetUser: senderId }
+        ]
+      });
+
+      if (!existingPermission) {
+        // Create bidirectional permissions for employer-candidate relationship
+        await this.messagingPermissionModel.create([
+          {
+            user: senderId,
+            targetUser: receiverId,
+            status: 'approved',
+            type: 'employer_candidate',
+            expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            user: receiverId,
+            targetUser: senderId,
+            status: 'approved',
+            type: 'employer_candidate',
+            expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error auto-creating employer-candidate permission:', error);
+      // Don't throw error, just log it
+    }
+  }
+
   async checkMessagingPermission(
     senderId: string,
     receiverId: string,
@@ -155,6 +196,16 @@ export class MessagingPermissionsService {
           });
           
           if (hasAppliedToEmployerJob) {
+            // Auto-create messaging permission for employer-candidate relationship
+            await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
+            return { canMessage: true };
+          }
+
+          // If no application found, check if employer has premium subscription for enhanced matching
+          const subscription = await this.subscriptionsService.getUserSubscription(senderId);
+          if (subscription && subscription.directMessagingEnabled && ['pro', 'enterprise'].includes(subscription.plan)) {
+            // Auto-create messaging permission for premium employer contacting any candidate
+            await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
             return { canMessage: true };
           }
         }
@@ -175,6 +226,8 @@ export class MessagingPermissionsService {
           });
           
           if (hasAppliedToEmployerJob) {
+            // Auto-create messaging permission for employer-candidate relationship
+            await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
             return { canMessage: true };
           }
         }
