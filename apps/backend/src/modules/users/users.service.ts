@@ -262,6 +262,20 @@ export class UsersService {
     }
   }
 
+  async downloadFileFromUrl(url: string): Promise<Buffer> {
+    try {
+      const axios = require('axios');
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        timeout: 30000, // 30 second timeout
+      });
+      return Buffer.from(response.data);
+    } catch (error) {
+      console.error('Error downloading file from URL:', error);
+      throw new BadRequestException(`Failed to download file from URL: ${error.message}`);
+    }
+  }
+
   async parseResumeAndSuggestProfile(userId: string, resumePath: string, originalName: string): Promise<any> {
     try {
       // Parse the resume

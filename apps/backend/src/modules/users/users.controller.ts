@@ -99,10 +99,22 @@ export class UsersController {
       console.log('🔍 [PRODUCTION DEBUG] File path:', file.path);
       console.log('🔍 [PRODUCTION DEBUG] File secureUrl:', (file as any).secureUrl);
       
-      parsedData = await this.usersService.parseResumeFromBuffer(file.buffer, file.originalname);
-      console.log('✅ [PRODUCTION DEBUG] Resume parsing successful:', parsedData ? 'Data extracted' : 'No data');
-      if (parsedData) {
-        console.log('📋 [PRODUCTION DEBUG] Parsed data keys:', Object.keys(parsedData));
+      // In production, file.buffer might be undefined if file was uploaded to Cloudinary
+      // We need to get the buffer from the Cloudinary URL
+      let fileBuffer = file.buffer;
+      if (!fileBuffer && file.path && file.path.includes('cloudinary.com')) {
+        console.log('🌐 [PRODUCTION DEBUG] Downloading file from Cloudinary for parsing...');
+        fileBuffer = await this.usersService.downloadFileFromUrl(file.path);
+      }
+      
+      if (fileBuffer) {
+        parsedData = await this.usersService.parseResumeFromBuffer(fileBuffer, file.originalname);
+        console.log('✅ [PRODUCTION DEBUG] Resume parsing successful:', parsedData ? 'Data extracted' : 'No data');
+        if (parsedData) {
+          console.log('📋 [PRODUCTION DEBUG] Parsed data keys:', Object.keys(parsedData));
+        }
+      } else {
+        console.log('⚠️ [PRODUCTION DEBUG] No file buffer available for parsing');
       }
     } catch (error) {
       console.error('❌ [PRODUCTION DEBUG] Error parsing resume:', error);
