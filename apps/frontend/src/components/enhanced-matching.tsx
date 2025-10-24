@@ -70,7 +70,7 @@ export default function EnhancedMatching({ jobId, employerId, isEnabled }: Enhan
   };
 
   const handleContactCandidate = (candidateId: string, applicationId: string) => {
-    router.push(`/messages?candidate=${candidateId}&application=${applicationId}`);
+    router.push(`/messages?user=${candidateId}&job=${jobId}`);
     toast({
       title: "Opening Messages",
       description: "Redirecting to messaging...",

@@ -120,6 +120,20 @@ export class EnhancedMatchingService {
     };
     } catch (error) {
       console.error('Error calculating enhanced match score:', error);
+      console.error('Job data:', { 
+        id: job?._id, 
+        title: job?.title, 
+        skills: job?.skills, 
+        location: job?.location,
+        experienceLevel: job?.experienceLevel 
+      });
+      console.error('Candidate data:', { 
+        id: candidate?._id, 
+        name: candidate?.fullName, 
+        skills: candidate?.skills, 
+        location: candidate?.location,
+        experience: candidate?.experience 
+      });
       return {
         score: 0,
         reasons: ['Error calculating match score'],
@@ -175,7 +189,7 @@ export class EnhancedMatchingService {
   }
 
   private calculateLocationMatch(jobLocation: string, candidateLocation: string): number {
-    if (!candidateLocation) return 0;
+    if (!candidateLocation || !jobLocation) return 0;
     
     const jobCity = jobLocation.toLowerCase().split(',')[0].trim();
     const candidateCity = candidateLocation.toLowerCase().split(',')[0].trim();
