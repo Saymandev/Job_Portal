@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {
@@ -181,7 +182,8 @@ export default function AdminDashboard() {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
+    const statusLower = (status || '').toLowerCase();
+    switch (statusLower) {
       case 'healthy':
         return <Badge variant="default" className="gap-1 bg-green-600 dark:bg-green-700"><CheckCircle className="h-3 w-3" />Healthy</Badge>;
       case 'warning':
@@ -189,12 +191,13 @@ export default function AdminDashboard() {
       case 'error':
         return <Badge variant="destructive" className="gap-1">Error</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{status || 'Unknown'}</Badge>;
     }
   };
 
   const getRoleBadge = (role: string) => {
-    switch (role.toLowerCase()) {
+    const roleLower = (role || '').toLowerCase();
+    switch (roleLower) {
       case 'admin':
         return <Badge variant="default" className="gap-1 bg-purple-600 dark:bg-purple-700"><Shield className="h-3 w-3" />Admin</Badge>;
       case 'employer':
@@ -202,12 +205,13 @@ export default function AdminDashboard() {
       case 'job_seeker':
         return <Badge variant="default" className="gap-1 bg-green-600 dark:bg-green-700"><Users className="h-3 w-3" />Job Seeker</Badge>;
       default:
-        return <Badge variant="outline">{role}</Badge>;
+        return <Badge variant="outline">{role || 'Unknown'}</Badge>;
     }
   };
 
   const getActivityIcon = (type: string) => {
-    switch (type.toLowerCase()) {
+    const typeLower = (type || '').toLowerCase();
+    switch (typeLower) {
       case 'user_registration':
         return <UserCheck className="h-4 w-4 text-green-500 dark:text-green-400 " />;
       case 'job_posted':
@@ -225,17 +229,118 @@ export default function AdminDashboard() {
   if (!isHydrated || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-1/3"></div>
+        <div className="space-y-6">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-28" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </div>
+
+          {/* System Health Skeleton */}
+          <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="text-center">
+                    <Skeleton className="h-4 w-16 mx-auto mb-2" />
+                    <Skeleton className="h-6 w-20 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats Grid Skeleton */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-muted rounded"></div>
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </CardContent>
+              </Card>
             ))}
           </div>
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="h-96 bg-muted rounded"></div>
-            <div className="h-96 bg-muted rounded"></div>
+
+          {/* Content Grid Skeleton */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            {[1, 2].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((j) => (
+                      <div key={j} className="flex items-center space-x-3 p-3 border rounded-lg">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-48" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                        <Skeleton className="h-6 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+
+          {/* Recent Activity Skeleton */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-8 w-20" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center space-x-3 p-3 border rounded-lg">
+                    <Skeleton className="h-4 w-4" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-64" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -384,14 +489,14 @@ export default function AdminDashboard() {
                     <div className="flex items-center space-x-3">
                       <div className="h-10 w-10 rounded-full bg-muted-foreground flex items-center justify-center">
                         <span className="text-white text-sm font-medium">
-                          {user.fullName.split(' ').map((n: string) => n[0]).join('')}
+                          {(user.fullName || 'U').split(' ').map((n: string) => n[0]).join('')}
                         </span>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground">{user.fullName}</h4>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <h4 className="font-semibold text-foreground">{user.fullName || 'Unknown User'}</h4>
+                        <p className="text-sm text-muted-foreground">{user.email || 'No email'}</p>
                         <p className="text-xs text-muted-foreground">
-                          Joined {new Date(user.createdAt).toLocaleDateString()}
+                          Joined {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown date'}
                         </p>
                       </div>
                     </div>
@@ -433,10 +538,10 @@ export default function AdminDashboard() {
                   <div key={job._id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground">{job.title}</h4>
-                        <p className="text-sm text-muted-foreground">{job.company.name}</p>
+                        <h4 className="font-semibold text-foreground">{job.title || 'Untitled Job'}</h4>
+                        <p className="text-sm text-muted-foreground">{job.company?.name || 'Unknown Company'}</p>
                         <p className="text-xs text-muted-foreground">
-                          Posted by {job.createdBy.fullName} • {new Date(job.postedAt).toLocaleDateString()}
+                          Posted by {job.createdBy?.fullName || 'Unknown User'} • {job.postedAt ? new Date(job.postedAt).toLocaleDateString() : 'Unknown date'}
                         </p>
                       </div>
                       <Badge variant="secondary" className="gap-1">
@@ -446,7 +551,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">
-                        {job.applicationsCount} applications
+                        {job.applicationsCount || 0} applications
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" asChild>
@@ -491,9 +596,9 @@ export default function AdminDashboard() {
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-foreground">{activity.description}</p>
+                    <p className="text-sm text-foreground">{activity.description || 'No description'}</p>
                     <p className="text-xs text-muted-foreground">
-                      {activity.user.fullName} ({activity.user.role}) • {new Date(activity.timestamp).toLocaleString()}
+                      {activity.user?.fullName || 'Unknown User'} ({activity.user?.role || 'Unknown'}) • {activity.timestamp ? new Date(activity.timestamp).toLocaleString() : 'Unknown time'}
                     </p>
                   </div>
                 </div>
