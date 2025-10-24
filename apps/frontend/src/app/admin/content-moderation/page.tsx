@@ -10,19 +10,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import {
-    AlertTriangle,
-    Ban,
-    Briefcase,
-    CheckCircle,
-    CheckSquare,
-    Download,
-    Eye,
-    Flag,
-    RefreshCw,
-    Search,
-    Shield,
-    User,
-    XCircle
+  AlertTriangle,
+  Ban,
+  Briefcase,
+  CheckCircle,
+  CheckSquare,
+  Download,
+  Eye,
+  Flag,
+  RefreshCw,
+  Search,
+  Shield,
+  User,
+  XCircle
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -140,6 +140,14 @@ export default function ContentModerationPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalFlags, setTotalFlags] = useState(0);
   const [limit] = useState(10);
+  
+  // View modal states
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [showFlagModal, setShowFlagModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [selectedFlag, setSelectedFlag] = useState<ContentFlag | null>(null);
   
   const { toast } = useToast();
 
@@ -376,6 +384,22 @@ export default function ContentModerationPage() {
         variant: 'destructive',
       });
     }
+  };
+
+  // View handlers
+  const handleViewJob = (job: JobPosting) => {
+    setSelectedJob(job);
+    setShowJobModal(true);
+  };
+
+  const handleViewUser = (user: UserProfile) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+  };
+
+  const handleViewFlag = (flag: ContentFlag) => {
+    setSelectedFlag(flag);
+    setShowFlagModal(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -754,7 +778,11 @@ export default function ContentModerationPage() {
                       </div>
                       
                       <div className="flex items-center gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewJob(job)}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
@@ -914,7 +942,11 @@ export default function ContentModerationPage() {
                       </div>
                       
                       <div className="flex items-center gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewUser(user)}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
@@ -1089,7 +1121,11 @@ export default function ContentModerationPage() {
                       </div>
                       
                       <div className="flex items-center gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewFlag(flag)}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
@@ -1131,6 +1167,399 @@ export default function ContentModerationPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Job View Modal */}
+      {showJobModal && selectedJob && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Job Details</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowJobModal(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Briefcase className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold">{selectedJob.title}</h3>
+                    <p className="text-lg text-gray-600">{selectedJob.company.name}</p>
+                    <p className="text-sm text-gray-500">{selectedJob.location} • {selectedJob.workType}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge className={getStatusColor(selectedJob.status)}>
+                      {(selectedJob.status || '').replace('_', ' ')}
+                    </Badge>
+                    {selectedJob.salary && (
+                      <Badge variant="secondary">
+                        {selectedJob.salary.currency} {selectedJob.salary.min}-{selectedJob.salary.max}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Job ID:</span>
+                    <p className="text-gray-600 font-mono text-xs">{selectedJob._id}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Posted By:</span>
+                    <p className="text-gray-600">{selectedJob.postedBy.name} ({selectedJob.postedBy.email})</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Created:</span>
+                    <p className="text-gray-600">{new Date(selectedJob.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Updated:</span>
+                    <p className="text-gray-600">{new Date(selectedJob.updatedAt).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Description</h4>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-800 whitespace-pre-wrap">{selectedJob.description}</p>
+                  </div>
+                </div>
+
+                {selectedJob.requirements && selectedJob.requirements.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Requirements</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      {selectedJob.requirements.map((req, index) => (
+                        <li key={index} className="text-gray-700">{req}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Benefits</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      {selectedJob.benefits.map((benefit, index) => (
+                        <li key={index} className="text-gray-700">{benefit}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {selectedJob.tags && selectedJob.tags.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Tags</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedJob.tags.map((tag, index) => (
+                        <Badge key={index} variant="outline">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedJob.flaggedReason && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Flag className="h-4 w-4 text-red-600" />
+                      <span className="font-medium text-red-800">Flagged Reason:</span>
+                    </div>
+                    <p className="text-red-700">{selectedJob.flaggedReason}</p>
+                    {selectedJob.flaggedBy && (
+                      <p className="text-sm text-red-600 mt-1">Flagged by: {selectedJob.flaggedBy}</p>
+                    )}
+                    {selectedJob.flaggedAt && (
+                      <p className="text-sm text-red-600">Flagged at: {new Date(selectedJob.flaggedAt).toLocaleString()}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowJobModal(false)}
+                >
+                  Close
+                </Button>
+                {selectedJob.status === 'flagged' || selectedJob.status === 'under_review' ? (
+                  <>
+                    <Button 
+                      onClick={() => {
+                        handleJobAction(selectedJob._id, 'approve');
+                        setShowJobModal(false);
+                      }}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        handleJobAction(selectedJob._id, 'reject');
+                        setShowJobModal(false);
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Reject
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    onClick={() => {
+                      handleJobAction(selectedJob._id, 'flag');
+                      setShowJobModal(false);
+                    }}
+                    className="text-yellow-600 hover:text-yellow-700"
+                  >
+                    <Flag className="h-4 w-4 mr-1" />
+                    Flag
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User View Modal */}
+      {showUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">User Details</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowUserModal(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold">{selectedUser.name}</h3>
+                    <p className="text-lg text-gray-600">{selectedUser.email}</p>
+                    <p className="text-sm text-gray-500">{selectedUser.company || 'No company'}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge className={getStatusColor(selectedUser.status)}>
+                      {(selectedUser.status || '').replace('_', ' ')}
+                    </Badge>
+                    <Badge className={getRoleColor(selectedUser.role)}>
+                      {selectedUser.role}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">User ID:</span>
+                    <p className="text-gray-600 font-mono text-xs">{selectedUser._id}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Role:</span>
+                    <p className="text-gray-600 capitalize">{selectedUser.role}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Last Active:</span>
+                    <p className="text-gray-600">{new Date(selectedUser.lastActive).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Created:</span>
+                    <p className="text-gray-600">{new Date(selectedUser.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {selectedUser.flaggedReason && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Flag className="h-4 w-4 text-red-600" />
+                      <span className="font-medium text-red-800">Flagged Reason:</span>
+                    </div>
+                    <p className="text-red-700">{selectedUser.flaggedReason}</p>
+                    {selectedUser.flaggedBy && (
+                      <p className="text-sm text-red-600 mt-1">Flagged by: {selectedUser.flaggedBy}</p>
+                    )}
+                    {selectedUser.flaggedAt && (
+                      <p className="text-sm text-red-600">Flagged at: {new Date(selectedUser.flaggedAt).toLocaleString()}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUserModal(false)}
+                >
+                  Close
+                </Button>
+                {selectedUser.status === 'active' ? (
+                  <Button 
+                    onClick={() => {
+                      handleUserAction(selectedUser._id, 'suspend');
+                      setShowUserModal(false);
+                    }}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Ban className="h-4 w-4 mr-1" />
+                    Suspend
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => {
+                      handleUserAction(selectedUser._id, 'activate');
+                      setShowUserModal(false);
+                    }}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Activate
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flag View Modal */}
+      {showFlagModal && selectedFlag && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Flag Details</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFlagModal(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Flag className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold">{selectedFlag.targetTitle}</h3>
+                    <p className="text-lg text-gray-600 capitalize">{selectedFlag.type}</p>
+                    <p className="text-sm text-gray-500">Reported by {selectedFlag.reporter.name}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge className={getStatusColor(selectedFlag.status)}>
+                      {selectedFlag.status}
+                    </Badge>
+                    <Badge className={getPriorityColor(selectedFlag.priority)}>
+                      {selectedFlag.priority}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Flag ID:</span>
+                    <p className="text-gray-600 font-mono text-xs">{selectedFlag._id}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Target ID:</span>
+                    <p className="text-gray-600 font-mono text-xs">{selectedFlag.targetId}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Reporter:</span>
+                    <p className="text-gray-600">{selectedFlag.reporter.name} ({selectedFlag.reporter.email})</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Created:</span>
+                    <p className="text-gray-600">{new Date(selectedFlag.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Reason</h4>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-800">{selectedFlag.reason}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Description</h4>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-800">{selectedFlag.description}</p>
+                  </div>
+                </div>
+
+                {selectedFlag.resolution && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="font-medium text-green-800">Resolution:</span>
+                    </div>
+                    <p className="text-green-700">{selectedFlag.resolution}</p>
+                    {selectedFlag.reviewedBy && (
+                      <p className="text-sm text-green-600 mt-1">Reviewed by: {selectedFlag.reviewedBy}</p>
+                    )}
+                    {selectedFlag.reviewedAt && (
+                      <p className="text-sm text-green-600">Reviewed at: {new Date(selectedFlag.reviewedAt).toLocaleString()}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFlagModal(false)}
+                >
+                  Close
+                </Button>
+                {selectedFlag.status === 'pending' && (
+                  <>
+                    <Button 
+                      onClick={() => {
+                        handleFlagAction(selectedFlag._id, 'resolve');
+                        setShowFlagModal(false);
+                      }}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Resolve
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        handleFlagAction(selectedFlag._id, 'dismiss');
+                        setShowFlagModal(false);
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Dismiss
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
