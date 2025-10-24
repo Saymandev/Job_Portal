@@ -94,13 +94,25 @@ export class UsersController {
     // Parse resume from buffer before uploading to get the data
     let parsedData = null;
     try {
+      console.log('🔍 [PRODUCTION DEBUG] Starting resume parsing for file:', file.originalname);
+      console.log('🔍 [PRODUCTION DEBUG] File buffer size:', file.buffer?.length);
+      console.log('🔍 [PRODUCTION DEBUG] File path:', file.path);
+      console.log('🔍 [PRODUCTION DEBUG] File secureUrl:', (file as any).secureUrl);
+      
       parsedData = await this.usersService.parseResumeFromBuffer(file.buffer, file.originalname);
+      console.log('✅ [PRODUCTION DEBUG] Resume parsing successful:', parsedData ? 'Data extracted' : 'No data');
+      if (parsedData) {
+        console.log('📋 [PRODUCTION DEBUG] Parsed data keys:', Object.keys(parsedData));
+      }
     } catch (error) {
-      console.error('Error parsing resume:', error);
+      console.error('❌ [PRODUCTION DEBUG] Error parsing resume:', error);
       // Continue with upload even if parsing fails
     }
 
-    const result = await this.usersService.uploadResume(userId, file.path, file.originalname, parsedData);
+    // In production with Cloudinary, file.path might be undefined
+    // We need to handle both local storage and Cloudinary cases
+    const filePath = file.path || (file as any).secureUrl || 'cloudinary-upload';
+    const result = await this.usersService.uploadResume(userId, filePath, file.originalname, parsedData);
 
     const response = {
       success: true,

@@ -81,16 +81,24 @@ export class UsersService {
     }
 
     // Extract filename from path
-    const filename = resumePath.split('/').pop() || resumePath.split('\\').pop() || 'resume';
+    // In production with Cloudinary, resumePath might be a URL or placeholder
+    const filename = resumePath === 'cloudinary-upload' 
+      ? originalName || 'resume' 
+      : resumePath.split('/').pop() || resumePath.split('\\').pop() || 'resume';
 
     // Store resume file information
     // If using Cloudinary, resumePath will be the Cloudinary URL
     // If using local storage, resumePath will be the local file path
     const isCloudinaryUrl = resumePath.includes('cloudinary.com') || resumePath.includes('res.cloudinary.com');
+    const isCloudinaryUpload = resumePath === 'cloudinary-upload';
     
     let resumeUrl: string;
     if (isCloudinaryUrl) {
       resumeUrl = resumePath; // Use Cloudinary URL directly
+    } else if (isCloudinaryUpload) {
+      // In production, we need to get the actual Cloudinary URL
+      // For now, we'll use a placeholder that will be updated by the frontend
+      resumeUrl = `cloudinary://${filename}`;
     } else {
       resumeUrl = `uploads/${filename}`; // Local storage path
     }
@@ -107,7 +115,8 @@ export class UsersService {
     user.resume = resumeUrl;
 
     // Use parsed data if provided, otherwise try to parse from local file
-    if (!parsedData && !isCloudinaryUrl && originalName) {
+    // Note: In production with Cloudinary, we rely on parsedData from the controller
+    if (!parsedData && !isCloudinaryUrl && !isCloudinaryUpload && originalName) {
       try {
         parsedData = await this.resumeParserService.parseResume(resumePath, originalName);
       } catch (error) {
@@ -116,7 +125,16 @@ export class UsersService {
     }
 
     // Update user profile with parsed data if available
+    console.log('📝 [PRODUCTION DEBUG] Checking parsed data:', parsedData ? 'Available' : 'Not available');
     if (parsedData) {
+      console.log('📋 [PRODUCTION DEBUG] Parsed data structure:', {
+        hasPersonalInfo: !!parsedData.personalInfo,
+        hasSkills: !!parsedData.skills,
+        hasExperience: !!parsedData.experience,
+        hasEducation: !!parsedData.education,
+        skillsCount: parsedData.skills?.length || 0,
+        experienceCount: parsedData.experience?.length || 0
+      });
       if (parsedData.personalInfo) {
           // Only update fields that are empty or if the parsed data seems more complete
           if (!user.fullName && parsedData.personalInfo.fullName) {
