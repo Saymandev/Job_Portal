@@ -115,5 +115,10 @@ JobSchema.index({ status: 1 });
 JobSchema.index({ location: 1 });
 JobSchema.index({ jobType: 1 });
 JobSchema.index({ experienceLevel: 1 });
-JobSchema.index({ createdAt: -1 });
+JobSchema.index({ isRemote: 1 });
+JobSchema.index({ salaryMin: 1 });
+JobSchema.index({ salaryMax: 1 });
+JobSchema.index({ isFeatured: -1, createdAt: -1 }); // Compound index for default sort
+JobSchema.index({ createdAt: -1 }); // For date sorting
+JobSchema.index({ 'company.name': 1 }); // For company sorting
 

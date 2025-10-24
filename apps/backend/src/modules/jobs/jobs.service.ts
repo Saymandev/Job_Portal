@@ -176,7 +176,7 @@ export class JobsService {
     }
   }
 
-  async findAll(searchJobsDto: SearchJobsDto): Promise<PaginatedResult<JobDocument>> {
+  async findAll(searchJobsDto: SearchJobsDto): Promise<PaginatedResult<any>> {
     const { 
       page = 1, 
       limit = 10, 
@@ -193,6 +193,10 @@ export class JobsService {
       sortBy,
       featured
     } = searchJobsDto;
+
+    // Limit the number of results to prevent very large queries
+    const maxLimit = Math.min(limit, 50);
+    const maxPage = Math.min(page, 100);
 
     const query: any = { status: 'open' };
 
@@ -273,15 +277,17 @@ export class JobsService {
       }
     }
 
-    const skip = (page - 1) * limit;
+    const skip = (maxPage - 1) * maxLimit;
 
+    // Optimize the query by using lean() for better performance
     const [data, total] = await Promise.all([
       this.jobModel
         .find(query)
         .populate('company', 'name logo location')
         .sort(sortCriteria)
         .skip(skip)
-        .limit(limit)
+        .limit(maxLimit)
+        .lean() // Use lean() for better performance
         .exec(),
       this.jobModel.countDocuments(query),
     ]);
@@ -290,11 +296,11 @@ export class JobsService {
       data,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPrevPage: page > 1,
+        page: maxPage,
+        limit: maxLimit,
+        totalPages: Math.ceil(total / maxLimit),
+        hasNextPage: maxPage < Math.ceil(total / maxLimit),
+        hasPrevPage: maxPage > 1,
       },
     };
   }
