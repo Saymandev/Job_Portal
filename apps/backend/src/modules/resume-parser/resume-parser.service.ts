@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
-import * as path from 'path';
-import * as pdfParse from 'pdf-parse';
 import * as mammoth from 'mammoth';
+import * as path from 'path';
 
 export interface ParsedResumeData {
   personalInfo: {
@@ -98,7 +97,8 @@ export class ResumeParserService {
   private async extractTextFromPDF(filePath: string): Promise<string> {
     try {
       const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParse(dataBuffer);
+      const pdfParseLib = require('pdf-parse');
+      const data = await pdfParseLib(dataBuffer);
       return data.text;
     } catch (error) {
       this.logger.error('Error extracting text from PDF:', error);
