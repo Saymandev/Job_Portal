@@ -162,8 +162,9 @@ export class UsersService {
           }
         }
 
-        // Update skills if user doesn't have any
-        if (!(user as any).cvSkills || (user as any).cvSkills.length === 0) {
+        // Update skills - always update if we have parsed skills
+        if (parsedData.skills && parsedData.skills.length > 0) {
+          console.log('📝 [PROFILE UPDATE] Updating skills:', parsedData.skills.length, 'skills');
           (user as any).cvSkills = parsedData.skills.map(skill => ({
             id: `skill-${Date.now()}-${Math.random()}`,
             name: skill,
@@ -172,8 +173,9 @@ export class UsersService {
           }));
         }
 
-        // Update experience if user doesn't have any
-        if (!(user as any).cvExperience || (user as any).cvExperience.length === 0) {
+        // Update experience - always update if we have parsed experience
+        if (parsedData.experience && parsedData.experience.length > 0) {
+          console.log('📝 [PROFILE UPDATE] Updating experience:', parsedData.experience.length, 'entries');
           (user as any).cvExperience = parsedData.experience.map(exp => ({
             id: `exp-${Date.now()}-${Math.random()}`,
             title: exp.title,
@@ -187,8 +189,9 @@ export class UsersService {
           }));
         }
 
-        // Update education if user doesn't have any
-        if (!(user as any).cvEducation || (user as any).cvEducation.length === 0) {
+        // Update education - always update if we have parsed education
+        if (parsedData.education && parsedData.education.length > 0) {
+          console.log('📝 [PROFILE UPDATE] Updating education:', parsedData.education.length, 'entries');
           (user as any).cvEducation = parsedData.education.map(edu => ({
             id: `edu-${Date.now()}-${Math.random()}`,
             degree: edu.degree,
@@ -202,8 +205,9 @@ export class UsersService {
           }));
         }
 
-        // Update certifications if user doesn't have any
-        if (!(user as any).certifications || (user as any).certifications.length === 0) {
+        // Update certifications - always update if we have parsed certifications
+        if (parsedData.certifications && parsedData.certifications.length > 0) {
+          console.log('📝 [PROFILE UPDATE] Updating certifications:', parsedData.certifications.length, 'entries');
           (user as any).certifications = parsedData.certifications.map(cert => ({
             id: `cert-${Date.now()}-${Math.random()}`,
             name: cert.name,
@@ -215,9 +219,10 @@ export class UsersService {
           }));
         }
 
-        // Update projects if user doesn't have any
-        if (!(user as any).projects || (user as any).projects.length === 0) {
-          (user as any).projects = parsedData.projects?.map(project => ({
+        // Update projects - always update if we have parsed projects
+        if (parsedData.projects && parsedData.projects.length > 0) {
+          console.log('📝 [PROFILE UPDATE] Updating projects:', parsedData.projects.length, 'entries');
+          (user as any).projects = parsedData.projects.map(project => ({
             id: `proj-${Date.now()}-${Math.random()}`,
             name: project.name,
             description: project.description,
@@ -226,11 +231,12 @@ export class UsersService {
             githubUrl: '',
             startDate: project.startDate || '',
             endDate: project.endDate || '',
-          })) || [];
+          }));
         }
 
-        // Update languages if user doesn't have any
-        if (!(user as any).languages || (user as any).languages.length === 0) {
+        // Update languages - always update if we have parsed languages
+        if (parsedData.languages && parsedData.languages.length > 0) {
+          console.log('📝 [PROFILE UPDATE] Updating languages:', parsedData.languages.length, 'entries');
           (user as any).languages = parsedData.languages.map(lang => ({
             id: `lang-${Date.now()}-${Math.random()}`,
             language: lang.language,
@@ -239,7 +245,9 @@ export class UsersService {
         }
     }  // Close if (parsedData) block
     
+    console.log('💾 [PROFILE UPDATE] Saving user profile with updated data...');
     const savedUser = await user.save();
+    console.log('✅ [PROFILE UPDATE] User profile saved successfully');
 
     const result = {
       filename: filename,
