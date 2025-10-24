@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
@@ -323,7 +324,44 @@ export default function CandidatePipelinePage() {
 
         {/* Kanban Board */}
         {isLoading ? (
-          <div className="text-center py-12">Loading applications...</div>
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {PIPELINE_STAGES.map((stage, stageIndex) => (
+              <div key={stageIndex} className="flex-shrink-0 w-80">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                      <Skeleton className="h-6 w-8" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="p-4 border rounded-lg space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-24" />
+                          </div>
+                          <Skeleton className="h-6 w-16" />
+                        </div>
+                        <div className="space-y-2">
+                          <Skeleton className="h-3 w-full" />
+                          <Skeleton className="h-3 w-3/4" />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-4">
             {columns.map((column) => (

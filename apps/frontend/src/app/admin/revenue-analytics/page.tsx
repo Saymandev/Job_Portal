@@ -496,46 +496,55 @@ export default function RevenueAnalyticsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-end justify-between space-x-2 relative border-2 border-dashed border-gray-300 rounded-lg p-2">
-            {/* Debug info */}
-            <div className="absolute top-0 left-0 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded">
-              Rendering {currentData?.length || 0} bars
-            </div>
-            {revenueData && currentData && currentData.length > 0 ? currentData.map((item, index) => {
+          <div className="h-80 flex items-end justify-between space-x-2 relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[320px] bg-gray-50">
+            {revenueData && currentData && currentData.length > 0 ? (() => {
               const maxRevenue = Math.max(...currentData.map(d => d.revenue));
-              // Ensure minimum height for visibility and proper scaling
-              const height = maxRevenue > 0 
-                ? Math.max((item.revenue / maxRevenue) * 80, item.revenue > 0 ? 8 : 2) // 80% max height, 8% min for non-zero, 2% for zero
-                : 2; // 2% minimum height when no revenue data
-              
-              // Debug logging for first few items
-              if (index < 3) {
-                console.log(`Bar ${index}:`, {
-                  month: timeRange === 'monthly' ? (item as any).month : (item as any).year,
-                  revenue: item.revenue,
-                  maxRevenue,
-                  height: `${height}%`
-                });
-              }
-              
               return (
-                <div key={index} className="flex flex-col items-center flex-1 min-w-0">
-                  <div 
-                    className={`rounded-t w-full transition-all duration-300 hover:opacity-80 ${
-                      item.revenue > 0 ? 'bg-primary' : 'bg-gray-200'
-                    }`}
-                    style={{ height: `${height}%` }}
-                    title={`${timeRange === 'monthly' ? (item as any).month : (item as any).year}: ${formatCurrency(item.revenue)}`}
-                  ></div>
-                  <div className="text-xs text-muted-foreground mt-2 text-center truncate w-full">
-                    {timeRange === 'monthly' ? (item as any).month?.split(' ')[0] : (item as any).year}
+                <>
+                  {/* Debug info */}
+                  <div className="absolute top-0 left-0 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded">
+                    Rendering {currentData.length} bars | Max: ${maxRevenue}
                   </div>
-                  <div className="text-xs font-medium mt-1 text-center">
-                    {formatCurrency(item.revenue)}
-                  </div>
-                </div>
+                  {currentData.map((item, index) => {
+                    // Ensure minimum height for visibility and proper scaling
+                    const height = maxRevenue > 0 
+                      ? Math.max((item.revenue / maxRevenue) * 90, item.revenue > 0 ? 15 : 8) // 90% max height, 15% min for non-zero, 8% for zero
+                      : 8; // 8% minimum height when no revenue data
+                    
+                    // Debug logging for first few items
+                    if (index < 3) {
+                      console.log(`Bar ${index}:`, {
+                        month: timeRange === 'monthly' ? (item as any).month : (item as any).year,
+                        revenue: item.revenue,
+                        maxRevenue,
+                        height: `${height}%`
+                      });
+                    }
+                    
+                    return (
+                      <div key={index} className="flex flex-col items-center flex-1 min-w-0">
+                        <div 
+                          className={`rounded-t w-full transition-all duration-300 hover:opacity-80 border border-gray-200 ${
+                            item.revenue > 0 ? 'bg-primary' : 'bg-gray-200'
+                          }`}
+                          style={{ 
+                            height: `${height}%`,
+                            minHeight: '8px' // Ensure minimum visible height
+                          }}
+                          title={`${timeRange === 'monthly' ? (item as any).month : (item as any).year}: ${formatCurrency(item.revenue)}`}
+                        ></div>
+                        <div className="text-xs text-muted-foreground mt-2 text-center truncate w-full">
+                          {timeRange === 'monthly' ? (item as any).month?.split(' ')[0] : (item as any).year}
+                        </div>
+                        <div className="text-xs font-medium mt-1 text-center">
+                          {formatCurrency(item.revenue)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
               );
-            }) : (
+            })() : (
               <div className="flex items-center justify-center h-full text-muted-foreground w-full">
                 <div className="text-center">
                   <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />

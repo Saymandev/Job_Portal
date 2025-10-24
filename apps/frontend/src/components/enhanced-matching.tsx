@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { ExternalLink, MapPin, MessageSquare, Search, Star, User } from 'lucide-react';
@@ -118,7 +119,29 @@ export default function EnhancedMatching({ jobId, employerId, isEnabled }: Enhan
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="text-center py-4">Loading enhanced matches...</div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 border rounded-lg">
+                <div className="flex items-start space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-24" />
+                    <div className="flex flex-wrap gap-2">
+                      <Skeleton className="h-6 w-16" />
+                      <Skeleton className="h-6 w-20" />
+                      <Skeleton className="h-6 w-14" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
         ) : matches.length === 0 ? (
