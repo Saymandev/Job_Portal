@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
+import { getPlanPrice } from '@/lib/pricing.config';
 import { useAuthStore } from '@/store/auth-store';
 import {
   Calendar,
@@ -288,7 +289,7 @@ export default function AdminSubscriptionManagementPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Revenue (Est.)</p>
                 <p className="text-2xl font-bold text-green-600">
-                  ${(stats.planBreakdown.basic * 29 + stats.planBreakdown.pro * 99 + stats.planBreakdown.enterprise * 299).toLocaleString()}
+                  ${(stats.planBreakdown.basic * getPlanPrice('basic') + stats.planBreakdown.pro * getPlanPrice('pro') + stats.planBreakdown.enterprise * getPlanPrice('enterprise')).toLocaleString()}
                 </p>
               </div>
               <DollarSign className="h-8 w-8 text-green-600" />

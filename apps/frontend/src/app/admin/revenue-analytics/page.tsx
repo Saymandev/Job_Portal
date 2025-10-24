@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
+import { getPlanPrice } from '@/lib/pricing.config';
 import {
   BarChart3,
   Calendar,
@@ -442,8 +443,7 @@ export default function RevenueAnalyticsPage() {
       {revenueStats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {revenueStats.byPlan.map((plan) => {
-            const planPrices = { basic: 29, pro: 79, enterprise: 199 };
-            const planRevenue = plan.count * (planPrices[plan._id as keyof typeof planPrices] || 0);
+            const planRevenue = plan.count * getPlanPrice(plan._id);
             const percentage = revenueStats.byPlan.reduce((sum, p) => sum + p.count, 0) > 0 
               ? (plan.count / revenueStats.byPlan.reduce((sum, p) => sum + p.count, 0)) * 100 
               : 0;
@@ -496,22 +496,41 @@ export default function RevenueAnalyticsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-end justify-between space-x-2">
+          <div className="h-64 flex items-end justify-between space-x-2 relative border-2 border-dashed border-gray-300 rounded-lg p-2">
+            {/* Debug info */}
+            <div className="absolute top-0 left-0 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded">
+              Rendering {currentData?.length || 0} bars
+            </div>
             {revenueData && currentData && currentData.length > 0 ? currentData.map((item, index) => {
               const maxRevenue = Math.max(...currentData.map(d => d.revenue));
-              const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : (item.revenue > 0 ? 10 : 0);
+              // Ensure minimum height for visibility and proper scaling
+              const height = maxRevenue > 0 
+                ? Math.max((item.revenue / maxRevenue) * 80, item.revenue > 0 ? 8 : 2) // 80% max height, 8% min for non-zero, 2% for zero
+                : 2; // 2% minimum height when no revenue data
+              
+              // Debug logging for first few items
+              if (index < 3) {
+                console.log(`Bar ${index}:`, {
+                  month: timeRange === 'monthly' ? (item as any).month : (item as any).year,
+                  revenue: item.revenue,
+                  maxRevenue,
+                  height: `${height}%`
+                });
+              }
               
               return (
-                <div key={index} className="flex flex-col items-center flex-1">
+                <div key={index} className="flex flex-col items-center flex-1 min-w-0">
                   <div 
-                    className="bg-primary rounded-t w-full transition-all duration-300 hover:bg-primary/80"
+                    className={`rounded-t w-full transition-all duration-300 hover:opacity-80 ${
+                      item.revenue > 0 ? 'bg-primary' : 'bg-gray-200'
+                    }`}
                     style={{ height: `${height}%` }}
                     title={`${timeRange === 'monthly' ? (item as any).month : (item as any).year}: ${formatCurrency(item.revenue)}`}
                   ></div>
-                  <div className="text-xs text-muted-foreground mt-2 text-center">
+                  <div className="text-xs text-muted-foreground mt-2 text-center truncate w-full">
                     {timeRange === 'monthly' ? (item as any).month?.split(' ')[0] : (item as any).year}
                   </div>
-                  <div className="text-xs font-medium mt-1">
+                  <div className="text-xs font-medium mt-1 text-center">
                     {formatCurrency(item.revenue)}
                   </div>
                 </div>
@@ -629,11 +648,7 @@ export default function RevenueAnalyticsPage() {
                       <div>
                         <p className="text-sm text-gray-600">Amount</p>
                         <p className="font-medium">
-                          {formatCurrency(
-                            subscription.plan === 'basic' ? 29 :
-                            subscription.plan === 'pro' ? 79 :
-                            subscription.plan === 'enterprise' ? 199 : 0
-                          )}
+                          {formatCurrency(getPlanPrice(subscription.plan))}
                         </p>
                       </div>
                       <div>

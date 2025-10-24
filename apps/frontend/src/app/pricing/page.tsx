@@ -5,26 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
+import { PRICING_CONFIG } from '@/lib/pricing.config';
 import { useAuthStore } from '@/store/auth-store';
 import {
-  ArrowRight,
-  BarChart3,
-  Building,
-  Check,
-  Code,
-  Crown,
-  DollarSign,
-  Download,
-  Headphones,
-  MessageSquare,
-  Mic,
-  Rocket,
-  Search,
-  Sparkles,
-  Star,
-  Target,
-  User,
-  Zap
+    ArrowRight,
+    BarChart3,
+    Building,
+    Check,
+    Code,
+    Crown,
+    DollarSign,
+    Download,
+    Headphones,
+    MessageSquare,
+    Mic,
+    Rocket,
+    Search,
+    Sparkles,
+    Star,
+    Target,
+    User,
+    Zap
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -97,7 +98,7 @@ const plans = [
   {
     id: 'basic',
     name: 'Basic',
-    price: 49,
+    price: PRICING_CONFIG.basic,
     interval: 'month',
     icon: Rocket,
     color: 'text-blue-600',
@@ -116,7 +117,7 @@ const plans = [
   {
     id: 'pro',
     name: 'Professional',
-    price: 149,
+    price: PRICING_CONFIG.pro,
     interval: '2 months',
     icon: Crown,
     color: 'text-purple-600',
@@ -135,7 +136,7 @@ const plans = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 499,
+    price: PRICING_CONFIG.enterprise,
     interval: '3 months',
     icon: Crown,
     color: 'text-amber-600',

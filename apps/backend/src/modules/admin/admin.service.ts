@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { getPlanPrice } from '../../common/config/pricing.config';
 import { AccountManager, AccountManagerDocument } from '../account-managers/schemas/account-manager.schema';
 import { AdvancedAnalyticsService } from '../advanced-analytics/advanced-analytics.service';
 import { AnalyticsInsight, AnalyticsInsightDocument } from '../advanced-analytics/schemas/analytics-insight.schema';
@@ -89,8 +90,7 @@ export class AdminService {
     // Revenue calculation (simplified)
     const subscriptions = await this.subscriptionModel.find({ status: 'active' });
     const revenue = subscriptions.reduce((sum, sub) => {
-      const prices = { basic: 29, pro: 79, enterprise: 199 };
-      return sum + (prices[sub.plan] || 0);
+      return sum + getPlanPrice(sub.plan);
     }, 0);
 
     return {
@@ -132,8 +132,7 @@ export class AdminService {
     // Revenue calculation
     const subscriptions = await this.subscriptionModel.find({ status: 'active' });
     const revenue = subscriptions.reduce((sum, sub) => {
-      const prices = { basic: 29, pro: 79, enterprise: 199 };
-      return sum + (prices[sub.plan] || 0);
+      return sum + getPlanPrice(sub.plan);
     }, 0);
 
     return {
@@ -286,8 +285,7 @@ export class AdminService {
       { $group: { _id: '$plan', count: { $sum: 1 } } },
     ]);
 
-    const prices = { basic: 29, pro: 79, enterprise: 199 };
-    const totalRevenue = subscriptions.reduce((sum, sub) => sum + (prices[sub.plan] || 0), 0);
+    const totalRevenue = subscriptions.reduce((sum, sub) => sum + getPlanPrice(sub.plan), 0);
 
     return {
       totalRevenue,
@@ -310,8 +308,7 @@ export class AdminService {
         createdAt: { $gte: date, $lt: nextMonth }
       });
 
-      const prices = { basic: 29, pro: 79, enterprise: 199 };
-      const monthlyRevenue = monthlySubscriptions.reduce((sum, sub) => sum + (prices[sub.plan] || 0), 0);
+      const monthlyRevenue = monthlySubscriptions.reduce((sum, sub) => sum + getPlanPrice(sub.plan), 0);
 
       monthlyData.push({
         month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
@@ -332,8 +329,7 @@ export class AdminService {
         createdAt: { $gte: startOfYear, $lt: endOfYear }
       });
 
-      const prices = { basic: 29, pro: 79, enterprise: 199 };
-      const yearlyRevenue = yearlySubscriptions.reduce((sum, sub) => sum + (prices[sub.plan] || 0), 0);
+      const yearlyRevenue = yearlySubscriptions.reduce((sum, sub) => sum + getPlanPrice(sub.plan), 0);
 
       yearlyData.push({
         year: year.toString(),
