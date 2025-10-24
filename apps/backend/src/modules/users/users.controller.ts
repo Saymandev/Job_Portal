@@ -94,21 +94,19 @@ export class UsersController {
     // Parse resume from buffer before uploading to get the data
     let parsedData = null;
     try {
-      console.log('🔍 [PRODUCTION DEBUG] Starting resume parsing for file:', file.originalname);
-      console.log('🔍 [PRODUCTION DEBUG] File buffer size:', file.buffer?.length);
-      console.log('🔍 [PRODUCTION DEBUG] File path:', file.path);
-      console.log('🔍 [PRODUCTION DEBUG] File secureUrl:', (file as any).secureUrl);
+    
+      
       
       // In production, file.buffer might be undefined if file was uploaded to Cloudinary
       // We need to get the buffer from the Cloudinary URL
       let fileBuffer = file.buffer;
       if (!fileBuffer && file.path && file.path.includes('cloudinary.com')) {
-        console.log('🌐 [PRODUCTION DEBUG] Attempting to download file from Cloudinary for parsing...');
-        console.log('🌐 [PRODUCTION DEBUG] Cloudinary URL:', file.path);
+       
+        
         
         // With the updated upload config, PDFs should now be preserved as PDFs
         const urlExtension = file.path.split('.').pop()?.toLowerCase();
-        console.log('🌐 [PRODUCTION DEBUG] URL extension:', urlExtension);
+        
         
         if (urlExtension === 'pdf' || urlExtension === 'doc' || urlExtension === 'docx') {
           try {

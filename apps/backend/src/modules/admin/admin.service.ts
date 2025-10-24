@@ -1499,8 +1499,7 @@ export class AdminService {
   }
 
   async resolveContentFlag(flagId: string, action: string, reason?: string) {
-    // Mock implementation since we don't have a flags schema yet
-    console.log(`Resolving flag ${flagId} with action ${action} and reason ${reason}`);
+   
     return { success: true };
   }
 

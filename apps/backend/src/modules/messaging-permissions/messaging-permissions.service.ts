@@ -104,23 +104,18 @@ export class MessagingPermissionsService {
 
   async autoCreateEmployerCandidatePermission(senderId: string, receiverId: string): Promise<void> {
     try {
-      console.log('🔧 [AUTO-PERMISSION] Creating employer-candidate permission:', { senderId, receiverId });
+     
       
       // First, check if the sender has a valid subscription for auto-messaging
       const subscription = await this.subscriptionsService.getUserSubscription(senderId);
-      console.log('🔍 [AUTO-PERMISSION] Checking subscription:', { 
-        hasSubscription: !!subscription, 
-        plan: subscription?.plan,
-        directMessagingEnabled: subscription?.directMessagingEnabled,
-        status: subscription?.status
-      });
+      
       
       // Only allow auto-creation for Pro and Enterprise plans with active subscriptions
       if (!subscription || 
           !['pro', 'enterprise'].includes(subscription.plan) || 
           subscription.status !== 'active' || 
           !subscription.directMessagingEnabled) {
-        console.log('❌ [AUTO-PERMISSION] User does not have valid subscription for auto-messaging');
+        
         return;
       }
       
@@ -133,7 +128,7 @@ export class MessagingPermissionsService {
       });
 
       if (!existingPermission) {
-        console.log('🔧 [AUTO-PERMISSION] No existing permission found, creating new ones');
+        
         
         // Create bidirectional permissions for employer-candidate relationship
         const permissions = await this.messagingPermissionModel.create([
@@ -157,13 +152,9 @@ export class MessagingPermissionsService {
           }
         ]);
         
-        console.log('✅ [AUTO-PERMISSION] Created permissions:', permissions.map(p => ({ 
-          user: p.user, 
-          targetUser: p.targetUser, 
-          status: p.status 
-        })));
+        
       } else {
-        console.log('ℹ️ [AUTO-PERMISSION] Permission already exists:', existingPermission._id);
+        
       }
     } catch (error) {
       console.error('❌ [AUTO-PERMISSION] Error auto-creating employer-candidate permission:', error);
@@ -175,16 +166,11 @@ export class MessagingPermissionsService {
     senderId: string,
     receiverId: string,
   ): Promise<{ canMessage: boolean; reason?: string; permission?: MessagingPermissionDocument }> {
-    console.log('🚨🚨🚨 [PERMISSION CHECK] METHOD CALLED 🚨🚨🚨');
-    console.log('🔍 [PERMISSION CHECK] Starting permission check:', { 
-      senderId: senderId.toString(), 
-      receiverId: receiverId.toString(),
-      timestamp: new Date().toISOString()
-    });
+    
     
     // Users can always message themselves (shouldn't happen in UI, but for safety)
     if (senderId.toString() === receiverId.toString()) {
-      console.log('✅ [PERMISSION CHECK] Same user, allowing');
+     
       return { canMessage: true };
     }
 
@@ -220,7 +206,7 @@ export class MessagingPermissionsService {
       if (sender && receiver) {
         // If sender is employer and receiver is job seeker
         if (sender.role === 'employer' && receiver.role === 'job_seeker') {
-          console.log('🔍 [PERMISSION CHECK] Employer-candidate relationship detected');
+          
           
           // Check if the job seeker has applied to any job posted by this employer
           const { Application } = await import('../applications/schemas/application.schema');
@@ -230,7 +216,7 @@ export class MessagingPermissionsService {
             applicant: receiverId
           }).populate('job');
           
-          console.log('🔍 [PERMISSION CHECK] Found applications:', applications.length);
+          
           
           const hasAppliedToEmployerJob = applications.some(app => {
             const jobPostedBy = (app.job as any).postedBy?.toString();
@@ -238,7 +224,7 @@ export class MessagingPermissionsService {
           });
           
           if (hasAppliedToEmployerJob) {
-            console.log('✅ [PERMISSION CHECK] Candidate has applied to employer job, auto-creating permission');
+            
             // Auto-create messaging permission for employer-candidate relationship
             await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
             return { canMessage: true };
@@ -246,22 +232,18 @@ export class MessagingPermissionsService {
 
           // If no application found, check if employer has premium subscription for enhanced matching
           const subscription = await this.subscriptionsService.getUserSubscription(senderId);
-          console.log('🔍 [PERMISSION CHECK] Subscription check:', { 
-            hasSubscription: !!subscription, 
-            directMessagingEnabled: subscription?.directMessagingEnabled,
-            plan: subscription?.plan 
-          });
+         
           
           if (subscription && 
               subscription.directMessagingEnabled && 
               ['pro', 'enterprise'].includes(subscription.plan) &&
               subscription.status === 'active') {
-            console.log('✅ [PERMISSION CHECK] Premium employer, auto-creating permission');
+            
             // Auto-create messaging permission for premium employer contacting any candidate
             await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
             return { canMessage: true };
           } else {
-            console.log('❌ [PERMISSION CHECK] Employer does not have valid subscription for auto-messaging');
+            
           }
         }
         
@@ -283,48 +265,37 @@ export class MessagingPermissionsService {
           if (hasAppliedToEmployerJob) {
             // Check if the employer has a valid subscription for auto-messaging
             const employerSubscription = await this.subscriptionsService.getUserSubscription(receiverId);
-            console.log('🔍 [PERMISSION CHECK] Employer subscription check:', { 
-              hasSubscription: !!employerSubscription, 
-              directMessagingEnabled: employerSubscription?.directMessagingEnabled,
-              plan: employerSubscription?.plan 
-            });
+            
             
             if (employerSubscription && 
                 employerSubscription.directMessagingEnabled && 
                 ['pro', 'enterprise'].includes(employerSubscription.plan) &&
                 employerSubscription.status === 'active') {
-              console.log('✅ [PERMISSION CHECK] Employer has valid subscription, auto-creating permission');
+             
               // Auto-create messaging permission for employer-candidate relationship
               await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
               return { canMessage: true };
             } else {
-              console.log('❌ [PERMISSION CHECK] Employer does not have valid subscription for auto-messaging');
+              
             }
           }
         }
       }
     } catch (error) {
-      console.log('❌ [PERMISSION CHECK] Error in employer-candidate relationship check:', error.message);
+      
       // Error checking employer-candidate relationship, continue with normal permission check
     }
 
-    console.log('🔍 [PERMISSION CHECK] Looking up direct permission in database...');
+    
     const permission = await this.messagingPermissionModel.findOne({
       user: senderId.toString(),
       targetUser: receiverId.toString(),
     });
 
-    console.log('🔍 [PERMISSION CHECK] Direct permission lookup:', { 
-      found: !!permission, 
-      permissionId: permission?._id,
-      status: permission?.status,
-      isActive: permission?.isActive,
-      expiresAt: permission?.expiresAt,
-      type: (permission as any)?.type
-    });
+    
 
     if (!permission) {
-      console.log('❌ [PERMISSION CHECK] No permission found, denying access');
+      
       return {
         canMessage: false,
         reason: 'No messaging permission found. Request permission to start messaging.',
@@ -357,13 +328,7 @@ export class MessagingPermissionsService {
 
     // Check if permission has expired first, before checking isActive
     if (permission.expiresAt && permission.expiresAt < new Date()) {
-      console.log('🔍 [PERMISSION CHECK] Permission expired, checking renewal eligibility:', {
-        expiresAt: permission.expiresAt,
-        currentTime: new Date(),
-        permissionType: (permission as any).type,
-        senderId,
-        receiverId
-      });
+      
       
       // Try to renew permission if it's between an employer and job seeker
       try {
@@ -388,42 +353,32 @@ export class MessagingPermissionsService {
           }
         }
 
-        console.log('🔍 [PERMISSION RENEWAL] Checking relationship:', {
-          senderRole: sender?.role,
-          receiverRole: receiver?.role,
-          isEmployerCandidateRelationship,
-          employerId
-        });
+        
 
         if (isEmployerCandidateRelationship && employerId) {
           const subscription = await this.subscriptionsService.getUserSubscription(employerId);
           
-          console.log('🔍 [PERMISSION RENEWAL] Checking employer subscription:', { 
-            employerId, 
-            hasSubscription: !!subscription, 
-            plan: subscription?.plan,
-            status: subscription?.status 
-          });
+          
           
           if (subscription && 
               subscription.status === 'active' && 
               ['pro', 'enterprise'].includes(subscription.plan) && 
               subscription.directMessagingEnabled) {
             
-            console.log('🔄 [PERMISSION CHECK] Renewing expired permission for premium employer');
+            
             
             // Renew the permission for another 90 days
             permission.expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
             permission.isActive = true;
             await permission.save();
             
-            console.log('✅ [PERMISSION CHECK] Permission renewed successfully');
+            
             return { canMessage: true, permission };
           } else {
-            console.log('❌ [PERMISSION RENEWAL] Employer does not have valid subscription for renewal');
+            
           }
         } else {
-          console.log('❌ [PERMISSION RENEWAL] Not an employer-candidate relationship or could not determine employer ID');
+          
         }
       } catch (error) {
         console.error('Error checking subscription for permission renewal:', error);
@@ -433,7 +388,7 @@ export class MessagingPermissionsService {
       permission.isActive = false;
       await permission.save();
       
-      console.log('❌ [PERMISSION CHECK] Permission expired and not renewable, denying access');
+      
       return {
         canMessage: false,
         reason: 'Messaging permission has expired.',
@@ -443,23 +398,15 @@ export class MessagingPermissionsService {
 
     // Check if permission is active (after handling expiration/renewal)
     if (permission.status === 'approved' && !permission.isActive) {
-      console.log('🔍 [PERMISSION CHECK] Permission is not active, checking if it should be activated:', {
-        status: permission.status,
-        isActive: permission.isActive,
-        expiresAt: permission.expiresAt,
-        isNotExpired: !permission.expiresAt || permission.expiresAt >= new Date()
-      });
+      
       
       // If the permission is approved but not active, and it's not expired, activate it
       if (!permission.expiresAt || permission.expiresAt >= new Date()) {
-        console.log('✅ [PERMISSION CHECK] Activating non-expired approved permission');
+        
         permission.isActive = true;
         await permission.save();
       } else {
-        console.log('❌ [PERMISSION CHECK] Permission is not active and has expired:', {
-          status: permission.status,
-          isActive: permission.isActive
-        });
+        
         return {
           canMessage: false,
           reason: 'Messaging permission has expired.',
@@ -468,7 +415,7 @@ export class MessagingPermissionsService {
       }
     }
 
-    console.log('✅ [PERMISSION CHECK] Permission check passed, allowing message');
+    
     return { canMessage: true, permission };
   }
 
@@ -719,7 +666,7 @@ export class MessagingPermissionsService {
         }
       );
 
-      console.log(`✅ [PERMISSION RENEWAL] Renewed ${expiredPermissions.length} expired permissions for employer ${userId}`);
+      
 
       return { 
         renewed: expiredPermissions.length, 

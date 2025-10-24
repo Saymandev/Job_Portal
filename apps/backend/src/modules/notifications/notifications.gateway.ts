@@ -23,7 +23,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   private connectedUsers = new Map<string, string>();
 
   handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
+    
     
     // Handle authentication if needed
     // You can add JWT verification here if required
