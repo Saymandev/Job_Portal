@@ -264,14 +264,61 @@ export class UsersService {
   async downloadFileFromUrl(url: string): Promise<Buffer> {
     try {
       const axios = require('axios');
-      const response = await axios.get(url, {
-        responseType: 'arraybuffer',
-        timeout: 30000, // 30 second timeout
-      });
+      
+      // Try different approaches for Cloudinary URLs
+      let response;
+      
+      if (url.includes('cloudinary.com')) {
+        // For Cloudinary URLs, try with different access modes
+        const cloudinaryUrl = url.replace('/raw/upload/', '/raw/upload/fl_attachment/');
+        
+        try {
+          response = await axios.get(cloudinaryUrl, {
+            responseType: 'arraybuffer',
+            timeout: 30000,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Accept': 'application/pdf,application/octet-stream,*/*',
+            },
+          });
+        } catch (cloudinaryError) {
+          console.log('Cloudinary attachment mode failed, trying original URL...');
+          // Fallback to original URL
+          response = await axios.get(url, {
+            responseType: 'arraybuffer',
+            timeout: 30000,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Accept': 'application/pdf,application/octet-stream,*/*',
+            },
+          });
+        }
+      } else {
+        // For other URLs, use standard request
+        response = await axios.get(url, {
+          responseType: 'arraybuffer',
+          timeout: 30000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/pdf,application/octet-stream,*/*',
+          },
+        });
+      }
+      
       return Buffer.from(response.data);
     } catch (error) {
       console.error('Error downloading file from URL:', error);
-      throw new BadRequestException(`Failed to download file from URL: ${error.message}`);
+      
+      // Provide more specific error messages
+      if (error.response?.status === 401) {
+        throw new BadRequestException('File access denied. The file may be private or require authentication.');
+      } else if (error.response?.status === 404) {
+        throw new BadRequestException('File not found. The file may have been deleted or moved.');
+      } else if (error.code === 'ECONNABORTED') {
+        throw new BadRequestException('File download timeout. The file may be too large or the server is slow.');
+      } else {
+        throw new BadRequestException(`Failed to download file from URL: ${error.message}`);
+      }
     }
   }
 

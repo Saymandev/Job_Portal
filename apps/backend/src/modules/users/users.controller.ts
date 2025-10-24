@@ -103,7 +103,7 @@ export class UsersController {
       // We need to get the buffer from the Cloudinary URL
       let fileBuffer = file.buffer;
       if (!fileBuffer && file.path && file.path.includes('cloudinary.com')) {
-        console.log('🌐 [PRODUCTION DEBUG] Downloading file from Cloudinary for parsing...');
+        console.log('🌐 [PRODUCTION DEBUG] Attempting to download file from Cloudinary for parsing...');
         console.log('🌐 [PRODUCTION DEBUG] Cloudinary URL:', file.path);
         
         // With the updated upload config, PDFs should now be preserved as PDFs
@@ -111,7 +111,14 @@ export class UsersController {
         console.log('🌐 [PRODUCTION DEBUG] URL extension:', urlExtension);
         
         if (urlExtension === 'pdf' || urlExtension === 'doc' || urlExtension === 'docx') {
-          fileBuffer = await this.usersService.downloadFileFromUrl(file.path);
+          try {
+            fileBuffer = await this.usersService.downloadFileFromUrl(file.path);
+            console.log('✅ [PRODUCTION DEBUG] Successfully downloaded file from Cloudinary');
+          } catch (downloadError) {
+            console.log('⚠️ [PRODUCTION DEBUG] Failed to download from Cloudinary:', downloadError.message);
+            console.log('📝 [PRODUCTION DEBUG] Will skip parsing but continue with upload');
+            // Don't throw error, just skip parsing
+          }
         } else {
           console.log('⚠️ [PRODUCTION DEBUG] File extension not supported for parsing:', urlExtension);
         }
@@ -128,6 +135,13 @@ export class UsersController {
       }
     } catch (error) {
       console.error('❌ [PRODUCTION DEBUG] Error parsing resume:', error);
+      
+      // If it's a 401 error, the file might be private - we'll still upload but skip parsing
+      if (error.message?.includes('401') || error.message?.includes('access denied')) {
+        console.log('🔒 [PRODUCTION DEBUG] File appears to be private, skipping parsing but continuing upload');
+      } else {
+        console.log('⚠️ [PRODUCTION DEBUG] Resume parsing failed, but continuing with upload');
+      }
       // Continue with upload even if parsing fails
     }
 

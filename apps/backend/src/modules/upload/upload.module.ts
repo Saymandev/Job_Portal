@@ -45,6 +45,7 @@ import { UploadController } from './upload.controller';
                   return {
                     folder: 'job-portal',
                     resource_type: 'raw', // Preserve original format for documents
+                    access_mode: 'public', // Make documents publicly accessible
                     format: extname(file.originalname).substring(1), // Keep original extension
                   };
                 } else {
