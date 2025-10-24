@@ -10,18 +10,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import {
-    AlertTriangle,
-    Clock,
-    Download,
-    Eye,
-    FileImage,
-    FileText,
-    MessageSquare,
-    RefreshCw,
-    Search,
-    Shield,
-    Users,
-    Video
+  AlertTriangle,
+  Clock,
+  Download,
+  Eye,
+  FileImage,
+  FileText,
+  MessageSquare,
+  RefreshCw,
+  Search,
+  Shield,
+  Users,
+  Video
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -156,27 +156,6 @@ export default function MessagingManagementPage() {
     }
   }, [toast, currentMessagePage, limit, messageSearch, messageType, messageStatus]);
 
-  const calculateStats = useCallback(() => {
-    try {
-      // Use total counts from database, not paginated results
-      const adminConversations = conversations.filter(c => c.isAdminConversation).length;
-      const unreadMessages = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
-      const flaggedMessages = 0; // This would need to be implemented
-      const activeUsers = new Set([...conversations.flatMap(c => c.participants.map(p => p._id))]).size;
-
-      setStats({
-        totalConversations, // Use state variable with total count
-        totalMessages, // Use state variable with total count
-        adminConversations,
-        unreadMessages,
-        flaggedMessages,
-        activeUsers,
-      });
-    } catch (error) {
-      console.error('Error calculating stats:', error);
-    }
-  }, [conversations, totalConversations, totalMessages]);
-
   const fetchStats = useCallback(async () => {
     try {
       const response = await api.get('/admin/messaging/stats');
@@ -185,10 +164,17 @@ export default function MessagingManagementPage() {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Fallback to calculating stats from loaded data
-      calculateStats();
+      // Set default stats if API fails
+      setStats({
+        totalConversations: 0,
+        totalMessages: 0,
+        adminConversations: 0,
+        unreadMessages: 0,
+        flaggedMessages: 0,
+        activeUsers: 0,
+      });
     }
-  }, [calculateStats]);
+  }, []); // No dependencies to prevent circular re-renders
 
   const fetchData = useCallback(async () => {
     try {
@@ -207,6 +193,11 @@ export default function MessagingManagementPage() {
   const handleMessagePageChange = (page: number) => {
     setCurrentMessagePage(page);
   };
+
+  // Manual refresh function to avoid auto-rerenders
+  const handleRefresh = useCallback(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Search handlers
   const handleConversationSearch = (value: string) => {
@@ -391,7 +382,7 @@ export default function MessagingManagementPage() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={fetchData} variant="outline">
+          <Button onClick={handleRefresh} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
