@@ -614,9 +614,11 @@ export default function CVBuilderPage() {
                         variant="ghost" 
                         size="sm"
                         onClick={() => {
+                          // Handle both Cloudinary URLs and local file paths
                           const resumeUrl = cvData.resume?.url?.startsWith('http') 
                             ? cvData.resume.url 
                             : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/${cvData.resume?.url}`;
+                          console.log('Opening resume URL:', resumeUrl);
                           window.open(resumeUrl, '_blank');
                         }}
                         type="button"

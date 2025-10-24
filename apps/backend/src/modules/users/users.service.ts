@@ -96,9 +96,8 @@ export class UsersService {
     if (isCloudinaryUrl) {
       resumeUrl = resumePath; // Use Cloudinary URL directly
     } else if (isCloudinaryUpload) {
-      // In production, we need to get the actual Cloudinary URL
-      // For now, we'll use a placeholder that will be updated by the frontend
-      resumeUrl = `cloudinary://${filename}`;
+      // This shouldn't happen with the new upload config, but handle it gracefully
+      resumeUrl = resumePath; // Use the actual Cloudinary URL from file.path
     } else {
       resumeUrl = `uploads/${filename}`; // Local storage path
     }
