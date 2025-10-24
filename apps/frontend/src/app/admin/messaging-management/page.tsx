@@ -128,13 +128,6 @@ export default function MessagingManagementPage() {
 
   const fetchConversations = useCallback(async () => {
     try {
-      console.log('🔄 Fetching conversations with params:', {
-        conversationType,
-        conversationStatus,
-        conversationSearch,
-        currentConversationPage,
-        limit
-      });
 
       const params = new URLSearchParams();
       if (conversationType !== 'all') params.append('type', conversationType);
@@ -143,33 +136,18 @@ export default function MessagingManagementPage() {
       params.append('page', currentConversationPage.toString());
       params.append('limit', limit.toString());
 
-      console.log('📡 API Request URL:', `/admin/messaging/conversations?${params}`);
       
       const response = await api.get(`/admin/messaging/conversations?${params}`);
       
-      console.log('📥 Conversations API Response:', {
-        status: response.status,
-        success: (response.data as any).success,
-        data: (response.data as any).data
-      });
 
       if ((response.data as any).success) {
         const data = (response.data as any).data;
-        console.log('📊 Conversations Data:', {
-          conversations: data.conversations?.length || 0,
-          total: data.total,
-          page: data.page,
-          totalPages: data.totalPages,
-          firstConversation: data.conversations?.[0] || null
-        });
         
         setConversations(data.conversations || []);
         setTotalConversations(data.total || 0);
         setTotalConversationPages(data.totalPages || 1);
         
-        console.log('✅ Conversations state updated successfully');
       } else {
-        console.warn('⚠️ Conversations API returned success: false');
       }
     } catch (error) {
       
@@ -183,13 +161,6 @@ export default function MessagingManagementPage() {
 
   const fetchMessages = useCallback(async () => {
     try {
-      console.log('🔄 Fetching messages with params:', {
-        currentMessagePage,
-        limit,
-        messageSearch,
-        messageType,
-        messageStatus
-      });
 
       const params = new URLSearchParams();
       params.append('page', currentMessagePage.toString());
@@ -198,33 +169,18 @@ export default function MessagingManagementPage() {
       if (messageType !== 'all') params.append('type', messageType);
       if (messageStatus !== 'all') params.append('status', messageStatus);
 
-      console.log('📡 Messages API Request URL:', `/admin/messaging/messages?${params}`);
       
       const response = await api.get(`/admin/messaging/messages?${params}`);
       
-      console.log('📥 Messages API Response:', {
-        status: response.status,
-        success: (response.data as any).success,
-        data: (response.data as any).data
-      });
 
       if ((response.data as any).success) {
         const data = (response.data as any).data;
-        console.log('📊 Messages Data:', {
-          messages: data.messages?.length || 0,
-          total: data.total,
-          page: data.page,
-          totalPages: data.totalPages,
-          firstMessage: data.messages?.[0] || null
-        });
         
         setMessages(data.messages || []);
         setTotalMessages(data.total || 0);
         setTotalMessagePages(data.totalPages || 1);
         
-        console.log('✅ Messages state updated successfully');
       } else {
-        console.warn('⚠️ Messages API returned success: false');
       }
     } catch (error) {
       
@@ -238,23 +194,14 @@ export default function MessagingManagementPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      console.log('🔄 Fetching messaging stats...');
       
       const response = await api.get('/admin/messaging/stats');
       
-      console.log('📥 Stats API Response:', {
-        status: response.status,
-        success: (response.data as any).success,
-        data: (response.data as any).data
-      });
 
       if ((response.data as any).success) {
         const statsData = (response.data as any).data;
-        console.log('📊 Stats Data:', statsData);
         setStats(statsData);
-        console.log('✅ Stats state updated successfully');
       } else {
-        console.warn('⚠️ Stats API returned success: false');
       }
     } catch (error) {
      
@@ -269,45 +216,30 @@ export default function MessagingManagementPage() {
         activeUsers: 0,
       };
       
-      console.log('🔄 Setting default stats:', defaultStats);
       setStats(defaultStats);
     }
   }, []); // No dependencies to prevent circular re-renders
 
   const fetchData = useCallback(async () => {
     try {
-      console.log('🚀 Starting data fetch...');
       setLoading(true);
       
       await Promise.all([fetchConversations(), fetchMessages(), fetchStats()]);
       
-      console.log('✅ All data fetched successfully');
     } catch (error) {
-      console.error('❌ Error in fetchData:', error);
     } finally {
       setLoading(false);
-      console.log('🏁 Data fetch completed, loading set to false');
     }
   }, [fetchConversations, fetchMessages, fetchStats]);
 
   // Pagination handlers
   const handleConversationPageChange = (page: number) => {
-    console.log('📄 Conversation page changed:', {
-      oldPage: currentConversationPage,
-      newPage: page,
-      totalPages: totalConversationPages
-    });
     
     setCurrentConversationPage(page);
     // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessagePageChange = (page: number) => {
-    console.log('📄 Message page changed:', {
-      oldPage: currentMessagePage,
-      newPage: page,
-      totalPages: totalMessagePages
-    });
     
     setCurrentMessagePage(page);
     // Data will be fetched automatically due to useEffect dependency
@@ -321,31 +253,17 @@ export default function MessagingManagementPage() {
   // View message handler
   const handleViewMessage = useCallback(async (message: Message) => {
     try {
-      console.log('👁️ Viewing message:', {
-        messageId: message._id,
-        sender: message.sender,
-        content: message.content?.substring(0, 50) + '...',
-        isFlagged: message.isFlagged
-      });
 
       const response = await api.get(`/admin/messaging/messages/${message._id}`);
       
-      console.log('📥 Message details API response:', {
-        status: response.status,
-        success: (response.data as any).success,
-        data: (response.data as any).data
-      });
 
       if ((response.data as any).success) {
         const messageData = (response.data as any).data;
-        console.log('📊 Message details data:', messageData);
         
         setSelectedMessage(messageData);
         setShowMessageModal(true);
         
-        console.log('✅ Message modal opened successfully');
       } else {
-        console.warn('⚠️ Message details API returned success: false');
       }
     } catch (error) {
      
@@ -359,42 +277,19 @@ export default function MessagingManagementPage() {
 
   // View conversation handler
   const handleViewConversation = useCallback((conversation: Conversation) => {
-    console.log('👁️ Viewing conversation:', {
-      conversationId: conversation._id,
-      participants: conversation.participants,
-      isAdminConversation: conversation.isAdminConversation,
-      unreadCount: conversation.unreadCount,
-      lastMessage: conversation.lastMessage
-    });
-    
     setSelectedConversation(conversation);
     setShowConversationModal(true);
-    
-    console.log('✅ Conversation modal opened successfully');
   }, []);
 
   // Flag message handler
   const handleFlagMessage = useCallback((message: Message) => {
-    console.log('🚩 Flagging message:', {
-      messageId: message._id,
-      sender: message.sender,
-      content: message.content?.substring(0, 50) + '...',
-      isFlagged: message.isFlagged
-    });
-    
     setSelectedMessage(message);
     setShowFlagModal(true);
-    
-    console.log('✅ Flag modal opened successfully');
   }, []);
 
   // Submit flag handler
   const handleSubmitFlag = useCallback(async () => {
     if (!selectedMessage || !flagReason.trim()) {
-      console.warn('⚠️ Flag submission validation failed:', {
-        hasSelectedMessage: !!selectedMessage,
-        hasFlagReason: !!flagReason.trim()
-      });
       toast({
         title: 'Error',
         description: 'Please provide a reason for flagging',
@@ -404,25 +299,12 @@ export default function MessagingManagementPage() {
     }
 
     try {
-      console.log('🚩 Submitting flag:', {
-        messageId: selectedMessage._id,
-        reason: flagReason,
-        category: flagCategory
-      });
-
       const response = await api.post(`/admin/messaging/messages/${selectedMessage._id}/flag`, {
         reason: flagReason,
         category: flagCategory,
       });
 
-      console.log('📥 Flag API response:', {
-        status: response.status,
-        success: (response.data as any).success,
-        data: (response.data as any).data
-      });
-
       if ((response.data as any).success) {
-        console.log('✅ Message flagged successfully');
         toast({
           title: 'Success',
           description: 'Message has been flagged for review',
@@ -430,14 +312,9 @@ export default function MessagingManagementPage() {
         setShowFlagModal(false);
         setFlagReason('');
         setSelectedMessage(null);
-        // Refresh data to show updated flag status
-        console.log('🔄 Refreshing data after flagging...');
         fetchData();
-      } else {
-        console.warn('⚠️ Flag API returned success: false');
       }
     } catch (error) {
-      
       toast({
         title: 'Error',
         description: 'Failed to flag message',
@@ -449,35 +326,16 @@ export default function MessagingManagementPage() {
   // Unflag message handler
   const handleUnflagMessage = useCallback(async (message: Message) => {
     try {
-      console.log('🚩 Unflagging message:', {
-        messageId: message._id,
-        sender: message.sender,
-        content: message.content?.substring(0, 50) + '...',
-        isFlagged: message.isFlagged
-      });
-
       const response = await api.post(`/admin/messaging/messages/${message._id}/unflag`);
-      
-      console.log('📥 Unflag API response:', {
-        status: response.status,
-        success: (response.data as any).success,
-        data: (response.data as any).data
-      });
 
       if ((response.data as any).success) {
-        console.log('✅ Message unflagged successfully');
         toast({
           title: 'Success',
           description: 'Message has been unflagged',
         });
-        // Refresh data to show updated flag status
-        console.log('🔄 Refreshing data after unflagging...');
         fetchData();
-      } else {
-        console.warn('⚠️ Unflag API returned success: false');
       }
     } catch (error: any) {
-      
       toast({
         title: 'Error',
         description: 'Failed to unflag message',
@@ -488,62 +346,32 @@ export default function MessagingManagementPage() {
 
   // Search handlers
   const handleConversationSearch = (value: string) => {
-    console.log('🔍 Conversation search changed:', {
-      oldValue: conversationSearch,
-      newValue: value,
-      currentPage: currentConversationPage
-    });
-    
     setConversationSearch(value);
     setCurrentConversationPage(1);
-    // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessageSearch = (value: string) => {
-    console.log('🔍 Message search changed:', {
-      oldValue: messageSearch,
-      newValue: value,
-      currentPage: currentMessagePage
-    });
-    
     setMessageSearch(value);
     setCurrentMessagePage(1);
-    // Data will be fetched automatically due to useEffect dependency
   };
 
   // Filter handlers
   const handleConversationFilterChange = (filterType: string, value: string) => {
-    console.log('🔧 Conversation filter changed:', {
-      filterType,
-      oldValue: filterType === 'type' ? conversationType : conversationStatus,
-      newValue: value,
-      currentPage: currentConversationPage
-    });
-    
     if (filterType === 'type') {
       setConversationType(value);
     } else if (filterType === 'status') {
       setConversationStatus(value);
     }
     setCurrentConversationPage(1);
-    // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessageFilterChange = (filterType: string, value: string) => {
-    console.log('🔧 Message filter changed:', {
-      filterType,
-      oldValue: filterType === 'type' ? messageType : messageStatus,
-      newValue: value,
-      currentPage: currentMessagePage
-    });
-    
     if (filterType === 'type') {
       setMessageType(value);
     } else if (filterType === 'status') {
       setMessageStatus(value);
     }
     setCurrentMessagePage(1);
-    // Data will be fetched automatically due to useEffect dependency
   };
 
   const getAttachmentIcon = (mimetype: string) => {
@@ -577,32 +405,10 @@ export default function MessagingManagementPage() {
   // The backend handles all filtering and pagination
 
   useEffect(() => {
-    console.log('🔄 useEffect triggered - fetching data');
-    console.log('📊 Current state:', {
-      conversations: conversations.length,
-      messages: messages.length,
-      stats: stats,
-      loading: loading,
-      currentConversationPage,
-      currentMessagePage
-    });
     
     fetchData();
   }, [fetchData]);
 
-  // Debug effect to log state changes
-  useEffect(() => {
-    console.log('📊 State updated:', {
-      conversations: conversations.length,
-      messages: messages.length,
-      stats: stats,
-      loading: loading,
-      totalConversations,
-      totalMessages,
-      currentConversationPage,
-      currentMessagePage
-    });
-  }, [conversations, messages, stats, loading, totalConversations, totalMessages, currentConversationPage, currentMessagePage]);
 
   if (loading) {
     return (
@@ -1212,10 +1018,10 @@ export default function MessagingManagementPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">
-                      {selectedMessage.sender?.fullName || selectedMessage.sender?.name || 'Unknown'}
+                      {selectedMessage.sender?.fullName || selectedMessage.sender?.name || 'System Message'}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {selectedMessage.sender?.email || 'No email'} • {selectedMessage.sender?.role || 'Unknown'}
+                      {selectedMessage.sender?.email || 'No email'} • {selectedMessage.sender?.role || 'System'}
                     </p>
                   </div>
                 </div>
@@ -1243,7 +1049,12 @@ export default function MessagingManagementPage() {
                   </div>
                   <div>
                     <span className="font-medium">Conversation ID:</span>
-                    <p className="text-gray-600 font-mono text-xs">{selectedMessage.conversation}</p>
+                    <p className="text-gray-600 font-mono text-xs">
+                      {typeof selectedMessage.conversation === 'object' 
+                        ? (selectedMessage.conversation as any)?._id || 'Unknown'
+                        : selectedMessage.conversation || 'Unknown'
+                      }
+                    </p>
                   </div>
                   <div>
                     <span className="font-medium">Sent:</span>
