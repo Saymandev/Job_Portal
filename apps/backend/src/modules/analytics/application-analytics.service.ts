@@ -124,12 +124,18 @@ export class ApplicationAnalyticsService {
     const experienceLevels = {};
     
     applications.forEach(app => {
-      const candidate = app.applicant;
+      try {
+        const candidate = app.applicant;
+        if (!candidate) return;
       
       // Skills analysis
-      if (candidate.skills) {
+      if (candidate.skills && Array.isArray(candidate.skills)) {
         candidate.skills.forEach(skill => {
-          skillsCount[skill] = (skillsCount[skill] || 0) + 1;
+          if (typeof skill === 'string') {
+            skillsCount[skill] = (skillsCount[skill] || 0) + 1;
+          } else if (skill && typeof skill === 'object' && skill.name) {
+            skillsCount[skill.name] = (skillsCount[skill.name] || 0) + 1;
+          }
         });
       }
       
@@ -140,8 +146,9 @@ export class ApplicationAnalyticsService {
       }
       
       // Experience level analysis
-      if (candidate.experience && candidate.experience.length > 0) {
+      if (candidate.experience && Array.isArray(candidate.experience) && candidate.experience.length > 0) {
         const totalYears = candidate.experience.reduce((total, exp) => {
+          if (!exp || !exp.startDate) return total;
           const startDate = new Date(exp.startDate);
           const endDate = exp.endDate ? new Date(exp.endDate) : new Date();
           const years = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
@@ -154,6 +161,9 @@ export class ApplicationAnalyticsService {
         else if (totalYears >= 2) level = 'mid';
         
         experienceLevels[level] = (experienceLevels[level] || 0) + 1;
+      }
+      } catch (error) {
+        console.error('Error processing candidate insights for application:', app._id, error);
       }
     });
 

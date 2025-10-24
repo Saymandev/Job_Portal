@@ -58,20 +58,22 @@ export class EnhancedMatchingService {
    * Enhanced matching algorithm with multiple factors
    */
   private async calculateEnhancedMatchScore(job: any, candidate: any): Promise<{ score: number; reasons: string[] }> {
-    let score = 0;
-    const reasons: string[] = [];
-    const weights = {
-      skills: 0.35,
-      experience: 0.20,
-      location: 0.15,
-      salary: 0.10,
-      culture: 0.10,
-      education: 0.05,
-      availability: 0.05,
-    };
+    try {
+      let score = 0;
+      const reasons: string[] = [];
+      const weights = {
+        skills: 0.35,
+        experience: 0.20,
+        location: 0.15,
+        salary: 0.10,
+        culture: 0.10,
+        education: 0.05,
+        availability: 0.05,
+      };
 
     // 1. Skills Match (35% weight)
-    const skillsScore = this.calculateSkillsMatch(job.skills, candidate.skills || []);
+    const candidateSkills = Array.isArray(candidate.skills) ? candidate.skills : [];
+    const skillsScore = this.calculateSkillsMatch(job.skills || [], candidateSkills);
     score += skillsScore * weights.skills;
     if (skillsScore > 80) reasons.push('Excellent skills match');
     else if (skillsScore > 60) reasons.push('Good skills match');
@@ -116,13 +118,28 @@ export class EnhancedMatchingService {
       score: Math.round(Math.min(score, 100)),
       reasons: reasons.slice(0, 3), // Return top 3 reasons
     };
+    } catch (error) {
+      console.error('Error calculating enhanced match score:', error);
+      return {
+        score: 0,
+        reasons: ['Error calculating match score'],
+      };
+    }
   }
 
-  private calculateSkillsMatch(jobSkills: string[], candidateSkills: string[]): number {
-    if (!jobSkills.length || !candidateSkills.length) return 0;
+  private calculateSkillsMatch(jobSkills: string[], candidateSkills: any[]): number {
+    if (!jobSkills || !Array.isArray(jobSkills) || !jobSkills.length) return 0;
+    if (!candidateSkills || !Array.isArray(candidateSkills) || !candidateSkills.length) return 0;
+    
+    // Normalize candidate skills to strings
+    const normalizedCandidateSkills = candidateSkills.map(skill => {
+      if (typeof skill === 'string') return skill;
+      if (skill && typeof skill === 'object' && skill.name) return skill.name;
+      return String(skill);
+    }).filter(skill => skill && skill.trim().length > 0);
     
     const matchingSkills = jobSkills.filter(jobSkill =>
-      candidateSkills.some(candidateSkill =>
+      normalizedCandidateSkills.some(candidateSkill =>
         jobSkill.toLowerCase().includes(candidateSkill.toLowerCase()) ||
         candidateSkill.toLowerCase().includes(jobSkill.toLowerCase())
       )
@@ -131,10 +148,11 @@ export class EnhancedMatchingService {
     return (matchingSkills.length / jobSkills.length) * 100;
   }
 
-  private calculateExperienceMatch(jobExperienceLevel: string, candidateExperience: any[]): number {
-    if (!candidateExperience || candidateExperience.length === 0) return 0;
+  private calculateExperienceMatch(jobExperienceLevel: string, candidateExperience: any): number {
+    if (!candidateExperience || !Array.isArray(candidateExperience) || candidateExperience.length === 0) return 0;
     
     const totalYears = candidateExperience.reduce((total, exp) => {
+      if (!exp || !exp.startDate) return total;
       const startDate = new Date(exp.startDate);
       const endDate = exp.endDate ? new Date(exp.endDate) : new Date();
       const years = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
