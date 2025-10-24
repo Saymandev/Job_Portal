@@ -443,15 +443,29 @@ export class MessagingPermissionsService {
 
     // Check if permission is active (after handling expiration/renewal)
     if (permission.status === 'approved' && !permission.isActive) {
-      console.log('❌ [PERMISSION CHECK] Permission is not active:', {
+      console.log('🔍 [PERMISSION CHECK] Permission is not active, checking if it should be activated:', {
         status: permission.status,
-        isActive: permission.isActive
+        isActive: permission.isActive,
+        expiresAt: permission.expiresAt,
+        isNotExpired: !permission.expiresAt || permission.expiresAt >= new Date()
       });
-      return {
-        canMessage: false,
-        reason: 'Messaging permission has expired.',
-        permission,
-      };
+      
+      // If the permission is approved but not active, and it's not expired, activate it
+      if (!permission.expiresAt || permission.expiresAt >= new Date()) {
+        console.log('✅ [PERMISSION CHECK] Activating non-expired approved permission');
+        permission.isActive = true;
+        await permission.save();
+      } else {
+        console.log('❌ [PERMISSION CHECK] Permission is not active and has expired:', {
+          status: permission.status,
+          isActive: permission.isActive
+        });
+        return {
+          canMessage: false,
+          reason: 'Messaging permission has expired.',
+          permission,
+        };
+      }
     }
 
     console.log('✅ [PERMISSION CHECK] Permission check passed, allowing message');
