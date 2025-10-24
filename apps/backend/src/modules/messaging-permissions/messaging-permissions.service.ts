@@ -317,7 +317,10 @@ export class MessagingPermissionsService {
     console.log('🔍 [PERMISSION CHECK] Direct permission lookup:', { 
       found: !!permission, 
       permissionId: permission?._id,
-      status: permission?.status 
+      status: permission?.status,
+      isActive: permission?.isActive,
+      expiresAt: permission?.expiresAt,
+      type: (permission as any)?.type
     });
 
     if (!permission) {
@@ -352,14 +355,7 @@ export class MessagingPermissionsService {
       };
     }
 
-    if (permission.status === 'approved' && !permission.isActive) {
-      return {
-        canMessage: false,
-        reason: 'Messaging permission has expired.',
-        permission,
-      };
-    }
-
+    // Check if permission has expired first, before checking isActive
     if (permission.expiresAt && permission.expiresAt < new Date()) {
       console.log('🔍 [PERMISSION CHECK] Permission expired, checking renewal eligibility:', {
         expiresAt: permission.expiresAt,
@@ -445,6 +441,20 @@ export class MessagingPermissionsService {
       };
     }
 
+    // Check if permission is active (after handling expiration/renewal)
+    if (permission.status === 'approved' && !permission.isActive) {
+      console.log('❌ [PERMISSION CHECK] Permission is not active:', {
+        status: permission.status,
+        isActive: permission.isActive
+      });
+      return {
+        canMessage: false,
+        reason: 'Messaging permission has expired.',
+        permission,
+      };
+    }
+
+    console.log('✅ [PERMISSION CHECK] Permission check passed, allowing message');
     return { canMessage: true, permission };
   }
 
