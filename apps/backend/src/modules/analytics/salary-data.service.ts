@@ -159,6 +159,9 @@ export class SalaryDataService {
     }
 
     try {
+      // Add delay to prevent rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+      
       // Clean and prepare search terms
       const searchPosition = query.position.replace(/[^a-zA-Z0-9\s]/g, '').trim();
       const searchLocation = query.location.replace(/[^a-zA-Z0-9\s]/g, '').trim();

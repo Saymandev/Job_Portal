@@ -144,16 +144,28 @@ export default function AdminAnalyticsPage() {
 
   const handleTriggerSalaryUpdate = async () => {
     try {
-      await api.post('/admin/salary-data/update');
-      toast({
-        title: 'Success',
-        description: 'Salary data update triggered successfully',
-      });
-      fetchData(); // Refresh data
+      const response = await api.post('/admin/salary-data/update');
+      console.log('Salary update response:', response.data);
+      
+      if (response.data?.success) {
+        toast({
+          title: 'Success',
+          description: 'Salary data update completed successfully',
+        });
+        fetchData(); // Refresh data
+      } else {
+        toast({
+          title: 'Warning',
+          description: 'Salary data update completed with some warnings (check logs)',
+          variant: 'default',
+        });
+        fetchData(); // Refresh data anyway
+      }
     } catch (error: any) {
+      console.error('Salary update error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to trigger salary data update',
+        description: `Failed to trigger salary data update: ${error.response?.data?.message || error.message}`,
         variant: 'destructive',
       });
     }
