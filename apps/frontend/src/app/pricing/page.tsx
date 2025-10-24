@@ -8,24 +8,24 @@ import api from '@/lib/api';
 import { PRICING_CONFIG } from '@/lib/pricing.config';
 import { useAuthStore } from '@/store/auth-store';
 import {
-    ArrowRight,
-    BarChart3,
-    Building,
-    Check,
-    Code,
-    Crown,
-    DollarSign,
-    Download,
-    Headphones,
-    MessageSquare,
-    Mic,
-    Rocket,
-    Search,
-    Sparkles,
-    Star,
-    Target,
-    User,
-    Zap
+  ArrowRight,
+  BarChart3,
+  Building,
+  Check,
+  Code,
+  Crown,
+  DollarSign,
+  Download,
+  Headphones,
+  MessageSquare,
+  Mic,
+  Rocket,
+  Search,
+  Sparkles,
+  Star,
+  Target,
+  User,
+  Zap
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -54,6 +54,8 @@ const planFeatures = {
     { text: '100 job postings per month', icon: null },
     { text: '5 job boosts per month', icon: Star },
     { text: '90-day job duration', icon: null },
+    { text: 'Direct messaging with candidates', icon: MessageSquare },
+    { text: 'Auto messaging permissions', icon: Zap },
     { text: 'API access', icon: Code },
     { text: 'Custom branding', icon: Building },
     { text: 'Bulk job import', icon: Download },
@@ -64,6 +66,8 @@ const planFeatures = {
     { text: 'Unlimited job postings', icon: null },
     { text: '10 job boosts per month', icon: Star },
     { text: 'Custom job duration', icon: null },
+    { text: 'Unlimited direct messaging', icon: MessageSquare },
+    { text: 'Auto messaging permissions', icon: Zap },
     { text: 'Priority application processing', icon: Target },
     { text: 'Enhanced candidate matching', icon: Search },
     { text: 'Application analytics dashboard', icon: BarChart3 },
@@ -339,6 +343,59 @@ export default function PricingPage() {
           })}
         </div>
 
+        {/* Messaging Features Highlight */}
+        <div className="max-w-6xl mx-auto mt-16">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardContent className="p-8">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                  <MessageSquare className="h-4 w-4" />
+                  Premium Messaging Features
+                </div>
+                <h2 className="text-3xl font-bold mb-4">Streamline Your Candidate Communication</h2>
+                <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                  Pro and Enterprise plans include powerful messaging features that eliminate friction 
+                  in your hiring process and help you connect with top talent faster.
+                </p>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Direct Messaging</h3>
+                  <p className="text-muted-foreground">
+                    Message candidates directly without waiting for permission requests. 
+                    Start conversations immediately.
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Zap className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Auto Permissions</h3>
+                  <p className="text-muted-foreground">
+                    Automatic messaging permissions are created when you contact candidates, 
+                    saving time and reducing back-and-forth.
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Target className="h-8 w-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Enhanced Matching</h3>
+                  <p className="text-muted-foreground">
+                    Contact any candidate from our enhanced matching system with 
+                    instant messaging capabilities.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* FAQ or Additional Info */}
         <div className="max-w-5xl mx-auto pt-16">
@@ -390,6 +447,21 @@ export default function PricingPage() {
                 <p className="text-sm text-muted-foreground">
                   Your existing jobs remain active. However, you&apos;ll be limited to your new plan&apos;s 
                   posting limit for new jobs.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-100 hover:border-slate-300">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-blue-500" />
+                  What are auto messaging permissions?
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Pro and Enterprise plans automatically create messaging permissions when you contact candidates, 
+                  eliminating the need for manual permission requests. This streamlines your hiring process.
                 </p>
               </CardContent>
             </Card>

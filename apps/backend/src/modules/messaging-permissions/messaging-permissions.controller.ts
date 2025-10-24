@@ -165,4 +165,14 @@ export class MessagingPermissionsController {
       data: stats,
     };
   }
+
+  @Get('check-permissions')
+  @ApiOperation({ summary: 'Check if user has messaging permissions based on subscription' })
+  async checkMessagingPermissions(@CurrentUser('id') userId: string) {
+    const result = await this.messagingPermissionsService.hasMessagingPermissions(userId);
+    return {
+      success: true,
+      data: result,
+    };
+  }
 }

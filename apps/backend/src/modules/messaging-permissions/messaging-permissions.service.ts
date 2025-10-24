@@ -106,6 +106,24 @@ export class MessagingPermissionsService {
     try {
       console.log('🔧 [AUTO-PERMISSION] Creating employer-candidate permission:', { senderId, receiverId });
       
+      // First, check if the sender has a valid subscription for auto-messaging
+      const subscription = await this.subscriptionsService.getUserSubscription(senderId);
+      console.log('🔍 [AUTO-PERMISSION] Checking subscription:', { 
+        hasSubscription: !!subscription, 
+        plan: subscription?.plan,
+        directMessagingEnabled: subscription?.directMessagingEnabled,
+        status: subscription?.status
+      });
+      
+      // Only allow auto-creation for Pro and Enterprise plans with active subscriptions
+      if (!subscription || 
+          !['pro', 'enterprise'].includes(subscription.plan) || 
+          subscription.status !== 'active' || 
+          !subscription.directMessagingEnabled) {
+        console.log('❌ [AUTO-PERMISSION] User does not have valid subscription for auto-messaging');
+        return;
+      }
+      
       // Check if permission already exists
       const existingPermission = await this.messagingPermissionModel.findOne({
         $or: [
@@ -229,11 +247,16 @@ export class MessagingPermissionsService {
             plan: subscription?.plan 
           });
           
-          if (subscription && subscription.directMessagingEnabled && ['pro', 'enterprise'].includes(subscription.plan)) {
+          if (subscription && 
+              subscription.directMessagingEnabled && 
+              ['pro', 'enterprise'].includes(subscription.plan) &&
+              subscription.status === 'active') {
             console.log('✅ [PERMISSION CHECK] Premium employer, auto-creating permission');
             // Auto-create messaging permission for premium employer contacting any candidate
             await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
             return { canMessage: true };
+          } else {
+            console.log('❌ [PERMISSION CHECK] Employer does not have valid subscription for auto-messaging');
           }
         }
         
@@ -253,9 +276,25 @@ export class MessagingPermissionsService {
           });
           
           if (hasAppliedToEmployerJob) {
-            // Auto-create messaging permission for employer-candidate relationship
-            await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
-            return { canMessage: true };
+            // Check if the employer has a valid subscription for auto-messaging
+            const employerSubscription = await this.subscriptionsService.getUserSubscription(receiverId);
+            console.log('🔍 [PERMISSION CHECK] Employer subscription check:', { 
+              hasSubscription: !!employerSubscription, 
+              directMessagingEnabled: employerSubscription?.directMessagingEnabled,
+              plan: employerSubscription?.plan 
+            });
+            
+            if (employerSubscription && 
+                employerSubscription.directMessagingEnabled && 
+                ['pro', 'enterprise'].includes(employerSubscription.plan) &&
+                employerSubscription.status === 'active') {
+              console.log('✅ [PERMISSION CHECK] Employer has valid subscription, auto-creating permission');
+              // Auto-create messaging permission for employer-candidate relationship
+              await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
+              return { canMessage: true };
+            } else {
+              console.log('❌ [PERMISSION CHECK] Employer does not have valid subscription for auto-messaging');
+            }
           }
         }
       }
@@ -473,5 +512,52 @@ export class MessagingPermissionsService {
       activePermissions,
       blockedUsers,
     };
+  }
+
+  // Check if user has messaging permissions based on subscription
+  async hasMessagingPermissions(userId: string): Promise<{ hasPermissions: boolean; reason?: string; plan?: string }> {
+    try {
+      const subscription = await this.subscriptionsService.getUserSubscription(userId);
+      
+      if (!subscription) {
+        return { 
+          hasPermissions: false, 
+          reason: 'No subscription found. Upgrade to Pro or Enterprise for direct messaging.' 
+        };
+      }
+      
+      if (subscription.status !== 'active') {
+        return { 
+          hasPermissions: false, 
+          reason: 'Subscription is not active. Please renew your subscription.' 
+        };
+      }
+      
+      if (!['pro', 'enterprise'].includes(subscription.plan)) {
+        return { 
+          hasPermissions: false, 
+          reason: 'Direct messaging requires Pro or Enterprise plan. Upgrade to unlock this feature.',
+          plan: subscription.plan
+        };
+      }
+      
+      if (!subscription.directMessagingEnabled) {
+        return { 
+          hasPermissions: false, 
+          reason: 'Direct messaging is not enabled for your account. Contact support.' 
+        };
+      }
+      
+      return { 
+        hasPermissions: true, 
+        plan: subscription.plan 
+      };
+    } catch (error) {
+      console.error('Error checking messaging permissions:', error);
+      return { 
+        hasPermissions: false, 
+        reason: 'Error checking subscription status' 
+      };
+    }
   }
 }
