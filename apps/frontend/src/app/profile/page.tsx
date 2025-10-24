@@ -756,16 +756,6 @@ export default function CVBuilderPage() {
                     />
                   </div>
                 </div>
-                
-                <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
-                  <div className="flex items-center gap-2 text-blue-700 mb-2">
-                    <Upload className="h-4 w-4" />
-                    <span className="text-sm font-medium">Resume Upload</span>
-                  </div>
-                  <p className="text-xs text-primary">
-                    Your resume can be uploaded in the prominent card above for better visibility to employers.
-                  </p>
-                </div>
               </CardContent>
             )}
           </Card>

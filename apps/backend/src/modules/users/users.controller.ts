@@ -2,17 +2,17 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import {
-    BadRequestException,
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Post,
-    Put,
-    UploadedFile,
-    UseGuards,
-    UseInterceptors,
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -91,7 +91,16 @@ export class UsersController {
       throw new BadRequestException('No file uploaded');
     }
 
-    const result = await this.usersService.uploadResume(userId, file.path, file.originalname);
+    // Parse resume from buffer before uploading to get the data
+    let parsedData = null;
+    try {
+      parsedData = await this.usersService.parseResumeFromBuffer(file.buffer, file.originalname);
+    } catch (error) {
+      console.error('Error parsing resume:', error);
+      // Continue with upload even if parsing fails
+    }
+
+    const result = await this.usersService.uploadResume(userId, file.path, file.originalname, parsedData);
 
     const response = {
       success: true,

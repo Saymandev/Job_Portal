@@ -69,7 +69,7 @@ export class UsersService {
     await user.save();
   }
 
-  async uploadResume(userId: string, resumePath?: string, originalName?: string): Promise<any> {
+  async uploadResume(userId: string, resumePath?: string, originalName?: string, parsedData?: any): Promise<any> {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -106,14 +106,18 @@ export class UsersService {
     // Also update the old resume field for backward compatibility
     user.resume = resumeUrl;
 
-    // Automatically parse resume and update profile if it's a local file
-    let parsedData = null;
-    if (!isCloudinaryUrl && originalName) {
+    // Use parsed data if provided, otherwise try to parse from local file
+    if (!parsedData && !isCloudinaryUrl && originalName) {
       try {
         parsedData = await this.resumeParserService.parseResume(resumePath, originalName);
-        
-        // Update user profile with parsed data
-        if (parsedData.personalInfo) {
+      } catch (error) {
+        console.error('Error parsing resume from file:', error);
+      }
+    }
+
+    // Update user profile with parsed data if available
+    if (parsedData) {
+      if (parsedData.personalInfo) {
           // Only update fields that are empty or if the parsed data seems more complete
           if (!user.fullName && parsedData.personalInfo.fullName) {
             user.fullName = parsedData.personalInfo.fullName;
@@ -216,12 +220,7 @@ export class UsersService {
             proficiency: lang.proficiency,
           }));
         }
-
-      } catch (error) {
-        // Log error but don't fail the upload
-        console.error('Error parsing resume:', error);
-      }
-    }
+    }  // Close if (parsedData) block
     
     const savedUser = await user.save();
 
@@ -233,6 +232,16 @@ export class UsersService {
     };
 
     return result;
+  }
+
+  async parseResumeFromBuffer(buffer: Buffer, originalName: string): Promise<any> {
+    try {
+      // Parse the resume from buffer
+      const parsedData = await this.resumeParserService.parseResumeFromBuffer(buffer, originalName);
+      return parsedData;
+    } catch (error) {
+      throw new BadRequestException(`Failed to parse resume: ${error.message}`);
+    }
   }
 
   async parseResumeAndSuggestProfile(userId: string, resumePath: string, originalName: string): Promise<any> {

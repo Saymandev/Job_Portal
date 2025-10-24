@@ -94,6 +94,32 @@ export class ResumeParserService {
     }
   }
 
+  async parseResumeFromBuffer(buffer: Buffer, originalName: string): Promise<ParsedResumeData> {
+    try {
+      const fileExtension = path.extname(originalName).toLowerCase();
+      let text: string;
+
+      // Extract text based on file type
+      if (fileExtension === '.pdf') {
+        text = await this.extractTextFromPDFBuffer(buffer);
+      } else if (fileExtension === '.docx') {
+        text = await this.extractTextFromDocxBuffer(buffer);
+      } else {
+        text = buffer.toString('utf-8');
+      }
+
+      this.logger.log(`Extracted text from ${originalName} buffer: ${text.length} characters`);
+
+      // Parse the extracted text
+      const parsedData = this.parseText(text);
+
+      return parsedData;
+    } catch (error) {
+      this.logger.error(`Error parsing resume buffer ${originalName}:`, error);
+      throw new Error(`Failed to parse resume: ${error.message}`);
+    }
+  }
+
   private async extractTextFromPDF(filePath: string): Promise<string> {
     try {
       const dataBuffer = fs.readFileSync(filePath);
@@ -113,6 +139,27 @@ export class ResumeParserService {
     } catch (error) {
       this.logger.error('Error extracting text from DOCX:', error);
       throw new Error('Failed to extract text from DOCX');
+    }
+  }
+
+  private async extractTextFromPDFBuffer(buffer: Buffer): Promise<string> {
+    try {
+      const pdfParseLib = require('pdf-parse');
+      const data = await pdfParseLib(buffer);
+      return data.text;
+    } catch (error) {
+      this.logger.error('Error extracting text from PDF buffer:', error);
+      throw new Error('Failed to extract text from PDF buffer');
+    }
+  }
+
+  private async extractTextFromDocxBuffer(buffer: Buffer): Promise<string> {
+    try {
+      const result = await mammoth.extractRawText({ buffer: buffer });
+      return result.value;
+    } catch (error) {
+      this.logger.error('Error extracting text from DOCX buffer:', error);
+      throw new Error('Failed to extract text from DOCX buffer');
     }
   }
 
@@ -396,7 +443,7 @@ export class ResumeParserService {
       }
     }
 
-    return [...new Set(skills)]; // Remove duplicates
+    return Array.from(new Set(skills)); // Remove duplicates
   }
 
   private extractCertifications(text: string, lines: string[]): ParsedResumeData['certifications'] {
