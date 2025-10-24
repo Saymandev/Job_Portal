@@ -147,7 +147,7 @@ export default function AdminAnalyticsPage() {
       const response = await api.post('/admin/salary-data/update');
       console.log('Salary update response:', response.data);
       
-      if (response.data?.success) {
+      if ((response.data as any).success) {
         toast({
           title: 'Success',
           description: 'Salary data update completed successfully',

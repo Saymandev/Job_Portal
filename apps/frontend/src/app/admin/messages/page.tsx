@@ -167,7 +167,7 @@ export default function AdminMessagesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, isAuthenticated, user]);
+  }, [toast, user]);
 
   // Monitor user object changes for debugging
  
