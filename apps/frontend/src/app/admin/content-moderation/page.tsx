@@ -48,9 +48,9 @@ interface JobPosting {
     max: number;
     currency: string;
   };
-  requirements: string[];
-  benefits: string[];
-  tags: string[];
+  requirements?: string;
+  benefits?: string[];
+  skills?: string[];
   flaggedReason?: string;
   flaggedBy?: string;
   flaggedAt?: string;
@@ -769,9 +769,9 @@ export default function ContentModerationPage() {
                         )}
                         
                         <div className="flex flex-wrap gap-2">
-                          {job.tags.map((tag, index) => (
+                          {Array.isArray(job.skills) && (job.skills || []).map((skill, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
-                              {tag}
+                              {skill}
                             </Badge>
                           ))}
                         </div>
@@ -1232,34 +1232,32 @@ export default function ContentModerationPage() {
                   </div>
                 </div>
 
-                {selectedJob.requirements && selectedJob.requirements.length > 0 && (
+                {selectedJob.requirements && (
                   <div>
                     <h4 className="font-semibold mb-2">Requirements</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      {selectedJob.requirements.map((req, index) => (
-                        <li key={index} className="text-gray-700">{req}</li>
-                      ))}
-                    </ul>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-gray-800 whitespace-pre-wrap">{selectedJob.requirements}</p>
+                    </div>
                   </div>
                 )}
 
-                {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                {selectedJob.benefits && Array.isArray(selectedJob.benefits) && selectedJob.benefits.length > 0 && (
                   <div>
                     <h4 className="font-semibold mb-2">Benefits</h4>
                     <ul className="list-disc list-inside space-y-1">
-                      {selectedJob.benefits.map((benefit, index) => (
+                      {(selectedJob.benefits || []).map((benefit, index) => (
                         <li key={index} className="text-gray-700">{benefit}</li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {selectedJob.tags && selectedJob.tags.length > 0 && (
+                {selectedJob.skills && Array.isArray(selectedJob.skills) && selectedJob.skills.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-2">Tags</h4>
+                    <h4 className="font-semibold mb-2">Skills</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedJob.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline">{tag}</Badge>
+                      {(selectedJob.skills || []).map((skill, index) => (
+                        <Badge key={index} variant="outline">{skill}</Badge>
                       ))}
                     </div>
                   </div>
