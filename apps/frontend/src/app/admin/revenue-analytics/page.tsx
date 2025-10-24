@@ -497,6 +497,19 @@ export default function RevenueAnalyticsPage() {
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-end justify-between space-x-2 relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[320px] bg-gray-50">
+            {/* Y-axis labels */}
+            <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-2">
+              <div className="text-right">${Math.max(...(currentData?.map(d => d.revenue) || [0]))}</div>
+              <div className="text-right">${Math.max(...(currentData?.map(d => d.revenue) || [0])) / 2}</div>
+              <div className="text-right">$0</div>
+            </div>
+            
+            {/* Grid lines */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 left-8 right-0 h-px bg-gray-200"></div>
+              <div className="absolute top-1/2 left-8 right-0 h-px bg-gray-200"></div>
+              <div className="absolute bottom-0 left-8 right-0 h-px bg-gray-200"></div>
+            </div>
             {revenueData && currentData && currentData.length > 0 ? (() => {
               const maxRevenue = Math.max(...currentData.map(d => d.revenue));
               return (
@@ -506,10 +519,10 @@ export default function RevenueAnalyticsPage() {
                     Rendering {currentData.length} bars | Max: ${maxRevenue}
                   </div>
                   {currentData.map((item, index) => {
-                    // Ensure minimum height for visibility and proper scaling
+                    // Calculate proper bar height with better scaling
                     const height = maxRevenue > 0 
-                      ? Math.max((item.revenue / maxRevenue) * 90, item.revenue > 0 ? 15 : 8) // 90% max height, 15% min for non-zero, 8% for zero
-                      : 8; // 8% minimum height when no revenue data
+                      ? Math.max((item.revenue / maxRevenue) * 85, item.revenue > 0 ? 20 : 12) // 85% max height, 20% min for non-zero, 12% for zero
+                      : 12; // 12% minimum height when no revenue data
                     
                     // Debug logging for first few items
                     if (index < 3) {
@@ -522,14 +535,14 @@ export default function RevenueAnalyticsPage() {
                     }
                     
                     return (
-                      <div key={index} className="flex flex-col items-center flex-1 min-w-0">
+                      <div key={index} className="flex flex-col items-center flex-1 min-w-0 ml-8">
                         <div 
-                          className={`rounded-t w-full transition-all duration-300 hover:opacity-80 border border-gray-200 ${
-                            item.revenue > 0 ? 'bg-primary' : 'bg-gray-200'
+                          className={`w-8 rounded-t transition-all duration-300 hover:opacity-80 shadow-sm ${
+                            item.revenue > 0 ? 'bg-gradient-to-t from-primary to-primary/80' : 'bg-gradient-to-t from-gray-200 to-gray-100'
                           }`}
                           style={{ 
                             height: `${height}%`,
-                            minHeight: '8px' // Ensure minimum visible height
+                            minHeight: '16px' // Ensure minimum visible height
                           }}
                           title={`${timeRange === 'monthly' ? (item as any).month : (item as any).year}: ${formatCurrency(item.revenue)}`}
                         ></div>
