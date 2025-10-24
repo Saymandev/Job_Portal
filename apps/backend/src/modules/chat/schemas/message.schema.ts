@@ -38,6 +38,28 @@ export class Message {
 
   @Prop({ type: [{ type: 'ObjectId', ref: 'User' }], default: [] })
   readBy: string[];
+
+  // Flagging properties
+  @Prop({ default: false })
+  isFlagged: boolean;
+
+  @Prop({ required: false })
+  flagReason?: string;
+
+  @Prop({ required: false })
+  flagCategory?: string;
+
+  @Prop({ required: false })
+  flaggedAt?: Date;
+
+  @Prop({ required: false })
+  flaggedBy?: string;
+
+  @Prop({ required: false })
+  unflaggedBy?: string;
+
+  @Prop({ required: false })
+  unflaggedAt?: Date;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

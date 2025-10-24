@@ -56,13 +56,20 @@ interface Message {
   conversation: string;
   sender: {
     _id: string;
-    name: string;
+    name?: string;
+    fullName?: string;
     email: string;
     role: string;
+    avatar?: string;
   };
   content: string;
   isRead: boolean;
   isAdminMessage: boolean;
+  isFlagged?: boolean;
+  flagReason?: string;
+  flagCategory?: string;
+  flaggedAt?: string;
+  flaggedBy?: string;
   attachment?: {
     filename: string;
     url: string;
@@ -107,6 +114,13 @@ export default function MessagingManagementPage() {
   const [totalConversations, setTotalConversations] = useState(0);
   const [totalMessages, setTotalMessages] = useState(0);
   const [limit] = useState(10);
+  
+  // Modal state
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [showFlagModal, setShowFlagModal] = useState(false);
+  const [flagReason, setFlagReason] = useState('');
+  const [flagCategory, setFlagCategory] = useState('inappropriate');
   
   const { toast } = useToast();
 
@@ -188,10 +202,12 @@ export default function MessagingManagementPage() {
   // Pagination handlers
   const handleConversationPageChange = (page: number) => {
     setCurrentConversationPage(page);
+    // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessagePageChange = (page: number) => {
     setCurrentMessagePage(page);
+    // Data will be fetched automatically due to useEffect dependency
   };
 
   // Manual refresh function to avoid auto-rerenders
@@ -199,15 +215,101 @@ export default function MessagingManagementPage() {
     fetchData();
   }, [fetchData]);
 
+  // View message handler
+  const handleViewMessage = useCallback(async (message: Message) => {
+    try {
+      const response = await api.get(`/admin/messaging/messages/${message._id}`);
+      if ((response.data as any).success) {
+        setSelectedMessage((response.data as any).data);
+        setShowMessageModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching message details:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch message details',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
+  // Flag message handler
+  const handleFlagMessage = useCallback((message: Message) => {
+    setSelectedMessage(message);
+    setShowFlagModal(true);
+  }, []);
+
+  // Submit flag handler
+  const handleSubmitFlag = useCallback(async () => {
+    if (!selectedMessage || !flagReason.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please provide a reason for flagging',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const response = await api.post(`/admin/messaging/messages/${selectedMessage._id}/flag`, {
+        reason: flagReason,
+        category: flagCategory,
+      });
+
+      if ((response.data as any).success) {
+        toast({
+          title: 'Success',
+          description: 'Message has been flagged for review',
+        });
+        setShowFlagModal(false);
+        setFlagReason('');
+        setSelectedMessage(null);
+        // Refresh data to show updated flag status
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error flagging message:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to flag message',
+        variant: 'destructive',
+      });
+    }
+  }, [selectedMessage, flagReason, flagCategory, toast, fetchData]);
+
+  // Unflag message handler
+  const handleUnflagMessage = useCallback(async (message: Message) => {
+    try {
+      const response = await api.post(`/admin/messaging/messages/${message._id}/unflag`);
+      if ((response.data as any).success) {
+        toast({
+          title: 'Success',
+          description: 'Message has been unflagged',
+        });
+        // Refresh data to show updated flag status
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error unflagging message:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to unflag message',
+        variant: 'destructive',
+      });
+    }
+  }, [toast, fetchData]);
+
   // Search handlers
   const handleConversationSearch = (value: string) => {
     setConversationSearch(value);
     setCurrentConversationPage(1);
+    // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessageSearch = (value: string) => {
     setMessageSearch(value);
     setCurrentMessagePage(1);
+    // Data will be fetched automatically due to useEffect dependency
   };
 
   // Filter handlers
@@ -218,6 +320,7 @@ export default function MessagingManagementPage() {
       setConversationStatus(value);
     }
     setCurrentConversationPage(1);
+    // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessageFilterChange = (filterType: string, value: string) => {
@@ -227,6 +330,7 @@ export default function MessagingManagementPage() {
       setMessageStatus(value);
     }
     setCurrentMessagePage(1);
+    // Data will be fetched automatically due to useEffect dependency
   };
 
   const getAttachmentIcon = (mimetype: string) => {
@@ -256,41 +360,8 @@ export default function MessagingManagementPage() {
     }
   };
 
-  // Filter conversations based on search and filters
-  const filteredConversations = conversations.filter(conversation => {
-    const matchesSearch = !conversationSearch || 
-      conversation.participants.some(p => 
-        p?.name?.toLowerCase().includes(conversationSearch.toLowerCase()) ||
-        p?.email?.toLowerCase().includes(conversationSearch.toLowerCase())
-      );
-    
-    const matchesType = conversationType === 'all' || 
-      (conversationType === 'admin' && conversation.isAdminConversation) ||
-      (conversationType === 'user' && !conversation.isAdminConversation);
-    
-    const matchesStatus = conversationStatus === 'all' ||
-      (conversationStatus === 'unread' && conversation.unreadCount > 0) ||
-      (conversationStatus === 'read' && conversation.unreadCount === 0);
-    
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  // Filter messages based on search and filters
-  const filteredMessages = messages.filter(message => {
-    const matchesSearch = !messageSearch || 
-      message.content.toLowerCase().includes(messageSearch.toLowerCase()) ||
-      message.sender?.name?.toLowerCase().includes(messageSearch.toLowerCase());
-    
-    const matchesType = messageType === 'all' ||
-      (messageType === 'admin' && message.isAdminMessage) ||
-      (messageType === 'user' && !message.isAdminMessage);
-    
-    const matchesStatus = messageStatus === 'all' ||
-      (messageStatus === 'read' && message.isRead) ||
-      (messageStatus === 'unread' && !message.isRead);
-    
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  // Use backend pagination - no client-side filtering needed
+  // The backend handles all filtering and pagination
 
   useEffect(() => {
     fetchData();
@@ -534,7 +605,7 @@ export default function MessagingManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {filteredConversations.map((conversation) => (
+                {conversations.map((conversation) => (
                   <div
                     key={conversation._id}
                     className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -600,10 +671,56 @@ export default function MessagingManagementPage() {
                   </div>
                 ))}
                 
-                {filteredConversations.length === 0 && (
+                {conversations.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p>No conversations found matching your filters</p>
+                  </div>
+                )}
+
+                {/* Conversation Pagination */}
+                {totalConversationPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="text-sm text-gray-500">
+                      Showing {((currentConversationPage - 1) * limit) + 1} to {Math.min(currentConversationPage * limit, totalConversations)} of {totalConversations} conversations
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConversationPageChange(1)}
+                        disabled={currentConversationPage === 1}
+                      >
+                        First
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConversationPageChange(currentConversationPage - 1)}
+                        disabled={currentConversationPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm">
+                        Page {currentConversationPage} of {totalConversationPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConversationPageChange(currentConversationPage + 1)}
+                        disabled={currentConversationPage === totalConversationPages}
+                      >
+                        Next
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConversationPageChange(totalConversationPages)}
+                        disabled={currentConversationPage === totalConversationPages}
+                      >
+                        Last
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -672,7 +789,7 @@ export default function MessagingManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {filteredMessages.map((message) => (
+                {messages.map((message) => (
                   <div
                     key={message._id}
                     className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -685,7 +802,7 @@ export default function MessagingManagementPage() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-sm">
-                              {message.sender?.name || 'Unknown'}
+                              {message.sender?.fullName || message.sender?.name || 'Unknown'}
                             </h3>
                             <p className="text-xs text-gray-600">
                               {message.sender?.email || 'No email'} • {message.sender?.role || 'Unknown'}
@@ -731,23 +848,90 @@ export default function MessagingManagementPage() {
                       </div>
                       
                       <div className="flex items-center gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewMessage(message)}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <AlertTriangle className="h-4 w-4 mr-1" />
-                          Flag
-                        </Button>
+                        {message.isFlagged ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleUnflagMessage(message)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <Shield className="h-4 w-4 mr-1" />
+                            Unflag
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleFlagMessage(message)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <AlertTriangle className="h-4 w-4 mr-1" />
+                            Flag
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
                 
-                {filteredMessages.length === 0 && (
+                {messages.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p>No messages found matching your filters</p>
+                  </div>
+                )}
+
+                {/* Message Pagination */}
+                {totalMessagePages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="text-sm text-gray-500">
+                      Showing {((currentMessagePage - 1) * limit) + 1} to {Math.min(currentMessagePage * limit, totalMessages)} of {totalMessages} messages
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleMessagePageChange(1)}
+                        disabled={currentMessagePage === 1}
+                      >
+                        First
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleMessagePageChange(currentMessagePage - 1)}
+                        disabled={currentMessagePage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm">
+                        Page {currentMessagePage} of {totalMessagePages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleMessagePageChange(currentMessagePage + 1)}
+                        disabled={currentMessagePage === totalMessagePages}
+                      >
+                        Next
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleMessagePageChange(totalMessagePages)}
+                        disabled={currentMessagePage === totalMessagePages}
+                      >
+                        Last
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -755,6 +939,208 @@ export default function MessagingManagementPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Message Details Modal */}
+      {showMessageModal && selectedMessage && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Message Details</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowMessageModal(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">
+                      {selectedMessage.sender?.fullName || selectedMessage.sender?.name || 'Unknown'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {selectedMessage.sender?.email || 'No email'} • {selectedMessage.sender?.role || 'Unknown'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-800">{selectedMessage.content}</p>
+                </div>
+
+                {selectedMessage.attachment && (
+                  <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                    {getAttachmentIcon(selectedMessage.attachment.mimetype)}
+                    <div>
+                      <p className="font-medium">{selectedMessage.attachment.filename}</p>
+                      <p className="text-sm text-gray-500">
+                        {formatFileSize(selectedMessage.attachment.size)} • {selectedMessage.attachment.mimetype}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Message ID:</span>
+                    <p className="text-gray-600 font-mono text-xs">{selectedMessage._id}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Conversation ID:</span>
+                    <p className="text-gray-600 font-mono text-xs">{selectedMessage.conversation}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent:</span>
+                    <p className="text-gray-600">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Read by:</span>
+                    <p className="text-gray-600">{selectedMessage.readBy.length} users</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Type:</span>
+                    <p className="text-gray-600">{selectedMessage.isAdminMessage ? 'Admin Message' : 'User Message'}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Status:</span>
+                    <p className="text-gray-600">{selectedMessage.isRead ? 'Read' : 'Unread'}</p>
+                  </div>
+                </div>
+
+                {selectedMessage.isFlagged && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <span className="font-medium text-red-800">Flagged for Review</span>
+                    </div>
+                    <p className="text-sm text-red-700">
+                      <strong>Reason:</strong> {selectedMessage.flagReason}
+                    </p>
+                    <p className="text-sm text-red-700">
+                      <strong>Category:</strong> {selectedMessage.flagCategory}
+                    </p>
+                    {selectedMessage.flaggedAt && (
+                      <p className="text-sm text-red-700">
+                        <strong>Flagged at:</strong> {new Date(selectedMessage.flaggedAt).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowMessageModal(false)}
+                >
+                  Close
+                </Button>
+                {!selectedMessage.isFlagged ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowMessageModal(false);
+                      handleFlagMessage(selectedMessage);
+                    }}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Flag Message
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowMessageModal(false);
+                      handleUnflagMessage(selectedMessage);
+                    }}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Unflag Message
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flag Message Modal */}
+      {showFlagModal && selectedMessage && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Flag Message</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFlagModal(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm text-gray-600 mb-2">Message content:</p>
+                  <p className="text-sm">{selectedMessage.content}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <Select value={flagCategory} onValueChange={setFlagCategory}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
+                      <SelectItem value="spam">Spam</SelectItem>
+                      <SelectItem value="harassment">Harassment</SelectItem>
+                      <SelectItem value="violence">Violence</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Reason</label>
+                  <textarea
+                    className="w-full p-3 border rounded-lg resize-none"
+                    rows={3}
+                    placeholder="Please provide a detailed reason for flagging this message..."
+                    value={flagReason}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFlagModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitFlag}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Flag Message
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

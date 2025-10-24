@@ -1136,6 +1136,70 @@ export class AdminService {
     };
   }
 
+  async getMessageById(messageId: string) {
+    const message = await this.messageModel
+      .findById(messageId)
+      .populate('sender', 'fullName name email role avatar')
+      .populate('conversation', 'title participants')
+      .lean();
+
+    if (!message) {
+      throw new Error('Message not found');
+    }
+
+    return message;
+  }
+
+  async flagMessage(messageId: string, reason: string, category: string, adminUserId: string) {
+    const message = await this.messageModel.findById(messageId);
+    if (!message) {
+      throw new Error('Message not found');
+    }
+
+    // Add flag information to the message
+    (message as any).isFlagged = true;
+    (message as any).flagReason = reason;
+    (message as any).flagCategory = category;
+    (message as any).flaggedAt = new Date();
+    (message as any).flaggedBy = adminUserId;
+
+    await message.save();
+
+    return {
+      messageId: message._id,
+      isFlagged: true,
+      flagReason: reason,
+      flagCategory: category,
+      flaggedAt: (message as any).flaggedAt,
+      flaggedBy: adminUserId
+    };
+  }
+
+  async unflagMessage(messageId: string, adminUserId: string) {
+    const message = await this.messageModel.findById(messageId);
+    if (!message) {
+      throw new Error('Message not found');
+    }
+
+    // Remove flag information from the message
+    (message as any).isFlagged = false;
+    (message as any).flagReason = undefined;
+    (message as any).flagCategory = undefined;
+    (message as any).flaggedAt = undefined;
+    (message as any).flaggedBy = undefined;
+    (message as any).unflaggedBy = adminUserId;
+    (message as any).unflaggedAt = new Date();
+
+    await message.save();
+
+    return {
+      messageId: message._id,
+      isFlagged: false,
+      unflaggedBy: adminUserId,
+      unflaggedAt: (message as any).unflaggedAt
+    };
+  }
+
   // ========== BRANDING MANAGEMENT ==========
 
   async getAllBrandingConfigurations(

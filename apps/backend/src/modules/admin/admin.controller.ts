@@ -1,3 +1,4 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
@@ -579,6 +580,43 @@ export class AdminController {
     return {
       success: true,
       data: stats,
+    };
+  }
+
+  @Get('messaging/messages/:id')
+  @ApiOperation({ summary: 'Get message details by ID' })
+  async getMessageById(@Param('id') messageId: string) {
+    const message = await this.adminService.getMessageById(messageId);
+    return {
+      success: true,
+      data: message,
+    };
+  }
+
+  @Post('messaging/messages/:id/flag')
+  @ApiOperation({ summary: 'Flag a message for moderation' })
+  async flagMessage(
+    @Param('id') messageId: string,
+    @Body() body: { reason: string; category: string },
+    @CurrentUser('id') adminUserId: string
+  ) {
+    const result = await this.adminService.flagMessage(messageId, body.reason, body.category, adminUserId);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Post('messaging/messages/:id/unflag')
+  @ApiOperation({ summary: 'Unflag a message' })
+  async unflagMessage(
+    @Param('id') messageId: string,
+    @CurrentUser('id') adminUserId: string
+  ) {
+    const result = await this.adminService.unflagMessage(messageId, adminUserId);
+    return {
+      success: true,
+      data: result,
     };
   }
 
