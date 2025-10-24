@@ -36,14 +36,28 @@ import { UploadController } from './upload.controller';
             storage: new CloudinaryStorage({
               cloudinary: cloudinary,
               params: (req, file) => {
-                return {
-                  folder: 'job-portal',
-                  resource_type: 'auto',
-                  transformation: [
-                    { quality: 'auto' },
-                    { fetch_format: 'auto' }
-                  ]
-                };
+                // For PDFs and documents, preserve original format for text extraction
+                const isDocument = file.mimetype === 'application/pdf' || 
+                                 file.mimetype === 'application/msword' || 
+                                 file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                
+                if (isDocument) {
+                  return {
+                    folder: 'job-portal',
+                    resource_type: 'raw', // Preserve original format for documents
+                    format: extname(file.originalname).substring(1), // Keep original extension
+                  };
+                } else {
+                  // For images, use auto optimization
+                  return {
+                    folder: 'job-portal',
+                    resource_type: 'auto',
+                    transformation: [
+                      { quality: 'auto' },
+                      { fetch_format: 'auto' }
+                    ]
+                  };
+                }
               },
             }),
             limits: {

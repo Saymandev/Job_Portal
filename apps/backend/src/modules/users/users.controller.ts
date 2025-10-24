@@ -104,7 +104,17 @@ export class UsersController {
       let fileBuffer = file.buffer;
       if (!fileBuffer && file.path && file.path.includes('cloudinary.com')) {
         console.log('🌐 [PRODUCTION DEBUG] Downloading file from Cloudinary for parsing...');
-        fileBuffer = await this.usersService.downloadFileFromUrl(file.path);
+        console.log('🌐 [PRODUCTION DEBUG] Cloudinary URL:', file.path);
+        
+        // With the updated upload config, PDFs should now be preserved as PDFs
+        const urlExtension = file.path.split('.').pop()?.toLowerCase();
+        console.log('🌐 [PRODUCTION DEBUG] URL extension:', urlExtension);
+        
+        if (urlExtension === 'pdf' || urlExtension === 'doc' || urlExtension === 'docx') {
+          fileBuffer = await this.usersService.downloadFileFromUrl(file.path);
+        } else {
+          console.log('⚠️ [PRODUCTION DEBUG] File extension not supported for parsing:', urlExtension);
+        }
       }
       
       if (fileBuffer) {
