@@ -79,7 +79,31 @@ interface AnalyticsDashboard {
   };
 }
 
+interface Subscription {
+  _id: string;
+  plan: string;
+  status: string;
+  startDate: string;
+  endDate?: string;
+  cancelAtPeriodEnd: boolean;
+  boostsAvailable: number;
+  boostsUsed: number;
+  featuredJobsEnabled: boolean;
+  advancedAnalyticsEnabled: boolean;
+  prioritySupportEnabled: boolean;
+  // Enhanced Employer Features
+  priorityApplicationsEnabled?: boolean;
+  enhancedMatchingEnabled?: boolean;
+  applicationAnalyticsEnabled?: boolean;
+  unlimitedResumeDownloadsEnabled?: boolean;
+  directMessagingEnabled?: boolean;
+  featuredProfileEnabled?: boolean;
+  salaryInsightsEnabled?: boolean;
+  interviewPrepEnabled?: boolean;
+}
+
 export default function AdvancedAnalytics() {
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [dashboard, setDashboard] = useState<AnalyticsDashboard | null>(null);
   const [insights, setInsights] = useState<AnalyticsInsight[]>([]);
   const [selectedInsight, setSelectedInsight] = useState<AnalyticsInsight | null>(null);
@@ -91,6 +115,33 @@ export default function AdvancedAnalytics() {
     isRead: undefined as boolean | undefined,
   });
   const { toast } = useToast();
+
+  const fetchSubscription = useCallback(async () => {
+    try {
+      const response = await api.get('/subscriptions/current');
+      if ((response.data as any).success) {
+        setSubscription((response.data as any).data);
+      }
+    } catch (error: any) {
+      // If no subscription found (404), user is on free plan
+      if (error.response?.status === 404) {
+        setSubscription({
+          _id: '',
+          plan: 'free',
+          status: 'active',
+          startDate: new Date().toISOString(),
+          cancelAtPeriodEnd: false,
+          boostsAvailable: 0,
+          boostsUsed: 0,
+          featuredJobsEnabled: false,
+          advancedAnalyticsEnabled: false,
+          prioritySupportEnabled: false
+        });
+      } else {
+        console.error('Error fetching subscription:', error);
+      }
+    }
+  }, []);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -128,12 +179,20 @@ export default function AdvancedAnalytics() {
   }, [filters, toast]);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    fetchSubscription();
+  }, [fetchSubscription]);
 
   useEffect(() => {
-    fetchInsights();
-  }, [fetchInsights]);
+    if (subscription?.advancedAnalyticsEnabled) {
+      fetchDashboard();
+    }
+  }, [fetchDashboard, subscription?.advancedAnalyticsEnabled]);
+
+  useEffect(() => {
+    if (subscription?.advancedAnalyticsEnabled) {
+      fetchInsights();
+    }
+  }, [fetchInsights, subscription?.advancedAnalyticsEnabled]);
 
   const generateInsights = async () => {
     try {
@@ -239,7 +298,8 @@ export default function AdvancedAnalytics() {
     }
   };
 
-  if (!dashboard?.subscription?.features) {
+  // Check if user has advanced analytics enabled
+  if (!subscription?.advancedAnalyticsEnabled) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">
