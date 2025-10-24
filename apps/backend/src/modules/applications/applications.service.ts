@@ -374,20 +374,32 @@ export class ApplicationsService {
       throw new NotFoundException('Resume not found');
     }
 
-    // In a real implementation, you would read the file from storage
-    // For now, we'll return a mock PDF buffer
-    const fs = await import('fs');
-    const path = await import('path');
-    
+    // Handle both local storage and Cloudinary URLs
     try {
-      const fullPath = path.join(process.cwd(), 'uploads', resumePath);
-      const resumeBuffer = fs.readFileSync(fullPath);
+      let resumeBuffer: Buffer;
+      
+      if (resumePath.startsWith('http')) {
+        // Cloudinary URL - download the file
+        const axios = require('axios');
+        const response = await axios.get(resumePath, {
+          responseType: 'arraybuffer',
+          timeout: 30000,
+        });
+        resumeBuffer = Buffer.from(response.data);
+      } else {
+        // Local file - read from filesystem
+        const fs = await import('fs');
+        const path = await import('path');
+        const fullPath = path.join(process.cwd(), 'uploads', resumePath);
+        resumeBuffer = fs.readFileSync(fullPath);
+      }
       
       // Track download for analytics
       await this.trackResumeDownload(employerId, applicationId);
       
       return resumeBuffer;
     } catch (error) {
+      console.error('Error downloading resume:', error);
       // If file not found, return a mock PDF
       return this.generateMockResume(application.applicant);
     }
