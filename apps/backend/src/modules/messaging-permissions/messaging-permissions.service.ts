@@ -102,8 +102,10 @@ export class MessagingPermissionsService {
       .sort({ createdAt: -1 });
   }
 
-  private async autoCreateEmployerCandidatePermission(senderId: string, receiverId: string): Promise<void> {
+  async autoCreateEmployerCandidatePermission(senderId: string, receiverId: string): Promise<void> {
     try {
+      console.log('🔧 [AUTO-PERMISSION] Creating employer-candidate permission:', { senderId, receiverId });
+      
       // Check if permission already exists
       const existingPermission = await this.messagingPermissionModel.findOne({
         $or: [
@@ -113,8 +115,10 @@ export class MessagingPermissionsService {
       });
 
       if (!existingPermission) {
+        console.log('🔧 [AUTO-PERMISSION] No existing permission found, creating new ones');
+        
         // Create bidirectional permissions for employer-candidate relationship
-        await this.messagingPermissionModel.create([
+        const permissions = await this.messagingPermissionModel.create([
           {
             user: senderId,
             targetUser: receiverId,
@@ -134,9 +138,17 @@ export class MessagingPermissionsService {
             updatedAt: new Date(),
           }
         ]);
+        
+        console.log('✅ [AUTO-PERMISSION] Created permissions:', permissions.map(p => ({ 
+          user: p.user, 
+          targetUser: p.targetUser, 
+          status: p.status 
+        })));
+      } else {
+        console.log('ℹ️ [AUTO-PERMISSION] Permission already exists:', existingPermission._id);
       }
     } catch (error) {
-      console.error('Error auto-creating employer-candidate permission:', error);
+      console.error('❌ [AUTO-PERMISSION] Error auto-creating employer-candidate permission:', error);
       // Don't throw error, just log it
     }
   }
@@ -145,8 +157,11 @@ export class MessagingPermissionsService {
     senderId: string,
     receiverId: string,
   ): Promise<{ canMessage: boolean; reason?: string; permission?: MessagingPermissionDocument }> {
+    console.log('🔍 [PERMISSION CHECK] Checking messaging permission:', { senderId, receiverId });
+    
     // Users can always message themselves (shouldn't happen in UI, but for safety)
     if (senderId === receiverId) {
+      console.log('✅ [PERMISSION CHECK] Same user, allowing');
       return { canMessage: true };
     }
 
@@ -182,6 +197,8 @@ export class MessagingPermissionsService {
       if (sender && receiver) {
         // If sender is employer and receiver is job seeker
         if (sender.role === 'employer' && receiver.role === 'job_seeker') {
+          console.log('🔍 [PERMISSION CHECK] Employer-candidate relationship detected');
+          
           // Check if the job seeker has applied to any job posted by this employer
           const { Application } = await import('../applications/schemas/application.schema');
           const ApplicationModel = this.messagingPermissionModel.db.model('Application');
@@ -190,12 +207,15 @@ export class MessagingPermissionsService {
             applicant: receiverId
           }).populate('job');
           
+          console.log('🔍 [PERMISSION CHECK] Found applications:', applications.length);
+          
           const hasAppliedToEmployerJob = applications.some(app => {
             const jobPostedBy = (app.job as any).postedBy?.toString();
             return jobPostedBy === senderId;
           });
           
           if (hasAppliedToEmployerJob) {
+            console.log('✅ [PERMISSION CHECK] Candidate has applied to employer job, auto-creating permission');
             // Auto-create messaging permission for employer-candidate relationship
             await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
             return { canMessage: true };
@@ -203,7 +223,14 @@ export class MessagingPermissionsService {
 
           // If no application found, check if employer has premium subscription for enhanced matching
           const subscription = await this.subscriptionsService.getUserSubscription(senderId);
+          console.log('🔍 [PERMISSION CHECK] Subscription check:', { 
+            hasSubscription: !!subscription, 
+            directMessagingEnabled: subscription?.directMessagingEnabled,
+            plan: subscription?.plan 
+          });
+          
           if (subscription && subscription.directMessagingEnabled && ['pro', 'enterprise'].includes(subscription.plan)) {
+            console.log('✅ [PERMISSION CHECK] Premium employer, auto-creating permission');
             // Auto-create messaging permission for premium employer contacting any candidate
             await this.autoCreateEmployerCandidatePermission(senderId, receiverId);
             return { canMessage: true };
@@ -241,7 +268,14 @@ export class MessagingPermissionsService {
       targetUser: receiverId,
     });
 
+    console.log('🔍 [PERMISSION CHECK] Direct permission lookup:', { 
+      found: !!permission, 
+      permissionId: permission?._id,
+      status: permission?.status 
+    });
+
     if (!permission) {
+      console.log('❌ [PERMISSION CHECK] No permission found, denying access');
       return {
         canMessage: false,
         reason: 'No messaging permission found. Request permission to start messaging.',
