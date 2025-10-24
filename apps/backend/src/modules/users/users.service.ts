@@ -134,30 +134,46 @@ export class UsersService {
         skillsCount: parsedData.skills?.length || 0,
         experienceCount: parsedData.experience?.length || 0
       });
-      if (parsedData.personalInfo) {
-          // Only update fields that are empty or if the parsed data seems more complete
-          if (!user.fullName && parsedData.personalInfo.fullName) {
+        if (parsedData.personalInfo) {
+          console.log('📝 [PROFILE UPDATE] Updating personal information...');
+          
+          // Always update personal information fields when we have parsed data
+          if (parsedData.personalInfo.fullName) {
+            console.log('📝 [PROFILE UPDATE] Updating fullName:', parsedData.personalInfo.fullName);
             user.fullName = parsedData.personalInfo.fullName;
           }
-          if (!(user as any).phone && parsedData.personalInfo.phone) {
+          if (parsedData.personalInfo.phone) {
+            console.log('📝 [PROFILE UPDATE] Updating phone:', parsedData.personalInfo.phone);
             (user as any).phone = parsedData.personalInfo.phone;
           }
-          if (!(user as any).location && parsedData.personalInfo.location) {
+          if (parsedData.personalInfo.location) {
+            console.log('📝 [PROFILE UPDATE] Updating location:', parsedData.personalInfo.location);
             (user as any).location = parsedData.personalInfo.location;
           }
-          if (!(user as any).bio && parsedData.personalInfo.summary) {
+          if (parsedData.personalInfo.summary) {
+            console.log('📝 [PROFILE UPDATE] Updating bio/summary');
             (user as any).bio = parsedData.personalInfo.summary;
           }
-          if (!(user as any).professionalTitle && parsedData.personalInfo.professionalTitle) {
+          if (parsedData.personalInfo.professionalTitle) {
+            console.log('📝 [PROFILE UPDATE] Updating professionalTitle:', parsedData.personalInfo.professionalTitle);
             (user as any).professionalTitle = parsedData.personalInfo.professionalTitle;
           }
-          if (!(user as any).website && parsedData.additionalInfo?.website) {
+        }
+
+        // Update additional information (website, LinkedIn, GitHub)
+        if (parsedData.additionalInfo) {
+          console.log('📝 [PROFILE UPDATE] Updating additional information...');
+          
+          if (parsedData.additionalInfo.website) {
+            console.log('📝 [PROFILE UPDATE] Updating website:', parsedData.additionalInfo.website);
             (user as any).website = parsedData.additionalInfo.website;
           }
-          if (!(user as any).linkedinUrl && parsedData.additionalInfo?.linkedinUrl) {
+          if (parsedData.additionalInfo.linkedinUrl) {
+            console.log('📝 [PROFILE UPDATE] Updating linkedinUrl:', parsedData.additionalInfo.linkedinUrl);
             (user as any).linkedinUrl = parsedData.additionalInfo.linkedinUrl;
           }
-          if (!(user as any).githubUrl && parsedData.additionalInfo?.githubUrl) {
+          if (parsedData.additionalInfo.githubUrl) {
+            console.log('📝 [PROFILE UPDATE] Updating githubUrl:', parsedData.additionalInfo.githubUrl);
             (user as any).githubUrl = parsedData.additionalInfo.githubUrl;
           }
         }
