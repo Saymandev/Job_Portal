@@ -175,7 +175,12 @@ export class MessagingPermissionsService {
     senderId: string,
     receiverId: string,
   ): Promise<{ canMessage: boolean; reason?: string; permission?: MessagingPermissionDocument }> {
-    console.log('🔍 [PERMISSION CHECK] Checking messaging permission:', { senderId, receiverId });
+    console.log('🚨🚨🚨 [PERMISSION CHECK] METHOD CALLED 🚨🚨🚨');
+    console.log('🔍 [PERMISSION CHECK] Starting permission check:', { 
+      senderId: senderId.toString(), 
+      receiverId: receiverId.toString(),
+      timestamp: new Date().toISOString()
+    });
     
     // Users can always message themselves (shouldn't happen in UI, but for safety)
     if (senderId.toString() === receiverId.toString()) {
@@ -299,9 +304,11 @@ export class MessagingPermissionsService {
         }
       }
     } catch (error) {
+      console.log('❌ [PERMISSION CHECK] Error in employer-candidate relationship check:', error.message);
       // Error checking employer-candidate relationship, continue with normal permission check
     }
 
+    console.log('🔍 [PERMISSION CHECK] Looking up direct permission in database...');
     const permission = await this.messagingPermissionModel.findOne({
       user: senderId.toString(),
       targetUser: receiverId.toString(),
