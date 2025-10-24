@@ -234,10 +234,11 @@ export class EnhancedMatchingService {
     return Math.min(score, 100);
   }
 
-  private calculateEducationMatch(job: any, candidateEducation: any[]): number {
-    if (!candidateEducation || candidateEducation.length === 0) return 50;
+  private calculateEducationMatch(job: any, candidateEducation: any): number {
+    if (!candidateEducation || !Array.isArray(candidateEducation) || candidateEducation.length === 0) return 50;
     
     const highestDegree = candidateEducation.reduce((highest, edu) => {
+      if (!edu || !edu.degree) return highest;
       const degreeLevel = this.getDegreeLevel(edu.degree);
       return degreeLevel > highest ? degreeLevel : highest;
     }, 0);
