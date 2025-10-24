@@ -10,6 +10,15 @@ import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { getPlanPrice } from '@/lib/pricing.config';
 import {
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  Title,
+  Tooltip,
+} from 'chart.js';
+import {
   BarChart3,
   Calendar,
   CreditCard,
@@ -21,97 +30,17 @@ import {
   Users
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-// Custom chart component
-const CustomChart = ({ data, timeRange }: { data: any[], timeRange: string }) => {
-  const maxRevenue = Math.max(...data.map(d => d.revenue));
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+import { Bar } from 'react-chartjs-2';
 
-  return (
-    <div className="relative h-full w-full">
-      {/* Y-axis labels */}
-      <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-3">
-        <div className="text-right font-medium">${maxRevenue}</div>
-        <div className="text-right">${Math.round(maxRevenue * 0.75)}</div>
-        <div className="text-right">${Math.round(maxRevenue * 0.5)}</div>
-        <div className="text-right">${Math.round(maxRevenue * 0.25)}</div>
-        <div className="text-right">$0</div>
-      </div>
-
-      {/* Chart area */}
-      <div className="ml-12 h-full flex items-end justify-between space-x-1 relative">
-        {/* Grid lines */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => (
-            <div
-              key={index}
-              className="absolute left-0 right-0 h-px bg-gray-100"
-              style={{ top: `${ratio * 100}%` }}
-            />
-          ))}
-        </div>
-
-        {/* Bars */}
-        {data.map((item, index) => {
-          const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
-          const isHovered = hoveredBar === index;
-          
-          return (
-            <div
-              key={index}
-              className="flex flex-col items-center flex-1 group relative"
-              onMouseEnter={() => setHoveredBar(index)}
-              onMouseLeave={() => setHoveredBar(null)}
-            >
-              {/* Bar */}
-              <div
-                className={`w-8 rounded-t-lg transition-all duration-300 cursor-pointer ${
-                  item.revenue > 0
-                    ? 'bg-gradient-to-t from-blue-600 to-blue-500 shadow-lg hover:shadow-xl'
-                    : 'bg-gradient-to-t from-gray-200 to-gray-100'
-                } ${isHovered ? 'scale-105' : ''}`}
-                style={{
-                  height: `${Math.max(height, 2)}%`,
-                  minHeight: '8px'
-                }}
-              >
-                {/* Bar value on top */}
-                {item.revenue > 0 && (
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700 whitespace-nowrap">
-                    ${item.revenue}
-                  </div>
-                )}
-              </div>
-
-              {/* X-axis label */}
-              <div className="text-xs text-gray-600 mt-2 text-center">
-                {timeRange === 'monthly' 
-                  ? (item as any).month?.split(' ')[0] 
-                  : (item as any).year}
-              </div>
-
-              {/* Hover tooltip */}
-              {isHovered && (
-                <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-10 whitespace-nowrap">
-                  <div className="font-medium">
-                    {timeRange === 'monthly' ? (item as any).month : (item as any).year}
-                  </div>
-                  <div className="text-blue-300">
-                    Revenue: ${item.revenue}
-                  </div>
-                  <div className="text-gray-300">
-                    Subscriptions: {item.subscriptions}
-                  </div>
-                  {/* Arrow */}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface RevenueStats {
   totalRevenue: number;
@@ -589,7 +518,100 @@ export default function RevenueAnalyticsPage() {
         <CardContent>
           <div className="h-80 w-full">
             {revenueData && currentData && currentData.length > 0 ? (
-              <CustomChart data={currentData} timeRange={timeRange} />
+              <Bar
+                data={{
+                  labels: currentData.map(item => 
+                    timeRange === 'monthly' 
+                      ? (item as any).month?.split(' ')[0] 
+                      : (item as any).year
+                  ),
+                  datasets: [
+                    {
+                      label: 'Revenue',
+                      data: currentData.map(item => item.revenue),
+                      backgroundColor: currentData.map(item => 
+                        item.revenue > 0 
+                          ? 'rgba(59, 130, 246, 0.8)' 
+                          : 'rgba(156, 163, 175, 0.3)'
+                      ),
+                      borderColor: currentData.map(item => 
+                        item.revenue > 0 
+                          ? 'rgba(59, 130, 246, 1)' 
+                          : 'rgba(156, 163, 175, 0.5)'
+                      ),
+                      borderWidth: 1,
+                      borderRadius: 4,
+                      borderSkipped: false,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                    tooltip: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      titleColor: 'white',
+                      bodyColor: 'white',
+                      borderColor: 'rgba(59, 130, 246, 0.8)',
+                      borderWidth: 1,
+                      cornerRadius: 8,
+                      displayColors: false,
+                      callbacks: {
+                        title: (context) => {
+                          const index = context[0].dataIndex;
+                          return timeRange === 'monthly' 
+                            ? (currentData[index] as any).month 
+                            : (currentData[index] as any).year;
+                        },
+                        label: (context) => {
+                          const index = context.dataIndex;
+                          const item = currentData[index];
+                          return [
+                            `Revenue: $${item.revenue}`,
+                            `Subscriptions: ${item.subscriptions}`
+                          ];
+                        },
+                      },
+                    },
+                  },
+                  scales: {
+                    x: {
+                      grid: {
+                        display: false,
+                      },
+                      ticks: {
+                        color: '#6b7280',
+                        font: {
+                          size: 12,
+                        },
+                      },
+                    },
+                    y: {
+                      beginAtZero: true,
+                      grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                      },
+                      ticks: {
+                        color: '#6b7280',
+                        font: {
+                          size: 12,
+                        },
+                        callback: function(value) {
+                          return '$' + value;
+                        },
+                      },
+                    },
+                  },
+                  interaction: {
+                    intersect: false,
+                    mode: 'index',
+                  },
+                }}
+              />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground w-full">
                 <div className="text-center">
