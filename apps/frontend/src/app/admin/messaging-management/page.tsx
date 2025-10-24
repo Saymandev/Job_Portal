@@ -117,7 +117,9 @@ export default function MessagingManagementPage() {
   
   // Modal state
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
+  const [showConversationModal, setShowConversationModal] = useState(false);
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flagReason, setFlagReason] = useState('');
   const [flagCategory, setFlagCategory] = useState('inappropriate');
@@ -126,6 +128,14 @@ export default function MessagingManagementPage() {
 
   const fetchConversations = useCallback(async () => {
     try {
+      console.log('🔄 Fetching conversations with params:', {
+        conversationType,
+        conversationStatus,
+        conversationSearch,
+        currentConversationPage,
+        limit
+      });
+
       const params = new URLSearchParams();
       if (conversationType !== 'all') params.append('type', conversationType);
       if (conversationStatus !== 'all') params.append('status', conversationStatus);
@@ -133,15 +143,36 @@ export default function MessagingManagementPage() {
       params.append('page', currentConversationPage.toString());
       params.append('limit', limit.toString());
 
+      console.log('📡 API Request URL:', `/admin/messaging/conversations?${params}`);
+      
       const response = await api.get(`/admin/messaging/conversations?${params}`);
+      
+      console.log('📥 Conversations API Response:', {
+        status: response.status,
+        success: (response.data as any).success,
+        data: (response.data as any).data
+      });
+
       if ((response.data as any).success) {
         const data = (response.data as any).data;
+        console.log('📊 Conversations Data:', {
+          conversations: data.conversations?.length || 0,
+          total: data.total,
+          page: data.page,
+          totalPages: data.totalPages,
+          firstConversation: data.conversations?.[0] || null
+        });
+        
         setConversations(data.conversations || []);
         setTotalConversations(data.total || 0);
         setTotalConversationPages(data.totalPages || 1);
+        
+        console.log('✅ Conversations state updated successfully');
+      } else {
+        console.warn('⚠️ Conversations API returned success: false');
       }
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      
       toast({
         title: 'Error',
         description: 'Failed to fetch conversations',
@@ -152,16 +183,51 @@ export default function MessagingManagementPage() {
 
   const fetchMessages = useCallback(async () => {
     try {
-      // Fetch all messages across all conversations for admin management
-      const response = await api.get(`/admin/messaging/messages?page=${currentMessagePage}&limit=${limit}&search=${messageSearch}&type=${messageType}&status=${messageStatus}`);
+      console.log('🔄 Fetching messages with params:', {
+        currentMessagePage,
+        limit,
+        messageSearch,
+        messageType,
+        messageStatus
+      });
+
+      const params = new URLSearchParams();
+      params.append('page', currentMessagePage.toString());
+      params.append('limit', limit.toString());
+      if (messageSearch) params.append('search', messageSearch);
+      if (messageType !== 'all') params.append('type', messageType);
+      if (messageStatus !== 'all') params.append('status', messageStatus);
+
+      console.log('📡 Messages API Request URL:', `/admin/messaging/messages?${params}`);
+      
+      const response = await api.get(`/admin/messaging/messages?${params}`);
+      
+      console.log('📥 Messages API Response:', {
+        status: response.status,
+        success: (response.data as any).success,
+        data: (response.data as any).data
+      });
+
       if ((response.data as any).success) {
         const data = (response.data as any).data;
+        console.log('📊 Messages Data:', {
+          messages: data.messages?.length || 0,
+          total: data.total,
+          page: data.page,
+          totalPages: data.totalPages,
+          firstMessage: data.messages?.[0] || null
+        });
+        
         setMessages(data.messages || []);
         setTotalMessages(data.total || 0);
         setTotalMessagePages(data.totalPages || 1);
+        
+        console.log('✅ Messages state updated successfully');
+      } else {
+        console.warn('⚠️ Messages API returned success: false');
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      
       toast({
         title: 'Error',
         description: 'Failed to fetch messages',
@@ -172,40 +238,77 @@ export default function MessagingManagementPage() {
 
   const fetchStats = useCallback(async () => {
     try {
+      console.log('🔄 Fetching messaging stats...');
+      
       const response = await api.get('/admin/messaging/stats');
+      
+      console.log('📥 Stats API Response:', {
+        status: response.status,
+        success: (response.data as any).success,
+        data: (response.data as any).data
+      });
+
       if ((response.data as any).success) {
-        setStats((response.data as any).data);
+        const statsData = (response.data as any).data;
+        console.log('📊 Stats Data:', statsData);
+        setStats(statsData);
+        console.log('✅ Stats state updated successfully');
+      } else {
+        console.warn('⚠️ Stats API returned success: false');
       }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+     
+      
       // Set default stats if API fails
-      setStats({
+      const defaultStats = {
         totalConversations: 0,
         totalMessages: 0,
         adminConversations: 0,
         unreadMessages: 0,
         flaggedMessages: 0,
         activeUsers: 0,
-      });
+      };
+      
+      console.log('🔄 Setting default stats:', defaultStats);
+      setStats(defaultStats);
     }
   }, []); // No dependencies to prevent circular re-renders
 
   const fetchData = useCallback(async () => {
     try {
+      console.log('🚀 Starting data fetch...');
       setLoading(true);
+      
       await Promise.all([fetchConversations(), fetchMessages(), fetchStats()]);
+      
+      console.log('✅ All data fetched successfully');
+    } catch (error) {
+      console.error('❌ Error in fetchData:', error);
     } finally {
       setLoading(false);
+      console.log('🏁 Data fetch completed, loading set to false');
     }
   }, [fetchConversations, fetchMessages, fetchStats]);
 
   // Pagination handlers
   const handleConversationPageChange = (page: number) => {
+    console.log('📄 Conversation page changed:', {
+      oldPage: currentConversationPage,
+      newPage: page,
+      totalPages: totalConversationPages
+    });
+    
     setCurrentConversationPage(page);
     // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessagePageChange = (page: number) => {
+    console.log('📄 Message page changed:', {
+      oldPage: currentMessagePage,
+      newPage: page,
+      totalPages: totalMessagePages
+    });
+    
     setCurrentMessagePage(page);
     // Data will be fetched automatically due to useEffect dependency
   };
@@ -218,13 +321,34 @@ export default function MessagingManagementPage() {
   // View message handler
   const handleViewMessage = useCallback(async (message: Message) => {
     try {
+      console.log('👁️ Viewing message:', {
+        messageId: message._id,
+        sender: message.sender,
+        content: message.content?.substring(0, 50) + '...',
+        isFlagged: message.isFlagged
+      });
+
       const response = await api.get(`/admin/messaging/messages/${message._id}`);
+      
+      console.log('📥 Message details API response:', {
+        status: response.status,
+        success: (response.data as any).success,
+        data: (response.data as any).data
+      });
+
       if ((response.data as any).success) {
-        setSelectedMessage((response.data as any).data);
+        const messageData = (response.data as any).data;
+        console.log('📊 Message details data:', messageData);
+        
+        setSelectedMessage(messageData);
         setShowMessageModal(true);
+        
+        console.log('✅ Message modal opened successfully');
+      } else {
+        console.warn('⚠️ Message details API returned success: false');
       }
     } catch (error) {
-      console.error('Error fetching message details:', error);
+     
       toast({
         title: 'Error',
         description: 'Failed to fetch message details',
@@ -233,15 +357,44 @@ export default function MessagingManagementPage() {
     }
   }, [toast]);
 
+  // View conversation handler
+  const handleViewConversation = useCallback((conversation: Conversation) => {
+    console.log('👁️ Viewing conversation:', {
+      conversationId: conversation._id,
+      participants: conversation.participants,
+      isAdminConversation: conversation.isAdminConversation,
+      unreadCount: conversation.unreadCount,
+      lastMessage: conversation.lastMessage
+    });
+    
+    setSelectedConversation(conversation);
+    setShowConversationModal(true);
+    
+    console.log('✅ Conversation modal opened successfully');
+  }, []);
+
   // Flag message handler
   const handleFlagMessage = useCallback((message: Message) => {
+    console.log('🚩 Flagging message:', {
+      messageId: message._id,
+      sender: message.sender,
+      content: message.content?.substring(0, 50) + '...',
+      isFlagged: message.isFlagged
+    });
+    
     setSelectedMessage(message);
     setShowFlagModal(true);
+    
+    console.log('✅ Flag modal opened successfully');
   }, []);
 
   // Submit flag handler
   const handleSubmitFlag = useCallback(async () => {
     if (!selectedMessage || !flagReason.trim()) {
+      console.warn('⚠️ Flag submission validation failed:', {
+        hasSelectedMessage: !!selectedMessage,
+        hasFlagReason: !!flagReason.trim()
+      });
       toast({
         title: 'Error',
         description: 'Please provide a reason for flagging',
@@ -251,12 +404,25 @@ export default function MessagingManagementPage() {
     }
 
     try {
+      console.log('🚩 Submitting flag:', {
+        messageId: selectedMessage._id,
+        reason: flagReason,
+        category: flagCategory
+      });
+
       const response = await api.post(`/admin/messaging/messages/${selectedMessage._id}/flag`, {
         reason: flagReason,
         category: flagCategory,
       });
 
+      console.log('📥 Flag API response:', {
+        status: response.status,
+        success: (response.data as any).success,
+        data: (response.data as any).data
+      });
+
       if ((response.data as any).success) {
+        console.log('✅ Message flagged successfully');
         toast({
           title: 'Success',
           description: 'Message has been flagged for review',
@@ -265,10 +431,13 @@ export default function MessagingManagementPage() {
         setFlagReason('');
         setSelectedMessage(null);
         // Refresh data to show updated flag status
+        console.log('🔄 Refreshing data after flagging...');
         fetchData();
+      } else {
+        console.warn('⚠️ Flag API returned success: false');
       }
     } catch (error) {
-      console.error('Error flagging message:', error);
+      
       toast({
         title: 'Error',
         description: 'Failed to flag message',
@@ -280,17 +449,35 @@ export default function MessagingManagementPage() {
   // Unflag message handler
   const handleUnflagMessage = useCallback(async (message: Message) => {
     try {
+      console.log('🚩 Unflagging message:', {
+        messageId: message._id,
+        sender: message.sender,
+        content: message.content?.substring(0, 50) + '...',
+        isFlagged: message.isFlagged
+      });
+
       const response = await api.post(`/admin/messaging/messages/${message._id}/unflag`);
+      
+      console.log('📥 Unflag API response:', {
+        status: response.status,
+        success: (response.data as any).success,
+        data: (response.data as any).data
+      });
+
       if ((response.data as any).success) {
+        console.log('✅ Message unflagged successfully');
         toast({
           title: 'Success',
           description: 'Message has been unflagged',
         });
         // Refresh data to show updated flag status
+        console.log('🔄 Refreshing data after unflagging...');
         fetchData();
+      } else {
+        console.warn('⚠️ Unflag API returned success: false');
       }
-    } catch (error) {
-      console.error('Error unflagging message:', error);
+    } catch (error: any) {
+      
       toast({
         title: 'Error',
         description: 'Failed to unflag message',
@@ -301,12 +488,24 @@ export default function MessagingManagementPage() {
 
   // Search handlers
   const handleConversationSearch = (value: string) => {
+    console.log('🔍 Conversation search changed:', {
+      oldValue: conversationSearch,
+      newValue: value,
+      currentPage: currentConversationPage
+    });
+    
     setConversationSearch(value);
     setCurrentConversationPage(1);
     // Data will be fetched automatically due to useEffect dependency
   };
 
   const handleMessageSearch = (value: string) => {
+    console.log('🔍 Message search changed:', {
+      oldValue: messageSearch,
+      newValue: value,
+      currentPage: currentMessagePage
+    });
+    
     setMessageSearch(value);
     setCurrentMessagePage(1);
     // Data will be fetched automatically due to useEffect dependency
@@ -314,6 +513,13 @@ export default function MessagingManagementPage() {
 
   // Filter handlers
   const handleConversationFilterChange = (filterType: string, value: string) => {
+    console.log('🔧 Conversation filter changed:', {
+      filterType,
+      oldValue: filterType === 'type' ? conversationType : conversationStatus,
+      newValue: value,
+      currentPage: currentConversationPage
+    });
+    
     if (filterType === 'type') {
       setConversationType(value);
     } else if (filterType === 'status') {
@@ -324,6 +530,13 @@ export default function MessagingManagementPage() {
   };
 
   const handleMessageFilterChange = (filterType: string, value: string) => {
+    console.log('🔧 Message filter changed:', {
+      filterType,
+      oldValue: filterType === 'type' ? messageType : messageStatus,
+      newValue: value,
+      currentPage: currentMessagePage
+    });
+    
     if (filterType === 'type') {
       setMessageType(value);
     } else if (filterType === 'status') {
@@ -364,8 +577,32 @@ export default function MessagingManagementPage() {
   // The backend handles all filtering and pagination
 
   useEffect(() => {
+    console.log('🔄 useEffect triggered - fetching data');
+    console.log('📊 Current state:', {
+      conversations: conversations.length,
+      messages: messages.length,
+      stats: stats,
+      loading: loading,
+      currentConversationPage,
+      currentMessagePage
+    });
+    
     fetchData();
   }, [fetchData]);
+
+  // Debug effect to log state changes
+  useEffect(() => {
+    console.log('📊 State updated:', {
+      conversations: conversations.length,
+      messages: messages.length,
+      stats: stats,
+      loading: loading,
+      totalConversations,
+      totalMessages,
+      currentConversationPage,
+      currentMessagePage
+    });
+  }, [conversations, messages, stats, loading, totalConversations, totalMessages, currentConversationPage, currentMessagePage]);
 
   if (loading) {
     return (
@@ -605,6 +842,7 @@ export default function MessagingManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                
                 {conversations.map((conversation) => (
                   <div
                     key={conversation._id}
@@ -618,10 +856,16 @@ export default function MessagingManagementPage() {
                           </div>
                           <div>
                             <h3 className="font-semibold">
-                              {conversation.participants.map(p => p?.name || 'Unknown').join(' & ')}
+                              {Array.isArray(conversation.participants) 
+                                ? conversation.participants.map(p => p?.name || 'Unknown').join(' & ')
+                                : 'Unknown Participants'
+                              }
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {conversation.participants.map(p => p?.email || 'No email').join(', ')}
+                              {Array.isArray(conversation.participants)
+                                ? conversation.participants.map(p => p?.email || 'No email').join(', ')
+                                : 'No email information'
+                              }
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -662,7 +906,11 @@ export default function MessagingManagementPage() {
                       </div>
                       
                       <div className="flex items-center gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewConversation(conversation)}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
@@ -789,6 +1037,7 @@ export default function MessagingManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                
                 {messages.map((message) => (
                   <div
                     key={message._id}
@@ -1135,6 +1384,131 @@ export default function MessagingManagementPage() {
                   className="bg-red-600 hover:bg-red-700"
                 >
                   Flag Message
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Conversation Details Modal */}
+      {showConversationModal && selectedConversation && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Conversation Details</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowConversationModal(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">
+                      {Array.isArray(selectedConversation.participants) 
+                        ? selectedConversation.participants.map(p => p?.name || 'Unknown').join(' & ')
+                        : 'Unknown Participants'
+                      }
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {Array.isArray(selectedConversation.participants)
+                        ? selectedConversation.participants.map(p => p?.email || 'No email').join(', ')
+                        : 'No email information'
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Conversation ID:</span>
+                    <p className="text-gray-600 font-mono text-xs">{selectedConversation._id}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Type:</span>
+                    <p className="text-gray-600">{selectedConversation.isAdminConversation ? 'Admin Conversation' : 'User Conversation'}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Created:</span>
+                    <p className="text-gray-600">{new Date(selectedConversation.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Updated:</span>
+                    <p className="text-gray-600">{new Date(selectedConversation.updatedAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Unread Messages:</span>
+                    <p className="text-gray-600">{selectedConversation.unreadCount}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Participants:</span>
+                    <p className="text-gray-600">{Array.isArray(selectedConversation.participants) ? selectedConversation.participants.length : 0}</p>
+                  </div>
+                </div>
+
+                {selectedConversation.job && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-blue-800">Related Job</span>
+                    </div>
+                    <p className="text-sm text-blue-700">{selectedConversation.job.title}</p>
+                  </div>
+                )}
+
+                {selectedConversation.lastMessage && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <MessageSquare className="h-4 w-4 text-gray-600" />
+                      <span className="font-medium text-gray-800">Last Message</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{selectedConversation.lastMessage.content}</p>
+                    <p className="text-xs text-gray-500">
+                      {selectedConversation.lastMessage.isAdminMessage ? 'Admin' : 'User'} • {new Date(selectedConversation.lastMessage.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+
+                {Array.isArray(selectedConversation.participants) && selectedConversation.participants.length > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-800 mb-3">Participants</h4>
+                    <div className="space-y-2">
+                      {selectedConversation.participants.map((participant, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-2 bg-white rounded border">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-medium">
+                              {(participant?.name || 'U').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{participant?.name || 'Unknown'}</p>
+                            <p className="text-xs text-gray-500">{participant?.email || 'No email'}</p>
+                          </div>
+                          <Badge className={getRoleColor(participant?.role || 'user')}>
+                            {participant?.role || 'Unknown'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowConversationModal(false)}
+                >
+                  Close
                 </Button>
               </div>
             </div>
