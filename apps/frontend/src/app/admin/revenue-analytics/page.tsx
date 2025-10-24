@@ -334,6 +334,12 @@ export default function RevenueAnalyticsPage() {
   console.log('Revenue data:', revenueData);
   console.log('Current data:', currentData);
   console.log('Time range:', timeRange);
+  console.log('Chart condition check:', {
+    hasRevenueData: !!revenueData,
+    hasCurrentData: !!currentData,
+    currentDataLength: currentData?.length || 0,
+    shouldRenderChart: !!(revenueData && currentData && currentData.length > 0)
+  });
   const previousPeriod = currentData && currentData.length > 1 ? currentData[currentData.length - 2] : null;
   const currentPeriod = currentData && currentData.length > 0 ? currentData[currentData.length - 1] : null;
   const revenueGrowth = previousPeriod && currentPeriod 
@@ -469,59 +475,62 @@ export default function RevenueAnalyticsPage() {
       )}
 
       {/* Revenue Chart */}
-      {revenueData && currentData && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Revenue Trend</CardTitle>
-                <CardDescription>
-                  Revenue and subscription growth over time
-                </CardDescription>
-              </div>
-              <Select value={timeRange} onValueChange={(value) => handleFilterChange('timeRange', value)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Revenue Trend</CardTitle>
+              <CardDescription>
+                Revenue and subscription growth over time
+              </CardDescription>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-end justify-between space-x-2">
-              {currentData.length > 0 ? currentData.map((item, index) => {
-                const maxRevenue = Math.max(...currentData.map(d => d.revenue));
-                const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : (item.revenue > 0 ? 10 : 0);
-                
-                return (
-                  <div key={index} className="flex flex-col items-center flex-1">
-                    <div 
-                      className="bg-primary rounded-t w-full transition-all duration-300 hover:bg-primary/80"
-                      style={{ height: `${height}%` }}
-                    ></div>
-                    <div className="text-xs text-muted-foreground mt-2 text-center">
-                      {timeRange === 'monthly' ? (item as any).month?.split(' ')[0] : (item as any).year}
-                    </div>
-                    <div className="text-xs font-medium mt-1">
-                      {formatCurrency(item.revenue)}
-                    </div>
+            <Select value={timeRange} onValueChange={(value) => handleFilterChange('timeRange', value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64 flex items-end justify-between space-x-2">
+            {revenueData && currentData && currentData.length > 0 ? currentData.map((item, index) => {
+              const maxRevenue = Math.max(...currentData.map(d => d.revenue));
+              const height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : (item.revenue > 0 ? 10 : 0);
+              
+              return (
+                <div key={index} className="flex flex-col items-center flex-1">
+                  <div 
+                    className="bg-primary rounded-t w-full transition-all duration-300 hover:bg-primary/80"
+                    style={{ height: `${height}%` }}
+                    title={`${timeRange === 'monthly' ? (item as any).month : (item as any).year}: ${formatCurrency(item.revenue)}`}
+                  ></div>
+                  <div className="text-xs text-muted-foreground mt-2 text-center">
+                    {timeRange === 'monthly' ? (item as any).month?.split(' ')[0] : (item as any).year}
                   </div>
-                );
-              }) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <div className="text-center">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No revenue data available</p>
+                  <div className="text-xs font-medium mt-1">
+                    {formatCurrency(item.revenue)}
                   </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              );
+            }) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground w-full">
+                <div className="text-center">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No revenue data available</p>
+                  <p className="text-sm mt-2">Revenue data will appear here once subscriptions are created</p>
+                  <p className="text-xs mt-1 text-gray-400">
+                    Debug: revenueData={!!revenueData}, currentData={!!currentData}, length={currentData?.length || 0}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Subscriptions List */}
       <Card>
