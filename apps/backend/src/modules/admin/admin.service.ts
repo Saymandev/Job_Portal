@@ -444,7 +444,12 @@ export class AdminService {
       .populate('postedBy', 'fullName email')
       .sort({ createdAt: -1 })
       .limit(limit)
-      .lean();
+      .lean()
+      .then(jobs => jobs.map(job => ({
+        ...job,
+        createdBy: job.postedBy, // Map postedBy to createdBy for frontend compatibility
+        applicationsCount: 0, // Add default applications count
+      })));
   }
 
   async getRecentActivity(limit: number = 10) {
@@ -455,25 +460,25 @@ export class AdminService {
       type: activity.type,
       description: activity.description,
       user: {
-        _id: (activity.userId as any)?._id,
+        _id: (activity.userId as any)?._id || activity.userId,
         fullName: (activity.userId as any)?.fullName || 'Unknown User',
         role: (activity.userId as any)?.role || 'unknown',
       },
       targetUser: activity.targetUserId ? {
-        _id: (activity.targetUserId as any)._id,
-        fullName: (activity.targetUserId as any).fullName,
+        _id: (activity.targetUserId as any)?._id || activity.targetUserId,
+        fullName: (activity.targetUserId as any)?.fullName || 'Unknown User',
       } : null,
       job: activity.jobId ? {
-        _id: (activity.jobId as any)._id,
-        title: (activity.jobId as any).title,
+        _id: (activity.jobId as any)?._id || activity.jobId,
+        title: (activity.jobId as any)?.title || 'Unknown Job',
       } : null,
       application: activity.applicationId ? {
-        _id: (activity.applicationId as any)._id,
-        status: (activity.applicationId as any).status,
+        _id: (activity.applicationId as any)?._id || activity.applicationId,
+        status: (activity.applicationId as any)?.status || 'unknown',
       } : null,
       company: activity.companyId ? {
-        _id: (activity.companyId as any)._id,
-        name: (activity.companyId as any).name,
+        _id: (activity.companyId as any)?._id || activity.companyId,
+        name: (activity.companyId as any)?.name || 'Unknown Company',
       } : null,
       timestamp: activity.createdAt,
       metadata: activity.metadata,
