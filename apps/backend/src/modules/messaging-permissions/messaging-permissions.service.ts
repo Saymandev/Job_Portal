@@ -127,8 +127,8 @@ export class MessagingPermissionsService {
       // Check if permission already exists
       const existingPermission = await this.messagingPermissionModel.findOne({
         $or: [
-          { user: senderId, targetUser: receiverId },
-          { user: receiverId, targetUser: senderId }
+          { user: senderId.toString(), targetUser: receiverId.toString() },
+          { user: receiverId.toString(), targetUser: senderId.toString() }
         ]
       });
 
@@ -138,8 +138,8 @@ export class MessagingPermissionsService {
         // Create bidirectional permissions for employer-candidate relationship
         const permissions = await this.messagingPermissionModel.create([
           {
-            user: senderId,
-            targetUser: receiverId,
+            user: senderId.toString(),
+            targetUser: receiverId.toString(),
             status: 'approved',
             type: 'employer_candidate',
             expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
@@ -147,8 +147,8 @@ export class MessagingPermissionsService {
             updatedAt: new Date(),
           },
           {
-            user: receiverId,
-            targetUser: senderId,
+            user: receiverId.toString(),
+            targetUser: senderId.toString(),
             status: 'approved',
             type: 'employer_candidate',
             expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
@@ -178,7 +178,7 @@ export class MessagingPermissionsService {
     console.log('🔍 [PERMISSION CHECK] Checking messaging permission:', { senderId, receiverId });
     
     // Users can always message themselves (shouldn't happen in UI, but for safety)
-    if (senderId === receiverId) {
+    if (senderId.toString() === receiverId.toString()) {
       console.log('✅ [PERMISSION CHECK] Same user, allowing');
       return { canMessage: true };
     }
@@ -303,8 +303,8 @@ export class MessagingPermissionsService {
     }
 
     const permission = await this.messagingPermissionModel.findOne({
-      user: senderId,
-      targetUser: receiverId,
+      user: senderId.toString(),
+      targetUser: receiverId.toString(),
     });
 
     console.log('🔍 [PERMISSION CHECK] Direct permission lookup:', { 
