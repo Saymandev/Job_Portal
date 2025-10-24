@@ -2,17 +2,17 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Role, Roles } from '@/common/decorators/roles.decorator';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
+    BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    UploadedFile,
+    UseGuards,
+    UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -84,28 +84,35 @@ export class UsersController {
   }
 
   @Post('upload-resume')
-  @ApiOperation({ summary: 'Upload resume' })
+  @ApiOperation({ summary: 'Upload resume and automatically parse profile data' })
   @UseInterceptors(FileInterceptor('file'))
   async uploadResume(@CurrentUser('id') userId: string, @UploadedFile() file: Express.Multer.File) {
-    
-    
     if (!file) {
-      
       throw new BadRequestException('No file uploaded');
     }
 
-      
-      const result = await this.usersService.uploadResume(userId, file.path);
-    
+    const result = await this.usersService.uploadResume(userId, file.path, file.originalname);
 
     const response = {
       success: true,
-      message: 'Resume uploaded successfully',
+      message: result.parsedData ? 'Resume uploaded and profile updated successfully' : 'Resume uploaded successfully',
       data: result,
     };
     
- 
     return response;
+  }
+
+  @Post('parse-resume')
+  @ApiOperation({ summary: 'Parse resume and suggest profile data' })
+  @UseInterceptors(FileInterceptor('file'))
+  async parseResume(@CurrentUser('id') userId: string, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    const result = await this.usersService.parseResumeAndSuggestProfile(userId, file.path, file.originalname);
+
+    return result;
   }
 
   @Post('upload-avatar')

@@ -2,12 +2,16 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
+import { ResumeParserService } from '../resume-parser/resume-parser.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly resumeParserService: ResumeParserService,
+  ) {}
 
   async findById(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id).populate('company');
@@ -65,7 +69,7 @@ export class UsersService {
     await user.save();
   }
 
-  async uploadResume(userId: string, resumePath?: string): Promise<any> {
+  async uploadResume(userId: string, resumePath?: string, originalName?: string): Promise<any> {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -101,6 +105,123 @@ export class UsersService {
     
     // Also update the old resume field for backward compatibility
     user.resume = resumeUrl;
+
+    // Automatically parse resume and update profile if it's a local file
+    let parsedData = null;
+    if (!isCloudinaryUrl && originalName) {
+      try {
+        parsedData = await this.resumeParserService.parseResume(resumePath, originalName);
+        
+        // Update user profile with parsed data
+        if (parsedData.personalInfo) {
+          // Only update fields that are empty or if the parsed data seems more complete
+          if (!user.fullName && parsedData.personalInfo.fullName) {
+            user.fullName = parsedData.personalInfo.fullName;
+          }
+          if (!(user as any).phone && parsedData.personalInfo.phone) {
+            (user as any).phone = parsedData.personalInfo.phone;
+          }
+          if (!(user as any).location && parsedData.personalInfo.location) {
+            (user as any).location = parsedData.personalInfo.location;
+          }
+          if (!(user as any).bio && parsedData.personalInfo.summary) {
+            (user as any).bio = parsedData.personalInfo.summary;
+          }
+          if (!(user as any).professionalTitle && parsedData.personalInfo.professionalTitle) {
+            (user as any).professionalTitle = parsedData.personalInfo.professionalTitle;
+          }
+          if (!(user as any).website && parsedData.additionalInfo?.website) {
+            (user as any).website = parsedData.additionalInfo.website;
+          }
+          if (!(user as any).linkedinUrl && parsedData.additionalInfo?.linkedinUrl) {
+            (user as any).linkedinUrl = parsedData.additionalInfo.linkedinUrl;
+          }
+          if (!(user as any).githubUrl && parsedData.additionalInfo?.githubUrl) {
+            (user as any).githubUrl = parsedData.additionalInfo.githubUrl;
+          }
+        }
+
+        // Update skills if user doesn't have any
+        if (!(user as any).cvSkills || (user as any).cvSkills.length === 0) {
+          (user as any).cvSkills = parsedData.skills.map(skill => ({
+            id: `skill-${Date.now()}-${Math.random()}`,
+            name: skill,
+            level: 'intermediate',
+            category: this.categorizeSkill(skill),
+          }));
+        }
+
+        // Update experience if user doesn't have any
+        if (!(user as any).cvExperience || (user as any).cvExperience.length === 0) {
+          (user as any).cvExperience = parsedData.experience.map(exp => ({
+            id: `exp-${Date.now()}-${Math.random()}`,
+            title: exp.title,
+            company: exp.company,
+            location: exp.location || '',
+            startDate: exp.startDate || '',
+            endDate: exp.endDate || '',
+            current: exp.current,
+            description: exp.description,
+            achievements: exp.achievements || [],
+          }));
+        }
+
+        // Update education if user doesn't have any
+        if (!(user as any).cvEducation || (user as any).cvEducation.length === 0) {
+          (user as any).cvEducation = parsedData.education.map(edu => ({
+            id: `edu-${Date.now()}-${Math.random()}`,
+            degree: edu.degree,
+            institution: edu.institution,
+            location: edu.location || '',
+            startDate: edu.startDate || '',
+            endDate: edu.endDate || '',
+            current: edu.current,
+            gpa: edu.gpa || '',
+            description: edu.description || '',
+          }));
+        }
+
+        // Update certifications if user doesn't have any
+        if (!(user as any).certifications || (user as any).certifications.length === 0) {
+          (user as any).certifications = parsedData.certifications.map(cert => ({
+            id: `cert-${Date.now()}-${Math.random()}`,
+            name: cert.name,
+            issuer: cert.issuer,
+            date: cert.date,
+            expiryDate: cert.expiryDate || '',
+            credentialId: cert.credentialId || '',
+            url: '',
+          }));
+        }
+
+        // Update projects if user doesn't have any
+        if (!(user as any).projects || (user as any).projects.length === 0) {
+          (user as any).projects = parsedData.projects?.map(project => ({
+            id: `proj-${Date.now()}-${Math.random()}`,
+            name: project.name,
+            description: project.description,
+            technologies: project.technologies || [],
+            url: project.url || '',
+            githubUrl: '',
+            startDate: project.startDate || '',
+            endDate: project.endDate || '',
+          })) || [];
+        }
+
+        // Update languages if user doesn't have any
+        if (!(user as any).languages || (user as any).languages.length === 0) {
+          (user as any).languages = parsedData.languages.map(lang => ({
+            id: `lang-${Date.now()}-${Math.random()}`,
+            language: lang.language,
+            proficiency: lang.proficiency,
+          }));
+        }
+
+      } catch (error) {
+        // Log error but don't fail the upload
+        console.error('Error parsing resume:', error);
+      }
+    }
     
     const savedUser = await user.save();
 
@@ -108,9 +229,129 @@ export class UsersService {
       filename: filename,
       url: resumeUrl,
       uploadedAt: new Date(),
+      parsedData: parsedData, // Include parsed data in response
     };
 
     return result;
+  }
+
+  async parseResumeAndSuggestProfile(userId: string, resumePath: string, originalName: string): Promise<any> {
+    try {
+      // Parse the resume
+      const parsedData = await this.resumeParserService.parseResume(resumePath, originalName);
+      
+      // Convert parsed data to the format expected by the frontend
+      const suggestedProfile = {
+        personalInfo: {
+          fullName: parsedData.personalInfo.fullName || '',
+          email: parsedData.personalInfo.email || '',
+          phone: parsedData.personalInfo.phone || '',
+          location: parsedData.personalInfo.location || '',
+          bio: parsedData.personalInfo.summary || '',
+          professionalTitle: parsedData.personalInfo.professionalTitle || '',
+          website: parsedData.additionalInfo?.website || '',
+          linkedinUrl: parsedData.additionalInfo?.linkedinUrl || '',
+          githubUrl: parsedData.additionalInfo?.githubUrl || '',
+        },
+        skills: parsedData.skills.map(skill => ({
+          id: `skill-${Date.now()}-${Math.random()}`,
+          name: skill,
+          level: 'intermediate' as const,
+          category: this.categorizeSkill(skill),
+        })),
+        experience: parsedData.experience.map(exp => ({
+          id: `exp-${Date.now()}-${Math.random()}`,
+          title: exp.title,
+          company: exp.company,
+          location: exp.location || '',
+          startDate: exp.startDate || '',
+          endDate: exp.endDate || '',
+          current: exp.current,
+          description: exp.description,
+          achievements: exp.achievements || [],
+        })),
+        education: parsedData.education.map(edu => ({
+          id: `edu-${Date.now()}-${Math.random()}`,
+          degree: edu.degree,
+          institution: edu.institution,
+          location: edu.location || '',
+          startDate: edu.startDate || '',
+          endDate: edu.endDate || '',
+          current: edu.current,
+          gpa: edu.gpa || '',
+          description: edu.description || '',
+        })),
+        certifications: parsedData.certifications.map(cert => ({
+          id: `cert-${Date.now()}-${Math.random()}`,
+          name: cert.name,
+          issuer: cert.issuer,
+          date: cert.date,
+          expiryDate: cert.expiryDate || '',
+          credentialId: cert.credentialId || '',
+          url: '',
+        })),
+        projects: parsedData.projects?.map(project => ({
+          id: `proj-${Date.now()}-${Math.random()}`,
+          name: project.name,
+          description: project.description,
+          technologies: project.technologies || [],
+          url: project.url || '',
+          githubUrl: '',
+          startDate: project.startDate || '',
+          endDate: project.endDate || '',
+        })) || [],
+        languages: parsedData.languages.map(lang => ({
+          id: `lang-${Date.now()}-${Math.random()}`,
+          language: lang.language,
+          proficiency: lang.proficiency,
+        })),
+      };
+
+      return {
+        success: true,
+        message: 'Resume parsed successfully',
+        data: {
+          suggestedProfile,
+          originalParsedData: parsedData, // Include original parsed data for debugging
+        },
+      };
+    } catch (error) {
+      throw new BadRequestException(`Failed to parse resume: ${error.message}`);
+    }
+  }
+
+  private categorizeSkill(skill: string): string {
+    const skillLower = skill.toLowerCase();
+    
+    // Technical skills
+    if (skillLower.includes('javascript') || skillLower.includes('python') || skillLower.includes('java') || 
+        skillLower.includes('react') || skillLower.includes('node') || skillLower.includes('sql') ||
+        skillLower.includes('html') || skillLower.includes('css') || skillLower.includes('git')) {
+      return 'Technical';
+    }
+    
+    // Business skills
+    if (skillLower.includes('management') || skillLower.includes('leadership') || 
+        skillLower.includes('project') || skillLower.includes('strategy') ||
+        skillLower.includes('analysis') || skillLower.includes('planning')) {
+      return 'Business';
+    }
+    
+    // Soft skills
+    if (skillLower.includes('communication') || skillLower.includes('teamwork') ||
+        skillLower.includes('problem') || skillLower.includes('creative') ||
+        skillLower.includes('adaptable') || skillLower.includes('time management')) {
+      return 'Soft Skills';
+    }
+    
+    // Industry specific
+    if (skillLower.includes('healthcare') || skillLower.includes('finance') ||
+        skillLower.includes('education') || skillLower.includes('manufacturing') ||
+        skillLower.includes('retail') || skillLower.includes('hospitality')) {
+      return 'Industry Specific';
+    }
+    
+    return 'Other';
   }
 
   async uploadAvatar(userId: string, avatarPath: string): Promise<UserDocument> {

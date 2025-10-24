@@ -117,8 +117,11 @@ export default function CVBuilderPage() {
   const { user, isAuthenticated, updateUser, fetchUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const [isParsingResume, setIsParsingResume] = useState(false);
   const [cvData, setCvData] = useState<CVData | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [showParsedData, setShowParsedData] = useState(false);
+  const [parsedProfileData, setParsedProfileData] = useState<any>(null);
   const [activeSection, setActiveSection] = useState('personal');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     personal: true,
@@ -347,11 +350,22 @@ export default function CVBuilderPage() {
         languages: [],
         resume: newResumeData 
       });
-      
-      toast({
-        title: 'Success!',
-        description: 'Resume uploaded successfully',
-      });
+
+      // If resume was parsed and profile was updated, refresh CV data
+      if (newResumeData.parsedData) {
+        // Refresh the CV data to show the updated profile
+        await fetchCVData();
+        
+        toast({
+          title: 'Success!',
+          description: 'Resume uploaded and profile automatically updated with extracted data',
+        });
+      } else {
+        toast({
+          title: 'Success!',
+          description: 'Resume uploaded successfully',
+        });
+      }
     } catch (error: any) {
       console.error('Upload error:', error);
       console.error('Error response:', error.response?.data);
@@ -558,9 +572,15 @@ export default function CVBuilderPage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground mb-2">Upload Your Resume/CV</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-2">
                   Upload your latest resume (PDF, DOC, or DOCX format, max 10MB). This helps employers see your complete professional profile.
                 </p>
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-4">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  <p className="text-xs font-medium">
+                    ✨ Your profile will be automatically updated with data extracted from your resume
+                  </p>
+                </div>
                 <div className="flex items-center gap-4">
                   <div className="flex-1 max-w-md">
                     <Input
