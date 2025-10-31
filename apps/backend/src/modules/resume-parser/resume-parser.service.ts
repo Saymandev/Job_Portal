@@ -173,7 +173,18 @@ export class ResumeParserService {
   }
 
   private parseText(text: string): ParsedResumeData {
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    // Normalization pipeline: unify newlines, remove duplicate spaces, fix hyphenated line-breaks, drop headers/footers
+    const normalized = text
+      .replace(/\r/g, '')
+      .replace(/\u00a0/g, ' ')
+      .replace(/([-\w])\n([a-z])/g, '$1 $2') // join broken words
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]{2,}/g, ' ');
+
+    const lines = normalized
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0 && !/^page \d+ of \d+$/i.test(l));
     
     const parsedData: ParsedResumeData = {
       personalInfo: {},
@@ -190,25 +201,25 @@ export class ResumeParserService {
     parsedData.personalInfo = this.extractPersonalInfo(text, lines);
     
     // Extract experience
-    parsedData.experience = this.extractExperience(text, lines);
+    parsedData.experience = this.extractExperience(normalized, lines);
     
     // Extract education
-    parsedData.education = this.extractEducation(text, lines);
+    parsedData.education = this.extractEducation(normalized, lines);
     
     // Extract skills
-    parsedData.skills = this.extractSkills(text, lines);
+    parsedData.skills = this.extractSkills(normalized, lines);
     
     // Extract certifications
-    parsedData.certifications = this.extractCertifications(text, lines);
+    parsedData.certifications = this.extractCertifications(normalized, lines);
     
     // Extract languages
-    parsedData.languages = this.extractLanguages(text, lines);
+    parsedData.languages = this.extractLanguages(normalized, lines);
     
     // Extract projects
-    parsedData.projects = this.extractProjects(text, lines);
+    parsedData.projects = this.extractProjects(normalized, lines);
     
     // Extract additional info (social links, etc.)
-    parsedData.additionalInfo = this.extractAdditionalInfo(text, lines);
+    parsedData.additionalInfo = this.extractAdditionalInfo(normalized, lines);
 
     return parsedData;
   }
@@ -322,8 +333,8 @@ export class ResumeParserService {
     if (experienceStart === -1) return experience;
 
     // Look for job entries (typically have dates and company names)
-    const datePattern = /(\d{4}|\d{1,2}\/\d{4}|\d{1,2}-\d{4}|present|current|now)/i;
-    const monthYearPattern = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{4}/i;
+    const datePattern = /(\b\d{4}\b|\b\d{1,2}\/(\d{2}|\d{4})\b|\b\d{1,2}-\d{4}\b|present|current|now)/i;
+    const monthYearPattern = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{2}|\d{4})/i;
 
     for (let i = experienceStart + 1; i < lines.length; i++) {
       const line = lines[i];
@@ -602,22 +613,33 @@ export class ResumeParserService {
       endIndex: startIndex
     };
 
-    // Look for job title and company in the next few lines
-    for (let i = startIndex; i < Math.min(startIndex + 5, lines.length); i++) {
-      const line = lines[i];
-      if (this.isMajorSection(line)) break;
-
-      if (line.length > 5 && line.length < 100) {
-        if (!jobEntry.title && this.looksLikeJobTitle(line)) {
-          jobEntry.title = line;
-        } else if (!jobEntry.company && line.length > 3 && line.length < 50) {
-          jobEntry.company = line;
-        }
+    // Parse header: try to capture "Title – Company, Location (Dates)"
+    const header = lines[startIndex];
+    const headerParts = header.split(/[-–—]\s*/);
+    if (headerParts.length >= 2) {
+      jobEntry.title = headerParts[0];
+      const right = headerParts.slice(1).join(' - ');
+      const companyLoc = right.split(/\s\(|\)/)[0];
+      jobEntry.company = companyLoc.split(',')[0]?.trim() || jobEntry.company;
+      jobEntry.location = companyLoc.split(',').slice(1).join(',').trim() || jobEntry.location;
+      const datesMatch = right.match(/\((.*?)\)/);
+      if (datesMatch) {
+        const { start, end, current } = this.parseDateRange(datesMatch[1]);
+        jobEntry.startDate = start; jobEntry.endDate = end; jobEntry.current = current;
       }
     }
 
-    jobEntry.endIndex = startIndex + 1;
-    return jobEntry.title ? jobEntry : null;
+    // Look for description bullets right after header
+    for (let i = startIndex + 1; i < Math.min(startIndex + 10, lines.length); i++) {
+      const line = lines[i];
+      if (this.isMajorSection(line)) break;
+      if (/^[•\-\u2022]/.test(line) || line.length > 40) {
+        jobEntry.achievements.push(line.replace(/^[•\-\u2022]\s*/, ''));
+      }
+      jobEntry.endIndex = i;
+    }
+
+    return (jobEntry.title || jobEntry.company || jobEntry.achievements.length) ? jobEntry : null;
   }
 
   private parseEducationEntry(lines: string[], startIndex: number): any {
@@ -683,13 +705,34 @@ export class ResumeParserService {
       endIndex: startIndex
     };
 
-    const line = lines[startIndex];
-    if (line.length > 5 && line.length < 100) {
-      project.name = line;
-      project.endIndex = startIndex + 1;
+    const header = lines[startIndex];
+    if (header.length > 3) {
+      project.name = header.replace(/^[•\-\u2022]\s*/, '');
+      // next lines: description and tech stack
+      for (let i = startIndex + 1; i < Math.min(startIndex + 6, lines.length); i++) {
+        const line = lines[i];
+        if (this.isMajorSection(line)) break;
+        if (/https?:\/\//i.test(line)) project.url = line.match(/https?:\/\/\S+/i)?.[0] || project.url;
+        if (/tech|stack|tools|used/i.test(line)) {
+          project.technologies = line.split(/[,;|•]/).map(s => s.trim()).filter(Boolean);
+        } else if (line.length > 20) {
+          project.description += (project.description ? ' ' : '') + line;
+        }
+        project.endIndex = i;
+      }
       return project;
     }
 
     return null;
+  }
+
+  // Parse date ranges like "Jan 2020 – Mar 2022", "2021/05 - Present"
+  private parseDateRange(input: string): { start: string; end: string; current: boolean } {
+    const norm = input.toLowerCase().replace(/\u2013|\u2014/g, '-').replace(/to|–|—/g, '-');
+    const parts = norm.split(/\s*-\s*/);
+    const start = parts[0]?.trim() || '';
+    const endRaw = parts[1]?.trim() || '';
+    const current = /present|current|now/.test(endRaw);
+    return { start, end: current ? '' : endRaw, current };
   }
 }

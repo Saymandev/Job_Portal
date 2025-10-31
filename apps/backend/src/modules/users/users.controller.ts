@@ -7,6 +7,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Post,
   Put,
@@ -48,6 +49,113 @@ export class UsersController {
       success: true,
       data: user,
     };
+  }
+
+  // Resume Templates
+  @Get('cv-templates')
+  @ApiOperation({ summary: 'List available resume templates' })
+  async listResumeTemplates() {
+    const templates = await this.usersService.listResumeTemplates();
+    return { success: true, data: templates };
+  }
+
+  @Post('cv-templates/seed')
+  @ApiOperation({ summary: 'Seed default resume templates (idempotent)' })
+  async seedResumeTemplates() {
+    const templates = await this.usersService.seedResumeTemplates();
+    return { success: true, data: templates };
+  }
+
+  // Resume Versions CRUD
+  @Get('cv-versions')
+  @ApiOperation({ summary: 'List my resume versions' })
+  async listResumeVersions(@CurrentUser('id') userId: string) {
+    const versions = await this.usersService.listResumeVersions(userId);
+    return { success: true, data: versions };
+  }
+
+  @Get('cv-versions/:id')
+  @ApiOperation({ summary: 'Get a specific resume version' })
+  async getResumeVersion(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    const version = await this.usersService.getResumeVersion(userId, id);
+    return { success: true, data: version };
+  }
+
+  @Post('cv-versions')
+  @ApiOperation({ summary: 'Create a new resume version' })
+  async createResumeVersion(
+    @CurrentUser('id') userId: string,
+    @Body()
+    payload: {
+      name: string;
+      templateId: string;
+      theme?: string;
+      sections?: Record<string, any>;
+      isDefault?: boolean;
+    },
+  ) {
+    const version = await this.usersService.createResumeVersion(userId, payload);
+    return { success: true, data: version };
+  }
+
+  @Put('cv-versions/:id')
+  @ApiOperation({ summary: 'Update a resume version' })
+  async updateResumeVersion(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() payload: Partial<{ name: string; templateId: string; theme: string; sections: Record<string, any>; isDefault: boolean }>,
+  ) {
+    const version = await this.usersService.updateResumeVersion(userId, id, payload);
+    return { success: true, data: version };
+  }
+
+  @Delete('cv-versions/:id')
+  @ApiOperation({ summary: 'Delete a resume version' })
+  async deleteResumeVersion(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    await this.usersService.deleteResumeVersion(userId, id);
+    return { success: true, message: 'Deleted' };
+  }
+
+  @Get('cv-versions/:id/export')
+  @ApiOperation({ summary: 'Export resume version as HTML (print to PDF in browser)' })
+  @Header('Content-Type', 'text/html')
+  async exportResumeVersionHtml(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    const html = await this.usersService.renderResumeHtml(userId, id);
+    return html;
+  }
+
+  @Post('ats-score')
+  @ApiOperation({ summary: 'Compute ATS keyword match score for a job description' })
+  async atsScore(
+    @CurrentUser('id') userId: string,
+    @Body() body: { versionId?: string; jobDescription: string },
+  ) {
+    if (!body?.jobDescription || typeof body.jobDescription !== 'string') {
+      throw new BadRequestException('jobDescription is required');
+    }
+    const result = await this.usersService.computeAtsScore(userId, body.versionId, body.jobDescription);
+    return { success: true, data: result };
+  }
+
+  @Post('ai-assist')
+  @ApiOperation({ summary: 'AI assist (rewrite bullets or extract skills).' })
+  async aiAssist(
+    @Body() body: { mode: 'rewrite' | 'extract_skills'; text: string },
+  ) {
+    if (!body?.text || !body?.mode) {
+      throw new BadRequestException('mode and text are required');
+    }
+    const result = await this.usersService.aiAssist(body.mode, body.text);
+    return { success: true, data: result };
   }
 
   @Put('profile')

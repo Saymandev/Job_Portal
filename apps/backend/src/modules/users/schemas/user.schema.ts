@@ -1,6 +1,6 @@
 import { Role } from '@/common/decorators/roles.decorator';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type UserDocument = User & Document & {
   createdAt: Date;
@@ -196,6 +196,13 @@ export class User {
     viewedAt: Date;
     viewerRole: string;
   }>;
+
+  // Resume Builder - versions linkage
+  @Prop({ type: [{ type: 'ObjectId', ref: 'ResumeVersion' }], default: [] })
+  resumeVersions?: Types.ObjectId[];
+
+  @Prop({ type: 'ObjectId', ref: 'ResumeVersion' })
+  defaultResumeVersion?: Types.ObjectId;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

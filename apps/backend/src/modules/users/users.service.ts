@@ -1,15 +1,19 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ResumeParserService } from '../resume-parser/resume-parser.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ResumeTemplate, ResumeTemplateDocument } from './schemas/resume-template.schema';
+import { ResumeVersion, ResumeVersionDocument } from './schemas/resume-version.schema';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(ResumeTemplate.name) private templateModel: Model<ResumeTemplateDocument>,
+    @InjectModel(ResumeVersion.name) private versionModel: Model<ResumeVersionDocument>,
     private readonly resumeParserService: ResumeParserService,
   ) {}
 
@@ -513,6 +517,357 @@ export class UsersService {
     }
 
     return this.userModel.find(query).populate('company').select('-password');
+  }
+
+  // Resume Templates
+  async listResumeTemplates(): Promise<ResumeTemplateDocument[]> {
+    const existing = await this.templateModel.find({ isActive: true }).exec();
+    if (existing.length > 0) return existing;
+
+    // Seed a few defaults if none exist
+    const defaults: Array<Partial<ResumeTemplate>> = [
+      { key: 'classic', name: 'Classic', defaultTheme: 'light', allowedThemes: ['light', 'dark', 'blue'], isActive: true },
+      { key: 'modern', name: 'Modern', defaultTheme: 'light', allowedThemes: ['light', 'slate', 'emerald'], isActive: true },
+      { key: 'elegant', name: 'Elegant', defaultTheme: 'light', allowedThemes: ['light', 'rose', 'violet'], isActive: true },
+    ];
+    await this.templateModel.insertMany(defaults);
+    return this.templateModel.find({ isActive: true }).exec();
+  }
+
+  async seedResumeTemplates(): Promise<ResumeTemplateDocument[]> {
+    return this.listResumeTemplates();
+  }
+
+  // Resume Versions CRUD
+  async listResumeVersions(userId: string): Promise<ResumeVersionDocument[]> {
+    return this.versionModel
+      .find({ user: new Types.ObjectId(userId) })
+      .populate('template')
+      .sort({ updatedAt: -1 })
+      .exec();
+  }
+
+  async getResumeVersion(userId: string, versionId: string): Promise<ResumeVersionDocument> {
+    const version = await this.versionModel
+      .findOne({ _id: versionId, user: new Types.ObjectId(userId) })
+      .populate('template');
+    if (!version) throw new NotFoundException('Resume version not found');
+    return version;
+  }
+
+  async createResumeVersion(userId: string, payload: { name: string; templateId: string; theme?: string; sections?: Record<string, any>; isDefault?: boolean; }): Promise<ResumeVersionDocument> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const template = await this.templateModel.findById(payload.templateId);
+    if (!template) throw new BadRequestException('Invalid template');
+
+    const version = await this.versionModel.create({
+      user: new Types.ObjectId(userId),
+      name: payload.name,
+      template: template._id,
+      theme: payload.theme || template.defaultTheme || 'light',
+      sections: payload.sections || {},
+      isDefault: !!payload.isDefault,
+    });
+
+    // Link on user
+    (user as any).resumeVersions = [
+      ...((user as any).resumeVersions || []),
+      version._id,
+    ];
+    if (payload.isDefault || !(user as any).defaultResumeVersion) {
+      (user as any).defaultResumeVersion = version._id;
+    }
+    await user.save();
+
+    return version.populate('template');
+  }
+
+  async updateResumeVersion(userId: string, versionId: string, payload: Partial<{ name: string; templateId: string; theme: string; sections: Record<string, any>; isDefault: boolean; }>): Promise<ResumeVersionDocument> {
+    const version = await this.versionModel.findOne({ _id: versionId, user: new Types.ObjectId(userId) });
+    if (!version) throw new NotFoundException('Resume version not found');
+
+    if (payload.templateId) {
+      const tpl = await this.templateModel.findById(payload.templateId);
+      if (!tpl) throw new BadRequestException('Invalid template');
+      (version as any).template = tpl._id;
+    }
+    if (payload.name !== undefined) version.name = payload.name;
+    if (payload.theme !== undefined) version.theme = payload.theme;
+    if (payload.sections !== undefined) version.sections = payload.sections;
+    if (payload.isDefault !== undefined) version.isDefault = payload.isDefault;
+
+    await version.save();
+
+    if (payload.isDefault) {
+      await this.userModel.findByIdAndUpdate(userId, { defaultResumeVersion: version._id });
+    }
+
+    return version.populate('template');
+  }
+
+  async deleteResumeVersion(userId: string, versionId: string): Promise<void> {
+    const version = await this.versionModel.findOneAndDelete({ _id: versionId, user: new Types.ObjectId(userId) });
+    if (!version) throw new NotFoundException('Resume version not found');
+
+    await this.userModel.findByIdAndUpdate(userId, {
+      $pull: { resumeVersions: version._id },
+      $unset: { defaultResumeVersion: '' },
+    });
+  }
+
+  // Render resume HTML for export (server-side HTML; PDF generation can be layered later)
+  async renderResumeHtml(userId: string, versionId: string): Promise<string> {
+    const version = await this.versionModel
+      .findOne({ _id: versionId, user: new Types.ObjectId(userId) })
+      .populate('template');
+    if (!version) throw new NotFoundException('Resume version not found');
+
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const sectionsConfig = (version as any).sections || {};
+    const order: string[] = sectionsConfig.order || [];
+    const enabled: Record<string, boolean> = sectionsConfig.enabled || {};
+
+    const safe = (val?: string) => (val ? String(val) : '');
+
+    function renderSection(key: string): string {
+      if (!enabled[key]) return '';
+      switch (key) {
+        case 'personal':
+          return `
+            <section class="section personal">
+              <h1 class="name">${safe(user.fullName)}</h1>
+              <div class="meta">${safe((user as any).professionalTitle)}${(user as any).location ? ' · ' + safe((user as any).location) : ''}</div>
+              <div class="links">${[safe(user.email), safe((user as any).phone), safe((user as any).website)].filter(Boolean).join(' · ')}</div>
+            </section>
+          `;
+        case 'summary':
+          return (user as any).bio ? `
+            <section class="section">
+              <h2>Summary</h2>
+              <p>${safe((user as any).bio)}</p>
+            </section>
+          ` : '';
+        case 'experience': {
+          const items: any[] = (user as any).cvExperience || [];
+          if (!items.length) return '';
+          return `
+            <section class="section">
+              <h2>Experience</h2>
+              ${items.map((exp) => `
+                <div class="item">
+                  <div class="row">
+                    <strong>${safe(exp.title)}</strong>
+                    <span>${safe(exp.company)}</span>
+                    <span class="muted">${safe(exp.startDate)}${exp.endDate ? ' – ' + safe(exp.endDate) : ''}</span>
+                  </div>
+                  <div class="desc">${safe(exp.description)}</div>
+                  ${Array.isArray(exp.achievements) && exp.achievements.length ? `
+                    <ul>
+                      ${exp.achievements.map((a: string) => `<li>${safe(a)}</li>`).join('')}
+                    </ul>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </section>
+          `;
+        }
+        case 'education': {
+          const items: any[] = (user as any).cvEducation || [];
+          if (!items.length) return '';
+          return `
+            <section class="section">
+              <h2>Education</h2>
+              ${items.map((edu) => `
+                <div class="item">
+                  <div class="row">
+                    <strong>${safe(edu.degree)}</strong>
+                    <span>${safe(edu.institution)}</span>
+                    <span class="muted">${safe(edu.startDate)}${edu.endDate ? ' – ' + safe(edu.endDate) : ''}</span>
+                  </div>
+                  <div class="desc">${safe(edu.description)}</div>
+                </div>
+              `).join('')}
+            </section>
+          `;
+        }
+        case 'skills': {
+          const skills: any[] = (user as any).cvSkills || [];
+          if (!skills.length) return '';
+          return `
+            <section class="section">
+              <h2>Skills</h2>
+              <div class="tags">${skills.map((s) => `<span class="tag">${safe(s.name)}</span>`).join('')}</div>
+            </section>
+          `;
+        }
+        case 'projects': {
+          const items: any[] = (user as any).projects || [];
+          if (!items.length) return '';
+          return `
+            <section class="section">
+              <h2>Projects</h2>
+              ${items.map((p) => `
+                <div class="item">
+                  <div class="row"><strong>${safe(p.name)}</strong> <span class="muted">${(p as any).url || ''}</span></div>
+                  <div class="desc">${safe(p.description)}</div>
+                </div>
+              `).join('')}
+            </section>
+          `;
+        }
+        case 'certifications': {
+          const items: any[] = (user as any).certifications || [];
+          if (!items.length) return '';
+          return `
+            <section class="section">
+              <h2>Certifications</h2>
+              <ul>
+                ${items.map((c) => `<li><strong>${safe(c.name)}</strong> — ${safe(c.issuer)} (${safe(c.date)})</li>`).join('')}
+              </ul>
+            </section>
+          `;
+        }
+        case 'languages': {
+          const items: any[] = (user as any).languages || [];
+          if (!items.length) return '';
+          return `
+            <section class="section">
+              <h2>Languages</h2>
+              <ul>
+                ${items.map((l) => `<li>${safe(l.language)} — ${safe(l.proficiency)}</li>`).join('')}
+              </ul>
+            </section>
+          `;
+        }
+        default:
+          return '';
+      }
+    }
+
+    const ordered = order.length ? order : ['personal', 'summary', 'experience', 'education', 'skills'];
+
+    const html = `<!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${safe(version.name)} — ${safe(user.fullName)}</title>
+        <style>
+          body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color: #111; }
+          .container { width: 800px; margin: 24px auto; }
+          .section { margin: 16px 0; }
+          h1 { font-size: 28px; margin: 0 0 4px; }
+          h2 { font-size: 16px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .08em; color: #444; }
+          .meta { color: #666; font-size: 14px; }
+          .links { color: #666; font-size: 13px; }
+          .row { display: flex; gap: 12px; align-items: baseline; }
+          .muted { color: #888; font-size: 12px; }
+          .item { margin: 8px 0; }
+          .desc { white-space: pre-wrap; }
+          .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+          .tag { background: #f1f5f9; color: #0f172a; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+          @media print { .container { width: auto; margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          ${ordered.map(renderSection).join('')}
+        </div>
+      </body>
+    </html>`;
+
+    return html;
+  }
+
+  async renderResumeHtmlPublic(versionId: string): Promise<string> {
+    const version = await this.versionModel.findById(versionId);
+    if (!version) throw new NotFoundException('Resume version not found');
+    return this.renderResumeHtml(String((version as any).user), versionId);
+  }
+
+  // Very simple ATS-style keyword matching against a job description
+  async computeAtsScore(userId: string, versionId: string | undefined, jobDescription: string): Promise<{ score: number; matched: string[]; missing: string[]; extractedKeywords: string[]; }> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9+.#\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const tokenize = (s: string) => Array.from(new Set(normalize(s).split(' ').filter(Boolean)));
+
+    // Extract resume keywords from user's CV fields
+    const skillTokens = ((user as any).cvSkills || []).map((s: any) => String(s.name || ''));
+    const experienceText = ((user as any).cvExperience || []).map((e: any) => `${e.title} ${e.company} ${e.description} ${(e.achievements||[]).join(' ')}`).join(' ');
+    const educationText = ((user as any).cvEducation || []).map((e: any) => `${e.degree} ${e.institution} ${e.description || ''}`).join(' ');
+    const projectsText = ((user as any).projects || []).map((p: any) => `${p.name} ${p.description} ${(p.technologies||[]).join(' ')}`).join(' ');
+    const summary = `${(user as any).professionalTitle || ''} ${(user as any).bio || ''}`;
+
+    const resumeCorpus = [summary, ...skillTokens, experienceText, educationText, projectsText].join(' ');
+    const resumeTokens = new Set(tokenize(resumeCorpus));
+
+    // Extract keywords from job description (naive)
+    const jdTokens = tokenize(jobDescription);
+
+    // Heuristic: ignore very short/common words
+    const stop = new Set(['and','or','with','for','to','of','the','a','an','in','on','at','by','is','are','as']);
+    const jdKeywords = jdTokens.filter(t => t.length > 2 && !stop.has(t));
+
+    const matched: string[] = [];
+    const missing: string[] = [];
+    for (const kw of jdKeywords) {
+      if (resumeTokens.has(kw)) matched.push(kw); else missing.push(kw);
+    }
+
+    const score = jdKeywords.length ? Math.round((matched.length / jdKeywords.length) * 100) : 0;
+
+    return {
+      score,
+      matched: matched.slice(0, 100),
+      missing: missing.slice(0, 100),
+      extractedKeywords: jdKeywords.slice(0, 200),
+    };
+  }
+
+  // AI Assist (heuristic fallback if AI is disabled): rewrite bullets / extract skills
+  async aiAssist(mode: 'rewrite' | 'extract_skills', text: string): Promise<any> {
+    const enabled = String(process.env.AI_ASSIST_ENABLED || 'false') === 'true';
+    // For now we return heuristic results even if disabled, but include the flag in response
+    const normalized = text.replace(/\r/g, '').trim();
+    if (mode === 'rewrite') {
+      const lines = normalized.split('\n').map(l => l.trim()).filter(Boolean);
+      const verbs = ['Led','Built','Developed','Implemented','Optimized','Improved','Designed','Automated','Increased','Reduced'];
+      const improve = (l: string, idx: number) => {
+        let s = l.replace(/^[-•\s]+/, '');
+        // Capitalize first letter
+        s = s.charAt(0).toUpperCase() + s.slice(1);
+        // Ensure starts with a verb
+        if (!/^[A-Z][a-z]+\b/.test(s)) {
+          s = `${verbs[idx % verbs.length]} ${s}`;
+        }
+        // Add impact hint if missing numbers
+        if (!/\d/.test(s)) {
+          s = `${s} resulting in a measurable impact (e.g., +15% performance).`;
+        }
+        return `• ${s}`;
+      };
+      const rewritten = lines.map(improve).join('\n');
+      return { enabled, mode, suggestions: rewritten };
+    }
+
+    // extract_skills
+    const tokens = normalized.split(/[^A-Za-z0-9+.#-]+/).filter(Boolean);
+    const candidates = new Set<string>();
+    for (const t of tokens) {
+      const k = t.trim();
+      if (k.length < 2) continue;
+      if (/[A-Z]/.test(k.charAt(0)) || /(js|ts|sql|aws|gcp|ci|cd|api|ui|ux|ml|ai|qa|qa)/i.test(k)) {
+        candidates.add(k);
+      }
+    }
+    const list = Array.from(candidates).slice(0, 50);
+    return { enabled, mode, skills: list };
   }
 
   async getCV(userId: string): Promise<any> {

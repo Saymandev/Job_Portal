@@ -171,6 +171,9 @@ export default function NavigationHeader() {
             <Link href="/jobs" className="text-muted-foreground hover:text-foreground">
               Browse Jobs
             </Link>
+            <Link href="/resume" className="text-muted-foreground hover:text-foreground">
+              Resume Builder
+            </Link>
             
             {isAuthenticated && user && (
               <>
@@ -706,7 +709,9 @@ export default function NavigationHeader() {
                   )}
                 </>
               )}
-              
+              <Link href="/resume" className="text-muted-foreground hover:text-foreground">
+              Resume Builder
+            </Link>
               {!isAuthenticated && (
                 <>
                   <Link href="/login" className="text-muted-foreground hover:text-foreground">

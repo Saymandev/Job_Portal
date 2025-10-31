@@ -4,6 +4,7 @@ import { Application, ApplicationSchema } from '../applications/schemas/applicat
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { Job, JobSchema } from '../jobs/schemas/job.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
+import { UsersModule } from '../users/users.module';
 import { PublicController } from './public.controller';
 import { PublicService } from './public.service';
 
@@ -15,6 +16,7 @@ import { PublicService } from './public.service';
       { name: Application.name, schema: ApplicationSchema },
       { name: Company.name, schema: CompanySchema },
     ]),
+    UsersModule,
   ],
   controllers: [PublicController],
   providers: [PublicService],
